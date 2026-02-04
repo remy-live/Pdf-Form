@@ -7,8 +7,13 @@
     <title>Pdf Studio</title>
 
     <script src="ext.js"></script>
-    <script src="template.js"></script>
 
+
+    <script>
+        // Ce petit script fait le lien entre PDF.js (dans ext.js) et le worker ci-dessus
+        // ✅ BON : On attend que le HTML soit fini de lire ('DOMContentLoaded')
+
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -334,84 +339,20 @@
             color: #f87171;
         }
 
-        /* --- OUTILS DÉVELOPPEUR (CACHÉS PAR DÉFAUT) --- */
-        .dev-btn {
-            display: none !important;
-        }
-
-        /* Si le body a la classe "codage", on affiche les boutons */
-        body.codage .dev-btn {
-            display: flex !important;
-        }
-
         /* Rouge */
     </style>
 </head>
 
 <body class="bg-bg h-screen w-screen flex flex-col text-text">
-    <div id="float-bar"
-        class="fixed z-50 bg-white shadow-xl border border-gray-200 rounded-lg p-1 flex items-center gap-1 hidden transform -translate-x-1/2 transition-all duration-100"
-        style="top:0; left:0;">
-        <select onchange="App.formatText('fontFamily', this.value)" id="wysiwyg-font"
-            class="text-[10px] border-r border-gray-200 pr-1 mr-1 outline-none bg-transparent h-6 cursor-pointer max-w-[80px]">
-            <option value="Arial">Arial</option>
-            <option value="Helvetica">Helvetica</option>
-            <option value="Times New Roman">Times</option>
-            <option value="Courier New">Courier</option>
-        </select>
-
-        <input type="number" id="wysiwyg-size" onchange="App.formatText('size', this.value)"
-            class="w-10 text-[10px] border border-gray-200 rounded h-6 text-center outline-none mr-1"
-            title="Taille (Globale)" min="6" max="100">
-
-        <div
-            class="relative w-6 h-6 rounded overflow-hidden border border-gray-300 cursor-pointer hover:border-gray-400 mr-1">
-            <input type="color" id="wysiwyg-color" oninput="App.formatText('color', this.value)"
-                class="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] cursor-pointer p-0 border-0"
-                title="Couleur du texte">
-        </div>
-
-        <div class="w-px h-4 bg-gray-200 mx-1"></div>
-
-        <button onclick="App.formatText('bold')"
-            class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700 font-bold text-xs"
-            title="Gras">B</button>
-        <button onclick="App.formatText('italic')"
-            class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700 italic text-xs"
-            title="Italique">I</button>
-        <button onclick="App.formatText('underline')"
-            class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700 underline text-xs"
-            title="Souligné">U</button>
-
-        <div class="w-px h-4 bg-gray-200 mx-1"></div>
-
-        <button onclick="App.formatText('align', 'left')"
-            class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600"><i
-                class="fa-solid fa-align-left text-[10px]"></i></button>
-        <button onclick="App.formatText('align', 'center')"
-            class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600"><i
-                class="fa-solid fa-align-center text-[10px]"></i></button>
-        <button onclick="App.formatText('align', 'right')"
-            class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600"><i
-                class="fa-solid fa-align-right text-[10px]"></i></button>
-    </div>
 
     <div id="modal-overlay"
         class="fixed inset-0 bg-black/40 z-[100] hidden flex items-center justify-center backdrop-blur-sm">
-        <div id="modal-box" class="bg-white rounded-xl shadow-2xl w-96 p-5 transform transition-all">
+        <div id="modal-box" class="bg-white rounded-xl shadow-2xl w-80 p-5 transform transition-all">
             <h3 id="modal-title" class="text-lg font-bold mb-2">Titre</h3>
             <p id="modal-msg" class="text-sm text-gray-600 mb-5 leading-relaxed">Message...</p>
-
-            <div id="modal-btn-info" class="flex justify-end">
+            <div class="flex justify-end">
                 <button onclick="App.closeModal()"
-                    class="bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded hover:bg-black transition">Compris</button>
-            </div>
-
-            <div id="modal-btn-confirm" class="flex justify-end gap-2 hidden">
-                <button onclick="App.closeModal()"
-                    class="text-gray-500 hover:bg-gray-100 text-xs font-bold px-4 py-2 rounded transition">Annuler</button>
-                <button id="btn-confirm-yes"
-                    class="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded hover:bg-blue-700 transition">Confirmer</button>
+                    class="bg-active text-white text-xs font-bold px-4 py-2 rounded hover:bg-gray-800 transition">Compris</button>
             </div>
         </div>
     </div>
@@ -452,7 +393,7 @@
                     <option value="Times New Roman">Times</option>
                     <option value="Courier New">Courier</option>
                 </select>
-                <input type="number" id="g-size" value="16"
+                <input type="number" id="g-size" value="11"
                     class="bg-transparent text-xs font-medium w-10 text-center outline-none border-none"
                     oninput="App.setStyle('size', this.value)" title="Taille Police">
             </div>
@@ -533,15 +474,7 @@
                 title="Plein Écran">
                 <i class="fa-solid fa-expand"></i>
             </button>
-            <button onclick="openDonationModal()"
-                class="text-pink-500 hover:text-pink-600  rounded-full hover:bg-pink-50 transition transform hover:scale-110"
-                title="Soutenir le projet">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                        clip-rule="evenodd" />
-                </svg>
-            </button>
+
             <button onclick="App.toggleHelp()"
                 class="text-gray-400 hover:text-blue-600 w-8 h-8 rounded-full border border-transparent hover:border-blue-100 hover:bg-blue-50 transition flex items-center justify-center ml-1"
                 title="Centre d'aide et Raccourcis">
@@ -595,10 +528,7 @@
                         title="Étiquette / Titre (Texte fixe)">
                         <i class="fa-solid fa-heading"></i>
                     </button>
-                    <button onclick="App.setTool('paragraph')" id="btn-paragraph" class="tool-btn"
-                        title="Texte Riche (Notice/Statuts)">
-                        <i class="fa-solid fa-align-justify"></i>
-                    </button>
+
                     <button onclick="App.setTool('rect')" id="btn-rect" class="tool-btn" title="Rectangle (Dessin)">
                         <i class="fa-regular fa-square"></i>
                     </button>
@@ -703,13 +633,8 @@
         <aside id="panel-right"
             class="w-72 bg-panel border-l border-border flex flex-col shrink-0 z-10 transition-transform duration-300">
             <div class="flex border-b border-border bg-gray-50">
-                <div class="flex border-b border-border bg-gray-50">
-                    <button onclick="App.setSideTab('props')" id="tab-btn-props"
-                        class="tab-btn active">Propriétés</button>
-                    <button onclick="App.setSideTab('bank')" id="tab-btn-bank" class="tab-btn">Banque</button>
-                    <button onclick="App.setSideTab('templates')" id="tab-btn-templates"
-                        class="tab-btn">Modèles</button>
-                </div>
+                <button onclick="App.setSideTab('props')" id="tab-btn-props" class="tab-btn active">Propriétés</button>
+                <button onclick="App.setSideTab('bank')" id="tab-btn-bank" class="tab-btn">Banque</button>
             </div>
 
             <div id="view-props" class="flex-1 flex flex-col overflow-hidden">
@@ -774,14 +699,6 @@
                                 class="text-xs font-medium">ID</span><input type="text" id="p-id"
                                 class="os-input font-mono text-xs bg-gray-50"></div>
 
-                        <div id="row-font-size" class="grid grid-cols-[60px_1fr] items-center gap-2">
-                            <span class="text-xs font-medium">Police</span>
-                            <div class="flex items-center gap-2">
-                                <input type="number" id="p-font-size" class="os-input w-16 text-center" min="6"
-                                    max="100">
-                                <span class="text-[10px] text-gray-400">px</span>
-                            </div>
-                        </div>
                         <div id="row-format" class="grid grid-cols-[60px_1fr] items-center gap-2">
                             <span class="text-xs font-medium">Format</span>
                             <select id="p-fmt" class="os-input">
@@ -813,21 +730,9 @@
                                     class="text-xs">Valeur</span><input type="text" id="p-val"
                                     class="os-input bg-white"></div>
                         </div>
-                        <div id="sub-dropdown"
-                            class="hidden flex-col gap-2 p-2 bg-gray-50 rounded border border-gray-200">
-                            <div class="grid grid-cols-[60px_1fr] items-center gap-2">
-                                <span class="text-xs font-medium">Défaut</span>
-                                <select id="p-dropdown-val" class="os-input bg-white h-6 p-0 px-1">
-                                </select>
-                            </div>
-
-                            <div class="flex flex-col gap-1">
-                                <span class="text-xs font-medium">Options (1/ligne)</span>
-                                <textarea id="p-opts"
-                                    class="os-input h-24 resize-none font-mono text-[10px] leading-tight"
-                                    placeholder="Option 1&#10;Option 2..."></textarea>
-                            </div>
-                        </div>
+                        <div id="sub-dropdown" class="hidden flex-col gap-1"><span
+                                class="text-xs font-medium">Options</span><textarea id="p-opts"
+                                class="os-input h-24 resize-none"></textarea></div>
                         <div class="flex gap-4 mt-1"><label
                                 class="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox"
                                     id="p-req" class="accent-black"> <span class="text-xs">Requis</span></label><label
@@ -933,59 +838,11 @@
                 </div>
 
                 <hr class="border-gray-200">
-                <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-bold uppercase text-gray-400">Ma Bibliothèque</span>
-                    <div class="flex gap-1">
-                        <button onclick="Bank.exportBank()"
-                            class="text-[10px] text-blue-600 hover:bg-blue-50 px-2 py-0.5 rounded border border-transparent hover:border-blue-100 transition"
-                            title="Exporter ma banque (.json)">
-                            <i class="fa-solid fa-download"></i>
-                        </button>
-                        <button onclick="document.getElementById('bank-file-input').click()"
-                            class="text-[10px] text-blue-600 hover:bg-blue-50 px-2 py-0.5 rounded border border-transparent hover:border-blue-100 transition"
-                            title="Importer une banque">
-                            <i class="fa-solid fa-upload"></i>
-                        </button>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <button onclick="Bank.exportDev()"
-                            class="dev-btn bg-purple-600 text-white text-[10px] font-bold py-2 rounded hover:bg-purple-700 transition w-full flex items-center justify-center gap-2 border border-purple-800 shadow-lg">
-                            <i class="fa-solid fa-database"></i> COPIER TOUTE LA BANQUE (DEV)
-                        </button>
-                    </div>
-                </div>
+
                 <div class="flex flex-col gap-2">
+                    <span class="text-[10px] font-bold uppercase text-gray-400">Ma Bibliothèque</span>
                     <div id="bank-list" class="flex flex-col pb-4">
                         <div class="text-xs text-gray-400 text-center italic py-4">Vide pour l'instant</div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-templates" class="hidden flex-1 flex flex-col p-4 gap-4 overflow-y-auto bg-gray-50">
-
-                <div class="bg-white border border-blue-200 p-3 rounded-lg flex flex-col gap-2 shadow-sm">
-                    <span class="text-[10px] font-bold uppercase text-blue-500">Nouveau Modèle</span>
-                    <button onclick="Templates.saveFromCurrentPage()"
-                        class="bg-blue-600 text-white text-[10px] font-bold py-2 rounded hover:bg-blue-700 transition w-full flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i> Sauver la page actuelle
-                    </button>
-
-                    <button onclick="Templates.exportDev()"
-                        class="dev-btn mt-2 bg-purple-600 text-white text-[10px] font-bold py-2 rounded hover:bg-purple-700 transition w-full flex items-center justify-center gap-2 border border-purple-800 shadow-lg">
-                        <i class="fa-solid fa-code"></i> COPIER CODE (DEV)
-                    </button>
-                    <p class="text-[9px] text-gray-400 italic text-center">Crée un modèle à partir de votre travail
-                        actuel.</p>
-                </div>
-
-                <hr class="border-gray-200">
-
-                <div class="flex flex-col gap-2">
-                    <span class="text-[10px] font-bold uppercase text-gray-400">Bibliothèque</span>
-                    <input type="text" placeholder="Rechercher..." oninput="Templates.filter(this.value)"
-                        class="os-input bg-white mb-2">
-
-                    <div id="template-list" class="grid grid-cols-1 gap-3 pb-4">
                     </div>
                 </div>
             </div>
@@ -1223,297 +1080,26 @@
         <button onclick="State.canvas.bringForward(State.canvas.getActiveObject()); App.hideCtx()"
             class="w-full text-left px-4 py-2 hover:bg-gray-100">Avancer</button>
     </div>
-    <div id="toast-container"></div>
     <script>
-        // --- CONFIGURATION DE LA BANQUE PAR DÉFAUT ---
-
+        
         document.addEventListener('DOMContentLoaded', () => {
             App.init();
-            Bank.init();
-            Templates.init();
+            Bank.init(); // <--- AJOUTER ICI
         });
         if (window.fabric) {
             fabric.Object.prototype.set({ transparentCorners: false, cornerColor: '#1c1c1e', cornerStyle: 'circle', cornerSize: 8, borderColor: '#1c1c1e' });
             fabric.Text.prototype.textBaseline = 'top'; fabric.IText.prototype.textBaseline = 'top'; fabric.Textbox.prototype.textBaseline = 'top';
         }
 
-
-        const customProps = ['ctype', 'pid', 'grp', 'val', 'opts', 'bStyle', 'isChecked', 'fmt', 'tAlign', 'lockScalingX', 'lockScalingY', 'srcObj', 'id', 'isBackground', 'evented', 'selectable', 'isRequired', 'isReadOnly', 'fontWeight', 'fontStyle', 'underline', 'styles'];
-
-        const Templates = {
-            items: [],
-
-            init: () => {
-                const staticTpls = (typeof APP_MODELS !== 'undefined') ? APP_MODELS : [];
-                let userTpls = [];
-                try { userTpls = JSON.parse(localStorage.getItem('pdf_studio_user_templates') || '[]'); } catch (e) { }
-                Templates.items = [...userTpls, ...staticTpls];
-                Templates.render();
-            },
-
-            render: (filterText = '') => {
-                const container = document.getElementById('template-list');
-                if (!container) return;
-                container.innerHTML = '';
-
-                const list = Templates.items.filter(t => t.name.toLowerCase().includes(filterText.toLowerCase()));
-                if (list.length === 0) { container.innerHTML = '<div class="text-xs text-gray-400 text-center italic">Aucun modèle</div>'; return; }
-
-                list.forEach(tpl => {
-                    const isUser = !tpl.id.startsWith('tpl_');
-                    const el = document.createElement('div');
-                    el.className = 'group relative bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition cursor-pointer';
-
-                    const delBtn = isUser ? `<button onclick="event.stopPropagation(); Templates.delete('${tpl.id}')" class="absolute top-1 right-1 bg-white text-red-500 w-5 h-5 flex items-center justify-center rounded shadow opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash text-[10px]"></i></button>` : '';
-
-                    el.innerHTML = `
-        <div class="h-24 bg-gray-100 overflow-hidden relative">
-            <img src="${tpl.thumbnail || ''}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
-            <div class="absolute bottom-0 left-0 bg-black/50 text-white text-[9px] px-2 py-0.5 rounded-tr">${tpl.category || 'Général'}</div>
-        </div>
-        <div class="p-2 border-t border-gray-100">
-            <div class="font-bold text-xs text-gray-700 truncate">${tpl.name}</div>
-            <div class="text-[9px] text-gray-400 flex justify-between mt-1"><span>${isUser ? 'Personnel' : 'Officiel'}</span><span>${tpl.objects ? tpl.objects.length : 0} objets</span></div>
-        </div>${delBtn}`;
-                    el.onclick = () => Templates.apply(tpl.id);
-                    container.appendChild(el);
-                });
-            },
-
-            // --- SAUVEGARDE ROBUSTE (BASÉE SUR LE FOND) ---
-            saveFromCurrentPage: () => {
-                const pageObjects = State.canvas.getObjects().filter(o => !o.isBackground && !o.isGuide);
-                if (pageObjects.length === 0) { App.showToast("Page vide !", "error"); return; }
-
-                // 1. TROUVER LE FOND BLANC (L'ANCRE)
-                const bg = State.canvas.getObjects().find(o => o.isBackground);
-                // Si pas de fond (cas rare), on prend 0,0
-                const refX = bg ? bg.left : 0;
-                const refY = bg ? bg.top : 0;
-
-                const name = prompt("Nom du modèle :", "Mon Formulaire");
-                if (!name) return;
-
-                const thumb = State.canvas.toDataURL({ format: 'png', multiplier: 0.2 });
-
-                // 2. CALCUL RELATIF
-                const objects = pageObjects.map(o => {
-                    const json = o.toObject(customProps);
-                    // On enregistre la position relative au coin du fond blanc
-                    json.left = o.left - refX;
-                    json.top = o.top - refY;
-                    return json;
-                });
-
-                const newTpl = { id: 'user_' + Date.now(), name: name, category: 'Perso', thumbnail: thumb, objects: objects };
-
-                const userTpls = JSON.parse(localStorage.getItem('pdf_studio_user_templates') || '[]');
-                userTpls.unshift(newTpl);
-                localStorage.setItem('pdf_studio_user_templates', JSON.stringify(userTpls));
-
-                App.showToast("Modèle sauvegardé !", "success");
-                Templates.init();
-            },
-
-            delete: (id) => {
-                App.askConfirm("Supprimer", "Voulez-vous supprimer ce modèle ?", () => {
-                    let userTpls = JSON.parse(localStorage.getItem('pdf_studio_user_templates') || '[]');
-                    userTpls = userTpls.filter(t => t.id !== id);
-                    localStorage.setItem('pdf_studio_user_templates', JSON.stringify(userTpls));
-                    Templates.init();
-                    App.showToast("Modèle supprimé", "success");
-                });
-            },
-
-            // --- APPLICATION ROBUSTE (BASÉE SUR LE FOND) ---
-            apply: (id) => {
-                const tpl = Templates.items.find(t => t.id === id);
-                if (!tpl) return;
-
-                App.askConfirm("Appliquer le modèle", "Remplacer le contenu actuel ?", () => {
-                    // 1. On ferme la modale TOUT DE SUITE pour rendre la main à l'interface
-                    App.closeModal();
-
-                    try {
-                        // On garde le fond existant pour récupérer ses coordonnées
-                        const existingBg = State.canvas.getObjects().find(o => o.isBackground);
-                        const refX = existingBg ? (existingBg.left || 0) : 0;
-                        const refY = existingBg ? (existingBg.top || 0) : 0;
-
-                        // On nettoie tout sauf le fond
-                        const itemsToRemove = State.canvas.getObjects().filter(o => !o.isBackground);
-                        State.canvas.remove(...itemsToRemove);
-
-                        fabric.util.enlivenObjects(tpl.objects, (objs) => {
-                            objs.forEach(o => {
-                                // --- SÉCURITÉ ANTI-CRASH (C'est ce qui manque dans ton code) ---
-                                // On s'assure que left et top sont bien des chiffres
-                                let cleanLeft = parseFloat(o.left);
-                                let cleanTop = parseFloat(o.top);
-
-                                // Si c'est pourri (NaN), on met 0 par défaut pour éviter le freeze
-                                if (isNaN(cleanLeft)) cleanLeft = 0;
-                                if (isNaN(cleanTop)) cleanTop = 0;
-
-                                // 3. RESTAURATION RELATIVE
-                                o.left = cleanLeft + refX;
-                                o.top = cleanTop + refY;
-
-                                // Sécurité supplémentaire sur les dimensions
-                                if (isNaN(o.width) || o.width <= 0) o.width = 50;
-                                if (isNaN(o.height) || o.height <= 0) o.height = 50;
-
-                                State.canvas.add(o);
-                                Factory.ensureUniqueId(o);
-                                o.setCoords();
-                            });
-
-                            State.canvas.requestRenderAll();
-
-                            // On utilise ta fonction de réparation
-                            if (App.fixImport) App.fixImport();
-                            else if (App.restoreRefs) App.restoreRefs();
-
-                            History.save();
-                            App.showToast("Modèle appliqué !", "success");
-                        });
-
-                    } catch (error) {
-                        console.error("Erreur critique lors de l'application du modèle :", error);
-                        App.showToast("Modèle corrompu, impossible à charger.", "error");
-                    }
-                });
-            },
-            // --- EXPORT DEV (MÊME LOGIQUE) ---
-            exportDev: () => {
-                const pageObjects = State.canvas.getObjects().filter(o => !o.isBackground && !o.isGuide);
-                if (pageObjects.length === 0) { App.showToast("Rien à exporter", "error"); return; }
-
-                const bg = State.canvas.getObjects().find(o => o.isBackground);
-                const refX = bg ? bg.left : 0;
-                const refY = bg ? bg.top : 0;
-
-                const name = prompt("Nom ?", "Nouveau Modèle");
-                if (!name) return;
-                const category = prompt("Catégorie ?", "Général");
-
-                const thumb = State.canvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.2 });
-
-                const objects = pageObjects.map(o => {
-                    const json = o.toObject(customProps);
-                    json.left = o.left - refX;
-                    json.top = o.top - refY;
-                    return json;
-                });
-
-                const codeObj = { id: "tpl_" + Date.now(), name: name, category: category, thumbnail: thumb, objects: objects };
-                const jsonString = JSON.stringify(codeObj) + ",";
-
-                navigator.clipboard.writeText(jsonString).then(() => {
-                    alert("✅ CODE COPIÉ !");
-                });
-            }
-        };
-
+        const customProps = ['ctype', 'pid', 'grp', 'val', 'opts', 'bStyle', 'isChecked', 'fmt', 'tAlign', 'lockScalingX', 'lockScalingY', 'srcObj', 'id', 'isBackground', 'evented', 'selectable'];
+        // --- GESTION DE LA BANQUE (Corrigé) ---
         const Bank = {
             items: [],
-            storageKey: 'prof_toolbox_bank_v2',
+            storageKey: 'prof_toolbox_bank_v2', // Nouvelle clé pour éviter les conflits avec l'ancienne version buggée
             maxSize: 4.8 * 1024 * 1024,
-            // DANS L'OBJET Bank = { ... }
-            // DANS L'OBJET Bank = { ... }
 
-            // --- OUTIL DEV OPTIMISÉ ---
-            exportDev: () => {
-                if (Bank.items.length === 0) {
-                    App.showToast("Banque vide", "error");
-                    return;
-                }
-
-                // JSON.stringify sans arguments = Compact (tout sur une ligne)
-                const jsonString = JSON.stringify(Bank.items);
-
-                navigator.clipboard.writeText(jsonString).then(() => {
-                    console.log("Export Banque Compact :", jsonString.length + " caractères.");
-                    alert("✅ BANQUE COMPACTE COPIÉE !\n\nTu peux le coller dans 'bank.js'.");
-                });
-            },
-            // 1. EXPORTER LA BANQUE
-            exportBank: () => {
-                if (Bank.items.length === 0) {
-                    App.showToast("La banque est vide, rien à exporter.", "error");
-                    return;
-                }
-
-                const data = JSON.stringify(Bank.items, null, 2); // Beau JSON
-                const blob = new Blob([data], { type: "application/json" });
-                const link = document.createElement('a');
-
-                // Nom du fichier avec la date
-                const date = new Date().toISOString().slice(0, 10);
-                link.href = URL.createObjectURL(blob);
-                link.download = `pdf_studio_banque_${date}.json`;
-                link.click();
-
-                App.showToast("Banque exportée avec succès !", "success");
-            },
-
-            // 2. IMPORTER UNE BANQUE
-            importBank: (input) => {
-                const file = input.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const importedItems = JSON.parse(e.target.result);
-
-                        if (!Array.isArray(importedItems)) {
-                            throw new Error("Format invalide");
-                        }
-
-                        // On demande si on fusionne ou si on remplace
-                        App.askConfirm(
-                            "Importer la banque",
-                            "Voulez-vous FUSIONNER avec votre banque actuelle ou tout REMPLACER ?",
-                            () => {
-                                // Action OUI : On remplace tout (Attention !)
-                                // Note : Tu peux adapter la logique ici. 
-                                // Pour l'instant, faisons une fusion intelligente (ajout des nouveaux)
-
-                                let addedCount = 0;
-                                importedItems.forEach(newItem => {
-                                    // On vérifie si l'item existe déjà (basé sur le nom ou le contenu) pour éviter les doublons
-                                    // Ici on fait simple : on ajoute tout avec un nouvel ID
-                                    newItem.id = Date.now() + Math.random();
-                                    Bank.items.push(newItem);
-                                    addedCount++;
-                                });
-
-                                Bank.saveStorage();
-                                Bank.render();
-                                App.showToast(`${addedCount} éléments importés !`, "success");
-                            }
-                        );
-
-                        // Si tu veux juste fusionner sans demander, tu peux simplifier le code ci-dessus.
-
-                    } catch (err) {
-                        console.error(err);
-                        App.showToast("Fichier JSON invalide.", "error");
-                    }
-                };
-                reader.readAsText(file);
-                input.value = ''; // Reset pour pouvoir réimporter le même fichier
-            },
             init: () => {
                 Bank.load();
-
-                // --- DÉTECTION ET REMPLISSAGE AUTOMATIQUE ---
-                if (Bank.items.length === 0 && typeof DEFAULT_TEMPLATES !== 'undefined') {
-                    Bank.populateDefaults();
-                }
-                // --------------------------------------------
-
                 const input = document.getElementById('img-input-bank');
                 if (input) {
                     input.addEventListener('change', (e) => {
@@ -1528,58 +1114,6 @@
                 if (typeof DropZone !== 'undefined') DropZone.init();
             },
 
-            // --- NOUVEAU MOTEUR DE GÉNÉRATION ---
-            populateDefaults: () => {
-                // Canvas fantôme pour générer les objets proprement
-                const tCan = new fabric.Canvas(null, { width: 400, height: 400 });
-
-                DEFAULT_TEMPLATES.forEach(def => {
-                    const objs = def.items.map(d => {
-                        let o;
-                        // Mapping du JSON vers la Factory
-                        if (d.type === 'label') {
-                            o = Factory.createLabel(d.x, d.y);
-                            o.set({
-                                text: d.text,
-                                fontSize: d.size,
-                                fill: d.color || '#000000',
-                                fontWeight: d.bold ? 'bold' : 'normal'
-                            });
-                        }
-                        else if (d.type === 'input') {
-                            o = Factory.createInputGroup(d.x, d.y, d.w, d.h, d.kind);
-                            if (d.fmt) o.set('fmt', d.fmt);
-                            if (d.val && o.txtObj) o.txtObj.text = d.val;
-                        }
-                        else if (d.type === 'radio') {
-                            o = Factory.createRadio(d.x, d.y);
-                            o.grp = d.grp; o.val = d.val;
-                        }
-                        else if (d.type === 'shape') {
-                            o = Factory.createShape(d.kind, d.x, d.y, d.w, d.h);
-                            if (d.stroke) o.set({ stroke: d.stroke, strokeWidth: 1 });
-                        }
-                        return o;
-                    });
-
-                    // Création du groupe pour la miniature
-                    const group = new fabric.Group(objs, { originX: 'center', originY: 'center' });
-                    tCan.add(group);
-                    group.setCoords();
-
-                    // Génération Miniature + JSON
-                    const preview = group.toDataURL({ format: 'png', multiplier: 0.5 });
-                    const json = JSON.stringify(group.toObject(customProps));
-
-                    Bank.add('template', json, preview, def.name);
-                    tCan.clear();
-                });
-
-                tCan.dispose();
-                Bank.saveStorage(); // Sauvegarde physique immédiate
-                Bank.render();
-            },
-
             load: () => {
                 const saved = localStorage.getItem(Bank.storageKey);
                 if (saved) { try { Bank.items = JSON.parse(saved); } catch (e) { console.error(e); } }
@@ -1591,7 +1125,7 @@
                 try {
                     const json = JSON.stringify(Bank.items);
                     if (new Blob([json]).size > Bank.maxSize) {
-                        App.showToast("Banque pleine ! Impossible de sauvegarder.", "error");
+                        alert("⚠️ Banque pleine !");
                         return false;
                     }
                     localStorage.setItem(Bank.storageKey, json);
@@ -1625,15 +1159,26 @@
                 else Bank.render();
             },
 
+            // --- CORRECTION MAJEURE ICI ---
             addFromSelection: () => {
                 const active = State.canvas.getActiveObject();
                 if (!active) { App.showModal("Erreur", "Sélectionnez un objet."); return; }
 
+                // On clone pour ne pas toucher à l'original
                 active.clone((cloned) => {
                     cloned.set({ left: 0, top: 0 });
+
+                    // Génération de l'image
                     const previewData = cloned.toDataURL({ format: 'jpeg', quality: 0.7, multiplier: 0.5, enableRetinaScaling: false });
+
+                    // SAUVEGARDE PROFONDE
+                    // includeDefaultValues: false allège le JSON
+                    // customProps est passé pour s'assurer que 'ctype' est gardé PARTOUT
                     const objData = cloned.toObject(customProps);
+
+                    // Sécurité : si c'est un groupe simple qui a perdu son ctype, on le remet
                     if (active.ctype && !objData.ctype) objData.ctype = active.ctype;
+
                     const json = JSON.stringify(objData);
 
                     let name = "Objet";
@@ -1643,16 +1188,14 @@
 
                     Bank.add('template', json, previewData, name);
                     App.showModal("Sauvegardé", "Ajouté à la bibliothèque.");
-                }, customProps);
+                }, customProps); // <--- Ce 2ème argument est vital pour que clone() copie les props
             },
 
             remove: (id) => {
-                App.askConfirm("Suppression", "Voulez-vous supprimer cet élément de la banque ?", () => {
-                    Bank.items = Bank.items.filter(i => i.id !== id);
-                    Bank.saveStorage();
-                    Bank.render();
-                    App.showToast("Élément supprimé", "success");
-                });
+                if (!confirm("Supprimer ?")) return;
+                Bank.items = Bank.items.filter(i => i.id !== id);
+                Bank.saveStorage();
+                Bank.render();
             },
 
             updateStorageUI: () => {
@@ -1698,7 +1241,6 @@
                 });
             }
         };
-
         const DropZone = {
             init: () => {
                 const workspace = document.getElementById('workspace');
@@ -1724,15 +1266,16 @@
                                 const rootObj = objects[0];
                                 if (!rootObj) return;
 
-                                // 1. CALCUL DU DÉCALAGE
+                                // 1. CALCUL DU DÉCALAGE (Pour placer sous la souris)
                                 const currentCenter = rootObj.getCenterPoint();
                                 const dx = pointer.x - currentCenter.x;
                                 const dy = pointer.y - currentCenter.y;
 
-                                // 2. PRÉPARATION DE LA LISTE
+                                // 2. PRÉPARATION DE LA LISTE À PLACER
                                 let finalObjects = [];
 
                                 if (rootObj.type === 'activeSelection') {
+                                    // Cas A : Plusieurs objets sauvés ensemble
                                     const items = rootObj.getObjects();
                                     items.forEach(child => {
                                         child.left += dx; child.top += dy;
@@ -1740,46 +1283,72 @@
                                         finalObjects.push(child);
                                     });
                                 } else if (rootObj.type === 'group' && !rootObj.ctype) {
+                                    // Cas B : Groupe purement graphique (Dessin) -> On le garde groupé ou on l'éclate selon besoin
+                                    // Ici, on décide de le poser tel quel, mais de le traiter comme un objet unique
                                     rootObj.set({ left: pointer.x, top: pointer.y, originX: 'center', originY: 'center' });
                                     rootObj.setCoords();
+                                    // Si on veut pouvoir éditer les morceaux du dessin, on peut l'éclater :
+                                    // State.canvas.add(rootObj); const sel = rootObj.toActiveSelection(); finalObjects = sel.getObjects();
+                                    // Sinon on le garde groupé :
                                     finalObjects = [rootObj];
                                 } else {
+                                    // Cas C : Objet unique ou Input (Checkbox, Textfield...)
                                     rootObj.set({ left: pointer.x, top: pointer.y, originX: 'center', originY: 'center' });
                                     finalObjects = [rootObj];
                                 }
 
-                                // 3. LE CERVEAU : REMAPPING
+                                // ============================================================
+                                // 3. LE CERVEAU : REMAPPING DES IDs ET GROUPES
+                                // ============================================================
+
+                                // Dictionnaire pour mapper les anciens noms de groupes radio vers les nouveaux
+                                // Cela garantit que les radios d'un MEME drop restent liés, 
+                                // mais isolés des drops précédents.
                                 const radioGroupMap = {};
 
                                 finalObjects.forEach(obj => {
-                                    // A. RESTAURATION LIENS
+                                    // A. RESTAURATION DES LIENS INTERNES (Pour que les inputs marchent)
                                     if (obj.type === 'group' && obj.ctype) {
                                         const items = obj.getObjects();
                                         obj.bgObj = items[0];
+                                        // On retrouve les enfants (Texte ou Coche)
                                         if (items[1]) {
                                             if (['textfield', 'textarea', 'dropdown'].includes(obj.ctype)) obj.txtObj = items[1];
                                             if (['checkbox', 'radio'].includes(obj.ctype)) obj.markObj = items[1];
                                         }
+                                        // On reverrouille les enfants pour éviter les bugs de sélection interne
                                         items.forEach(k => {
-                                            k.selectable = false; k.evented = false;
+                                            k.selectable = false;
+                                            k.evented = false;
                                             k.lockMovementX = true; k.lockMovementY = true;
                                         });
+                                        // On réapplique les verrous globaux du groupe
                                         if (['textfield', 'textarea', 'checkbox', 'radio', 'dropdown', 'label'].includes(obj.ctype)) {
                                             obj.setControlsVisibility({ mtr: false });
                                             obj.lockRotation = true;
                                         }
                                     }
 
-                                    // B. PID UNIQUE
-                                    if (obj.ctype) obj.pid = Factory.getSafeId(obj.ctype);
+                                    // B. GÉNÉRATION D'UN NOUVEL ID UNIQUE (PID)
+                                    // Obligatoire pour éviter les doublons d'ID dans le PDF
+                                    if (obj.ctype) {
+                                        obj.pid = Factory.getSafeId(obj.ctype);
+                                    }
 
-                                    // C. RADIOS INTELLIGENTS
+                                    // C. GESTION INTELLIGENTE DES RADIOS
                                     if (obj.ctype === 'radio' && obj.grp) {
                                         const oldGrp = obj.grp;
+
+                                        // Si on n'a pas encore créé de nouveau nom pour ce groupe DANS CE DROP...
                                         if (!radioGroupMap[oldGrp]) {
+                                            // ... on en crée un unique (ex: "Sexe_17458992")
                                             radioGroupMap[oldGrp] = `${oldGrp}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
                                         }
+
+                                        // On assigne le nouveau nom mappé
                                         obj.grp = radioGroupMap[oldGrp];
+
+                                        // La valeur (val: "A", "B"...) reste inchangée, c'est ce qu'on veut.
                                     }
 
                                     // D. AJOUT AU CANVAS
@@ -1787,19 +1356,13 @@
                                     obj.setCoords();
                                 });
 
-                                // 4. SÉLECTION FINALE
+                                // 4. SÉLECTION FINALE (UX)
                                 if (finalObjects.length > 1) {
                                     const sel = new fabric.ActiveSelection(finalObjects, { canvas: State.canvas });
                                     State.canvas.setActiveObject(sel);
                                 } else if (finalObjects.length === 1) {
                                     State.canvas.setActiveObject(finalObjects[0]);
                                 }
-
-                                // --- LE FIX EST ICI ---
-                                // On s'assure que les paragraphes déposés récupèrent leurs propriétés spéciales
-                                // (poignées cachées, hauteur auto, etc.)
-                                App.rehydrate();
-                                // ----------------------
 
                                 State.canvas.requestRenderAll();
                                 Panel.update(State.canvas.getActiveObject());
@@ -1812,17 +1375,11 @@
                             fabric.Image.fromURL(data.content, (img) => {
                                 if (img.width > 300) img.scaleToWidth(300);
                                 img.set({
-                                    hasRotatingPoint: false,
-                                    lockRotation: true,
                                     left: pointer.x, top: pointer.y,
                                     originX: 'center', originY: 'center',
                                     ctype: 'image',
                                     pid: Factory.getName('image')
                                 });
-                                const defaultControls = fabric.Object.prototype.controls;
-                                img.controls = { ...defaultControls };  // Copie tous les contrôles par défaut
-                                delete img.controls.mtr;
-                                img.setControlVisible('mtr', false);
                                 Factory.ensureUniqueId(img);
                                 img.srcObj = data.content;
                                 State.canvas.add(img);
@@ -1864,25 +1421,9 @@
                 History.processing = true;
                 App.clearGuides();
                 State.canvas.clear();
-
                 State.canvas.loadFromJSON(json, () => {
-                    // --- C'EST ICI QUE TOUT SE JOUE ---
-
-                    // 1. On lance la réparation complète (Liens + Position + Verrous)
-                    // Remplace App.restoreRefs() par ceci :
-                    if (App.fixImport) {
-                        App.fixImport();
-                    } else {
-                        // Si tu as gardé le nom 'restoreRefs', assure-toi que son code 
-                        // contient bien le 'setPositionByOrigin' que je t'ai donné juste avant.
-                        App.restoreRefs();
-                    }
-
-                    // 2. Reste de ta logique
                     State.canvas.renderAll();
-
-                    if (App.rehydrate) App.rehydrate(); // Garde-le si tu l'utilises pour autre chose
-
+                    App.restoreRefs();
                     History.processing = false;
                     Panel.update(null);
                     Navigator.refresh();
@@ -1899,7 +1440,7 @@
             currentPage: 0,  // Index de la page active (commence à 0)
             totalPages: 1,    // Nombre total de pages
             sequenceList: [], // Pour stocker l'ordre temporaire
-            isSequencing: false, canvas: null, mode: 'select', snap: true, isPreview: false, pdfBytes: null, clipboard: null, counts: { textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14 }
+            isSequencing: false, canvas: null, mode: 'select', snap: true, isPreview: false, pdfBytes: null, clipboard: null, counts: { draw : 1, textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14 }
         };
 
         const Navigator = {
@@ -2025,22 +1566,6 @@
             }
         };
         const Factory = {
-            createParagraph: (l, t) => {
-                const obj = new fabric.Textbox("Double-cliquez pour éditer", {
-                    left: l, top: t,
-                    width: 300, // Largeur par défaut
-                    fontSize: State.defaults.size,
-                    fontFamily: 'Arial',
-                    fill: '#000000',
-                    splitByGrapheme: false, // Coupe les mots proprement
-                    lockScalingY: false,    // Hauteur automatique
-                    editable: true
-                });
-                obj.ctype = 'paragraph';
-                // On cache les poignées haut/bas car la hauteur est auto
-                obj.setControlsVisibility({ mtr: false, mt: false, mb: false, tl: false, tr: false, bl: false, br: false, ml: true, mr: true });
-                return obj;
-            },
             getSafeId: (type) => {
                 let candidate;
                 do {
@@ -2058,107 +1583,63 @@
                 }
             },
 
-
+            // --- INPUT TEXTE / TEXTAREA / DROPDOWN ---
             createInputGroup: (l, t, w, h, type) => {
-                // 1. ÉTAT DES CONTRÔLES
-                const isLocked = document.getElementById('g-lock').checked;
-                const headerHeight = parseInt(document.getElementById('g-def-height').value) || 24;
-                const headerSize = parseInt(document.getElementById('g-size').value) || 14;
-
-                let boxHeight = h;
-                let fontSize = headerSize;
-
-                // 2. LOGIQUE DE TAILLE
-                if (isLocked) {
-                    if (type === 'textfield' || type === 'dropdown') {
-                        boxHeight = headerHeight;
-                        fontSize = Math.floor(boxHeight * 0.70);
-                    } else {
-                        // Textarea : police fixée par le header, hauteur libre (souris)
-                        fontSize = headerSize;
-                    }
-                } else {
-                    boxHeight = h;
-                    if (type === 'textfield' || type === 'dropdown') {
-                        fontSize = Math.max(10, Math.floor(boxHeight * 0.70));
-                    }
-                }
-
-                // 3. CRÉATION DU FOND
                 const rect = new fabric.Rect({
-                    width: w, height: boxHeight,
+                    width: w, height: h,
                     fill: State.defaults.fill,
                     stroke: State.defaults.stroke,
                     strokeWidth: State.defaults.width,
-                    originX: 'left', originY: 'top', left: 0, top: 0
+                    originX: 'left', originY: 'top'
                 });
-
-                // 4. CRÉATION DU TEXTE
-                let textTop = 4; // PAR DÉFAUT (Pour Textarea) : Collé en haut avec petite marge
-
-                if (type === 'textfield' || type === 'dropdown') {
-                    // Pour les champs simple ligne, on écrase la valeur pour Centrer
-                    textTop = (boxHeight - fontSize) / 2;
-                    textTop = Math.max(0, textTop);
-                }
-
-                const textObj = new fabric.Textbox(type === 'dropdown' ? "Option 1" : "", {
-                    width: type === 'dropdown' ? w - 25 : w - 10, // Prend toute la largeur dispo
-                    fontSize: fontSize,
+                const text = new fabric.Textbox("", {
+                    width: w - 8,
+                    fontSize: State.defaults.size,
                     fontFamily: State.defaults.font,
+                    left: 4, top: 4,
                     originX: 'left', originY: 'top',
-                    left: 5,
-                    top: textTop, // <--- Utilise la valeur calculée (4px pour textarea, Centré pour les autres)
-                    splitByGrapheme: type === 'textarea', // Permet le retour à la ligne forcé si mot trop long
-                    editable: type !== 'dropdown',
-                    cursorColor: type === 'dropdown' ? 'transparent' : 'blue'
+                    splitByGrapheme: type === 'textarea',
+                    editable: true
                 });
 
-                const items = [rect, textObj];
+                // === FIX DÉFINITIF ROTATION ===
+                // 1. On rend les sous-objets non sélectionnables individuellement
+                rect.selectable = false;
+                text.selectable = false;
 
-                // 5. SPÉCIFIQUE DROPDOWN : LA FLÈCHE ▼
-                if (type === 'dropdown') {
-                    const arrowSize = fontSize / 2;
-                    const arrow = new fabric.Triangle({
-                        width: arrowSize, height: arrowSize,
-                        fill: 'black',
-                        left: w - 15, top: (boxHeight / 2) - (arrowSize / 2),
-                        angle: 180,
-                        originX: 'center', originY: 'center'
-                    });
-                    items.push(arrow);
-                }
+                // 2. On désactive complètement les contrôles et transformations sur les sous-objets
+                rect.hasControls = false;
+                rect.hasBorders = false;
+                rect.lockMovementX = rect.lockMovementY = true;
+                rect.lockScalingX = rect.lockScalingY = true;
+                rect.lockRotation = true;
 
-                // Verrouillages internes
-                items.forEach(o => {
-                    o.selectable = false; o.evented = false;
-                    o.lockMovementX = true; o.lockMovementY = true;
-                });
+                text.hasControls = false;
+                text.hasBorders = false;
+                text.lockMovementX = text.lockMovementY = true;
+                text.lockScalingX = text.lockScalingY = true;
+                text.lockRotation = true;
 
-                // 6. CRÉATION DU GROUPE
-                const grp = new fabric.Group(items, {
+                const lockY = (type === 'textfield' && State.defaults.lock);
+
+                const grp = new fabric.Group([rect, text], {
                     left: l, top: t,
-                    originX: 'left', originY: 'top',
-                    subTargetCheck: true,
-                    lockScalingY: (isLocked && (type === 'textfield' || type === 'dropdown')),
-                    lockRotation: true,
-                    padding: 0
+                    subTargetCheck: true,   // Gardé à true pour que le dblclick détecte le texte et déclenche l'édition
+                    lockScalingY: lockY,
+                    lockRotation: true
                 });
 
-                grp.bgObj = rect;
-                grp.txtObj = textObj;
-                if (type === 'dropdown') grp.arrowObj = items[2];
+                const controls = { mtr: false };
+                if (lockY) Object.assign(controls, { mt: false, mb: false, ml: true, mr: true });
+                grp.setControlsVisibility(controls);
 
-                grp.set({ ctype: type, pid: Factory.getName(type) });
-
-                // Initialisation Dropdown
-                if (type === 'dropdown') {
-                    grp.opts = "Option 1\nOption 2\nOption 3";
-                    grp.val = "Option 1";
-                }
-
+                grp.set({ ctype: type, pid: Factory.getName(type), bStyle: 'solid', fmt: 'text', tAlign: 'left' });
+                grp.bgObj = rect; grp.txtObj = text;
                 return grp;
-            }, createCheckbox: (l, t) => {
+            },
+
+            // --- CHECKBOX ---
+            createCheckbox: (l, t) => {
                 const s = State.defaults.boxSize;
                 const rect = new fabric.Rect({
                     width: s, height: s,
@@ -2261,278 +1742,26 @@
                 if (type === 'rect') obj = new fabric.Rect(opts);
                 else if (type === 'circle') obj = new fabric.Ellipse({ ...opts, rx: w / 2, ry: h / 2 });
                 else if (type === 'line') obj = new fabric.Line([l, t, l + w, t + h], { stroke: State.defaults.stroke, strokeWidth: State.defaults.width });
-                const defaultControls = fabric.Object.prototype.controls;
-                obj.controls = { ...defaultControls };
-                delete obj.controls.mtr;
+
                 obj.ctype = 'draw';
                 return obj;
             },
 
             // --- LABEL ---
-            // --- LABEL ---
             createLabel: (l, t) => {
                 const obj = new fabric.IText("Texte", {
-                    left: l,
-                    top: t,
+                    left: l, top: t,
                     fontSize: State.defaults.size,
                     fontFamily: State.defaults.font,
-                    fill: State.defaults.stroke,
-
-                    // Bloque le redimensionnement
-                    lockScalingX: true,
-                    lockScalingY: true,
-
-                    // Bloque la rotation
-                    lockRotation: true
+                    fill: State.defaults.stroke
                 });
-
                 obj.ctype = 'label';
-
-                // Cache visuellement les poignées de redimensionnement et de rotation
-                obj.setControlsVisibility({
-                    mt: false, // milieu haut
-                    mb: false, // milieu bas
-                    ml: false, // milieu gauche
-                    mr: false, // milieu droite
-                    bl: false, // bas gauche
-                    br: false, // bas droite
-                    tl: false, // top gauche
-                    tr: false, // top droite
-                    mtr: false // poignée de rotation
-                });
-
+                obj.lockRotation = true;
+                obj.setControlsVisibility({ mtr: false });
                 return obj;
             }
         };
         const App = {
-            // A mettre dans ton objet App
-            fixImport: () => {
-                const objs = State.canvas.getObjects();
-                objs.forEach(obj => {
-                    if (['textfield', 'textarea', 'dropdown'].includes(obj.ctype)) {
-
-                        // A. Reconnexion
-                        const items = obj.getObjects();
-                        obj.bgObj = items[0];
-                        obj.txtObj = items[1];
-
-                        // B. CORRECTION DU DÉCALAGE (Le Magic Fix)
-                        // On capture la position visuelle actuelle
-                        const currentPoint = obj.getPointByOrigin('left', 'top');
-                        // On change l'origine interne
-                        obj.set({ originX: 'left', originY: 'top' });
-                        // On replace l'objet exactement au même endroit visuel
-                        obj.setPositionByOrigin(currentPoint, 'left', 'top');
-
-                        // C. Verrous
-                        obj.set({
-                            lockRotation: true,
-                            subTargetCheck: true,
-                            padding: 0,
-                            lockScalingY: (obj.ctype === 'textfield')
-                        });
-
-                        // D. Contrôles
-                        const controls = { mtr: false };
-                        if (obj.ctype === 'textfield') Object.assign(controls, { mt: false, mb: false, ml: true, mr: true });
-                        else Object.assign(controls, { mt: true, mb: true, ml: true, mr: true });
-                        obj.setControlsVisibility(controls);
-                    }
-                });
-                State.canvas.requestRenderAll();
-            },
-
-            showToast: (msg, type = 'info') => {
-                const container = document.getElementById('toast-container');
-                if (!container) return;
-
-                const el = document.createElement('div');
-                el.className = `toast ${type} show`; // Utilise le CSS existant
-                // Icônes selon le type
-                let icon = '<i class="fa-solid fa-circle-info"></i>';
-                if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i>';
-                if (type === 'error') icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
-
-                el.innerHTML = `${icon} <span>${msg}</span>`;
-                container.appendChild(el);
-
-                // Auto suppression après 3s
-                setTimeout(() => {
-                    el.classList.remove('show');
-                    setTimeout(() => el.remove(), 300);
-                }, 3000);
-            },
-
-            // Demande une confirmation (Remplace confirm())
-            askConfirm: (title, msg, onYes) => {
-                document.getElementById('modal-title').innerText = title;
-                document.getElementById('modal-msg').innerText = msg;
-
-                // Bascule l'affichage des boutons
-                document.getElementById('modal-btn-info').classList.add('hidden');
-                document.getElementById('modal-btn-confirm').classList.remove('hidden');
-
-                // Setup du bouton OUI
-                const btnYes = document.getElementById('btn-confirm-yes');
-                // On clone le bouton pour supprimer les anciens event listeners
-                const newBtn = btnYes.cloneNode(true);
-                btnYes.parentNode.replaceChild(newBtn, btnYes);
-
-                newBtn.onclick = () => {
-                    onYes();
-                    App.closeModal();
-                };
-
-                // Affichage
-                const ov = document.getElementById('modal-overlay');
-                ov.classList.remove('hidden');
-                ov.classList.add('modal-enter');
-                setTimeout(() => ov.classList.add('modal-enter-active'), 10);
-            },
-
-            // Modifiez showModal pour remettre les boutons par défaut
-            // 1. Pour les messages simples (Information)
-            // C'est celle utilisée par le bouton Séquence
-            showModal: (title, msg) => {
-                document.getElementById('modal-title').innerText = title;
-                document.getElementById('modal-msg').innerText = msg;
-
-                // IMPORTANT : On AFFICHE "Compris" et on CACHE "Confirmer"
-                document.getElementById('modal-btn-info').classList.remove('hidden');
-                document.getElementById('modal-btn-confirm').classList.add('hidden'); // <--- C'EST CETTE LIGNE QUI MANQUAIT
-
-                const ov = document.getElementById('modal-overlay');
-                ov.classList.remove('hidden');
-                ov.classList.add('modal-enter');
-                setTimeout(() => ov.classList.add('modal-enter-active'), 10);
-            },
-
-            // 2. Pour les actions (Confirmation)
-
-
-            // DANS L'OBJET App = { ... }
-
-            // --- FONCTION DE RÉPARATION APRÈS CHARGEMENT ---
-            rehydrate: () => {
-                const objs = State.canvas.getObjects();
-                objs.forEach(o => {
-                    // Si c'est un paragraphe, on remet les règles du jeu
-                    if (o.ctype === 'paragraph') {
-                        o.set({
-                            editable: true,
-                            lockScalingY: false,    // Hauteur auto
-                            splitByGrapheme: false  // Coupe les mots proprement
-                        });
-                        // On cache à nouveau les poignées verticales
-                        o.setControlsVisibility({
-                            mtr: false, mt: false, mb: false,
-                            tl: false, tr: false, bl: false, br: false,
-                            ml: true, mr: true
-                        });
-                    }
-                });
-                State.canvas.requestRenderAll();
-            },
-            // Dans App = { ... }
-
-            // GESTION BARRE FLOTTANTE
-            // DANS L'OBJET App = { ... }
-
-            // Dans App = { ... }
-
-            // DANS App = { ... }
-
-            updateFloatBar: () => {
-                const bar = document.getElementById('float-bar');
-                const obj = State.canvas.getActiveObject();
-
-                if (!obj || !obj.isEditing || obj.ctype !== 'paragraph') {
-                    bar.classList.add('hidden');
-                    return;
-                }
-
-                // --- MISE A JOUR UI ---
-                const sizeInput = document.getElementById('wysiwyg-size');
-                if (sizeInput) sizeInput.value = obj.fontSize || 16;
-
-                const fontSelect = document.getElementById('wysiwyg-font');
-                if (fontSelect) fontSelect.value = obj.fontFamily || 'Arial';
-
-                // NOUVEAU : Récupération couleur
-                const colorInput = document.getElementById('wysiwyg-color');
-                if (colorInput) {
-                    // On regarde la couleur de la sélection, sinon la couleur globale
-                    const currentStyle = obj.getSelectionStyles()[0];
-                    const color = (currentStyle && currentStyle.fill) ? currentStyle.fill : obj.fill;
-                    colorInput.value = App.toHex(color); // Utilise ta fonction existante ou celle par défaut
-                }
-                // ----------------------
-
-                const bound = obj.getBoundingRect();
-                const canvasRect = document.getElementById('c').getBoundingClientRect();
-                const top = canvasRect.top + bound.top - 45;
-                const left = canvasRect.left + bound.left + (bound.width / 2);
-
-                bar.style.top = `${Math.max(10, top)}px`;
-                bar.style.left = `${left}px`;
-                bar.classList.remove('hidden');
-            },
-            // APPLICATION DU STYLE (Le moteur WYSIWYG)
-            // Dans App = { ... }
-
-            formatText: (type, val) => {
-                const obj = State.canvas.getActiveObject();
-                if (!obj || !obj.isEditing) return;
-
-                if (type === 'bold') {
-                    const current = obj.getSelectionStyles()[0]?.fontWeight || 'normal';
-                    obj.setSelectionStyles({ fontWeight: current === 'bold' ? 'normal' : 'bold' });
-                }
-                else if (type === 'italic') {
-                    const current = obj.getSelectionStyles()[0]?.fontStyle || 'normal';
-                    obj.setSelectionStyles({ fontStyle: current === 'italic' ? 'normal' : 'italic' });
-                }
-                else if (type === 'underline') {
-                    const current = obj.getSelectionStyles()[0]?.underline || false;
-                    obj.setSelectionStyles({ underline: !current });
-                }
-                else if (type === 'font') {
-                    // Police Globale (plus sûr pour l'instant)
-                    obj.set('fontFamily', val);
-                }
-                else if (type === 'size') {
-                    // --- NOUVEAU : TAILLE GLOBALE ---
-                    const s = parseInt(val);
-                    if (s > 0) {
-                        obj.set('fontSize', s);
-                        // On met à jour la hauteur si besoin (optionnel car lockScalingY: false gère ça)
-                        obj.setCoords();
-                    }
-                }
-                else if (type === 'color') {
-                    // --- NOUVEAU : GESTION COULEUR ---
-                    // Si sélection active -> Couleur locale (un mot)
-                    // Sinon -> Couleur globale
-                    const hasSelection = obj.selectionStart !== obj.selectionEnd;
-
-                    if (hasSelection) {
-                        obj.setSelectionStyles({ fill: val });
-                    } else {
-                        obj.set('fill', val);
-                        // On nettoie les styles locaux pour que tout devienne uniforme
-                        obj.cleanStyle('fill');
-                    }
-                }
-                else if (type === 'align') {
-                    obj.set('textAlign', val);
-                    obj.tAlign = val;
-                }
-
-                State.canvas.requestRenderAll();
-                // Pas de History.save() ici si on tape au clavier, mais sur un clic bouton oui
-                // Pour simplifier, on sauvegarde :
-                // History.save(); 
-            },
             setZoom: (delta) => {
                 let zoom = State.canvas.getZoom();
                 zoom += delta;
@@ -2566,30 +1795,31 @@
                     }
 
                     const date = new Date(data.timestamp).toLocaleString();
-                    App.askConfirm(
-                        "Session trouvée",
-                        `Une session du ${date} a été trouvée. Voulez-vous la restaurer ?`,
-                        () => {
-                            // 1. Restaurer les variables d'état
-                            State.pages = data.pages;
-                            State.totalPages = data.totalPages || data.pages.length;
+                    if (confirm(`Une session précédente (${date}) a été trouvée.\nVoulez-vous la restaurer ?`)) {
 
-                            // 2. Restaurer les dimensions
-                            if (data.dims) {
-                                State.canvas.pageW = data.dims.w;
-                                State.canvas.pageH = data.dims.h;
-                                State.canvas.pageOffset = { x: data.dims.offX, y: data.dims.offY };
-                                App.resize();
-                            }
+                        // 1. Restaurer les variables d'état
+                        State.pages = data.pages;
+                        State.totalPages = data.totalPages || data.pages.length;
 
-                            // 3. Charger la page
-                            setTimeout(() => {
-                                App.loadPage(data.currentPage || 0);
-                                App.rehydrate();
-                                App.showToast("Session restaurée avec succès", "success");
-                            }, 100);
+                        // 2. Restaurer les dimensions (TRÈS IMPORTANT pour l'alignement)
+                        if (data.dims) {
+                            State.canvas.pageW = data.dims.w;
+                            State.canvas.pageH = data.dims.h;
+                            State.canvas.pageOffset = { x: data.dims.offX, y: data.dims.offY };
+
+                            // On force le redimensionnement du viewport
+                            App.resize();
                         }
-                    );
+
+                        // 3. Charger la page (avec un petit délai pour être sûr que Fabric est prêt)
+                        setTimeout(() => {
+                            App.loadPage(data.currentPage || 0);
+                            App.showModal("Restauration", "Votre session a été récupérée avec succès.");
+                        }, 100);
+                    } else {
+                        // Si l'utilisateur dit NON, on peut nettoyer pour ne pas redemander
+                        // localStorage.removeItem('prof_toolbox_autosave'); // Décommente si tu veux supprimer au refus
+                    }
                 } catch (e) {
                     console.error("Erreur lors de la lecture de l'auto-save", e);
                     // Si c'est planté, on nettoie pour éviter que ça replante au prochain démarrage
@@ -2665,44 +1895,32 @@
             },
 
             loadPage: (index) => {
-                // --- CORRECTIF : ON VIDE LA MÉMOIRE DE LA SÉQUENCE ---
-                State.sequenceList = [];
-                State.isSequencing = false;
-                // ----------------------------------------------------
-
                 State.canvas.clear();
                 const json = State.pages[index];
 
                 if (json) {
+                    // Si la page contient des données, on les charge
                     State.canvas.loadFromJSON(json, () => {
                         State.canvas.renderAll();
+                        App.restoreRefs(); // Important pour reconnecter bgObj/txtObj
 
-                        // Réparation des liens (Background/Text)
-                        if (App.fixImport) App.fixImport();
-                        else if (App.restoreRefs) App.restoreRefs();
-
-                        // Verrouillage du fond
+                        // On s'assure que le fond est bien non-sélectionnable
                         const bg = State.canvas.getObjects().find(o => o.isBackground);
                         if (bg) {
                             bg.set({ selectable: false, evented: false, lockMovementX: true, lockMovementY: true });
                             State.canvas.sendToBack(bg);
                         }
 
-                        Navigator.refresh();
-
-                        // Reset visuel du bouton Séquence (au cas où il était resté orange)
-                        const btnSeq = document.getElementById('btn-seq');
-                        if (btnSeq) {
-                            btnSeq.innerHTML = '<i class="fa-solid fa-arrow-down-1-9"></i> Séquence';
-                            btnSeq.classList.remove('font-bold', 'bg-orange-100', 'px-2', 'rounded');
-                        }
+                        Navigator.refresh(); // Mise à jour de la liste des calques
                     });
                 } else {
+                    // Si la page est vide (cas rare mais possible), on charge un fond blanc
                     App.loadBlank();
                 }
                 State.currentPage = index;
                 App.updatePageIndicator();
             },
+
             changePage: (delta) => {
                 const newIndex = State.currentPage + delta;
                 // Vérification des limites (pas moins de 0, pas plus que le total)
@@ -2783,7 +2001,7 @@
 
                 // Petit feedback discret (Toast) au lieu d'une grosse modale bloquante
                 // (Tu peux garder App.showModal si tu préfères, mais c'est moins fluide)
-                App.showToast("Style copié !", "success");
+                console.log("Style copié !");
             },
             pasteStyle: (target) => {
                 if (!target || !State.clipboardStyle) return;
@@ -2810,7 +2028,6 @@
                     if (st.fontFamily) txt.set('fontFamily', st.fontFamily);
                     if (st.fontSize) txt.set('fontSize', st.fontSize);
                     if (target.ctype === 'label') target.set('fill', st.stroke); // Le label prend la couleur du trait
-                    //  Panel.dom.fontSize.value = newFontSize;
                 }
 
                 // Alignement
@@ -2908,7 +2125,6 @@
             },
             // --- FIN BLOC SMART GUIDES ---
             toggleSequenceMode: () => {
-
                 State.isSequencing = !State.isSequencing;
                 const btn = document.getElementById('btn-seq');
 
@@ -3006,80 +2222,32 @@
                 // 5. Écouteurs d'événements Fabric
                 State.canvas.on('object:modified', History.save);
                 // GESTION DU REDIMENSIONNEMENT (Panel + Anti-Distortion)
-                // GESTION DU REDIMENSIONNEMENT INTELLIGENT
-                // DANS App.init() ... State.canvas.on('object:scaling', ...)
-
                 State.canvas.on('object:scaling', function (e) {
                     const target = e.target;
-                    // On vérifie si c'est un de nos objets gérés
-                    if (!target || !['textfield', 'textarea', 'dropdown'].includes(target.ctype)) return;
 
-                    // 1. Calcul des vraies dimensions en pixels (pour éviter l'effet d'étirement)
-                    const finalW = Math.round(target.width * target.scaleX);
-                    const finalH = Math.round(target.height * target.scaleY);
+                    // 1. On met à jour les chiffres dans le panneau en temps réel
+                    Panel.update(target);
 
-                    // 2. On applique les dimensions et on remet l'échelle à 1
-                    target.set({ width: finalW, height: finalH, scaleX: 1, scaleY: 1 });
+                    // 2. MAGIE : On empêche les radios/checkbox d'être écrasés dans un groupe
+                    if (target.type === 'activeSelection' || target.type === 'group') {
 
-                    // 3. Mise à jour du fond (Rectangle)
-                    if (target.bgObj) {
-                        target.bgObj.set({
-                            width: finalW, height: finalH,
-                            left: -finalW / 2, top: -finalH / 2
+                        const groupScaleX = target.scaleX;
+                        const groupScaleY = target.scaleY;
+
+                        target.getObjects().forEach(obj => {
+                            // Si c'est un objet qui doit rester géométrique (Rond ou Carré)
+                            if (['checkbox', 'radio'].includes(obj.ctype)) {
+
+                                // On calcule l'échelle Y nécessaire pour compenser l'étirement du groupe
+                                // Cela force l'objet à garder son aspect ratio 1:1 visuel
+                                const newScaleY = (obj.scaleX * groupScaleX) / groupScaleY;
+
+                                obj.set('scaleY', newScaleY);
+                            }
                         });
                     }
-
-                    // 4. Mise à jour du Texte (C'EST ICI QUE LA MAGIE OPÈRE)
-                    if (target.txtObj) {
-
-                        if (target.ctype === 'textfield' || target.ctype === 'dropdown') {
-                            // --- CAS A : TextField / Dropdown ---
-                            // On force le recalcul de la police selon la nouvelle hauteur
-                            const newFontSize = Math.floor(finalH * 0.70);
-                            target.txtObj.set('fontSize', newFontSize);
-
-                            // On recentre verticalement avec cette nouvelle police
-                            const textTop = (finalH - newFontSize) / 2;
-
-                            target.txtObj.set({
-                                width: finalW - 8,
-                                left: (-finalW / 2) + 4,
-                                top: (-finalH / 2) + Math.max(0, textTop)
-                            });
-                        } else {
-                            // --- CAS B : TextArea ---
-                            // On ne touche PAS à la police, on ajuste juste la largeur de la zone
-                            target.txtObj.set({
-                                width: finalW - 8,
-                                left: (-finalW / 2) + 4,
-                                top: (-finalH / 2) + 4 // Toujours calé en haut
-                            });
-                        }
-                    }
-                    if (target.ctype === 'dropdown' && target.arrowObj) {
-                        // La flèche doit être calée à droite
-                        // Coordonnée X = (Largeur / 2) - Marge (15px)
-                        // Rappel : Dans un groupe, 0 est le centre. Donc le bord droit est à +Width/2
-
-                        const arrowSize = target.txtObj.fontSize / 2; // Taille proportionnelle ou fixe selon ton choix
-
-                        target.arrowObj.set({
-                            width: arrowSize,
-                            height: arrowSize,
-                            left: (finalW / 2) - 15, // Toujours à 15px du bord droit
-                            top: 0 // Centré verticalement (0 est le centre du groupe)
-                            // Si le pivot de ta flèche n'est pas center/center, ajuste 'top'
-                        });
-
-                        // Si tu veux que la flèche change de taille avec la hauteur :
-                        // target.arrowObj.scaleToWidth(newFontSize / 2);
-                    }
-
-                    target.setCoords();
-                    Panel.update(target); // Met à jour le panneau de droite en direct
                 });
                 State.canvas.on('mouse:down', function (opt) {
-
                     const evt = opt.e;
                     if (State.mode === 'hand' || evt.altKey || evt.code === 'Space') {
                         this.isDragging = true;
@@ -3210,7 +2378,7 @@
                         ctx2.restore();
                     });
 
-
+                    // (Tu peux laisser ici tes Guides Magnétiques rouges s'ils ne sont pas déjà dessinés ailleurs)
                 });         // 6. Bindings globaux
                 App.bindEvents();
                 App.bindKeys();
@@ -3220,7 +2388,14 @@
                     App.checkAutoSave();
                 }, 500);
             },
-
+            showModal: (title, msg) => {
+                document.getElementById('modal-title').innerText = title;
+                document.getElementById('modal-msg').innerText = msg;
+                const ov = document.getElementById('modal-overlay');
+                ov.classList.remove('hidden');
+                ov.classList.add('modal-enter');
+                setTimeout(() => ov.classList.add('modal-enter-active'), 10);
+            },
             closeModal: () => {
                 const ov = document.getElementById('modal-overlay');
                 ov.classList.remove('modal-enter-active');
@@ -3232,11 +2407,6 @@
             },
             resize: () => { const el = document.getElementById('workspace'); State.canvas.setWidth(el.clientWidth); State.canvas.setHeight(el.clientHeight); State.canvas.calcOffset(); },
             loadBlank: () => {
-                // --- 1. LE FIX EST ICI (AJOUTEZ CES 2 LIGNES) ---
-                State.sequenceList = [];    // On vide la mémoire des séquences
-                State.isSequencing = false; // On désactive le mode séquence
-                // ------------------------------------------------
-
                 State.canvas.clear();
 
                 // Dimensions A4 standard
@@ -3272,47 +2442,22 @@
 
                 App.updatePageIndicator();
                 State.canvas.requestRenderAll();
-            },            // Appelle cette fonction juste après loadFromJSON
+            },
             restoreRefs: () => {
-                const objs = State.canvas.getObjects();
-
-                objs.forEach(obj => {
-                    // On cible uniquement nos champs
-                    if (['textfield', 'textarea', 'dropdown'].includes(obj.ctype)) {
-
-                        // 1. On reconnecte les fils
-                        const items = obj.getObjects();
-                        obj.bgObj = items[0]; // Le rect est toujours le 1er
-                        obj.txtObj = items[1]; // Le texte est toujours le 2ème
-
-                        // 2. Sécurité : On s'assure que Fabric n'a pas remis "Center" par défaut
-                        if (obj.originX !== 'left') {
-                            // Astuce : On remet en left sans bouger l'objet visuellement
-                            const p = obj.getPointByOrigin('left', 'top');
-                            obj.set({ originX: 'left', originY: 'top' });
-                            obj.setPositionByOrigin(p, 'left', 'top');
-                        }
-
-                        // 3. On remet les contrôles (Cachés par défaut à l'import)
-                        const controls = { mtr: false }; // Pas de rotation
-                        if (obj.ctype === 'textfield') {
-                            Object.assign(controls, { mt: false, mb: false, ml: true, mr: true });
-                            obj.set('lockScalingY', true);
-                        } else {
-                            Object.assign(controls, { mt: true, mb: true, ml: true, mr: true });
-                        }
-                        obj.setControlsVisibility(controls);
+                State.canvas.getObjects().forEach(o => {
+                    if (o.isBackground) { o.set({ selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true }); State.canvas.sendToBack(o); }
+                    if (o.type === 'group' && o._objects.length >= 2) {
+                        o.bgObj = o._objects[0];
+                        if (['textfield', 'textarea'].includes(o.ctype)) o.txtObj = o._objects[1];
+                        if (['checkbox', 'radio'].includes(o.ctype)) o.markObj = o._objects[1];
                     }
                 });
-
-                State.canvas.requestRenderAll();
             },
             setSideTab: (tab) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 document.getElementById('tab-btn-' + tab).classList.add('active');
                 document.getElementById('view-props').classList.add('hidden');
                 document.getElementById('view-bank').classList.add('hidden');
-                document.getElementById('view-templates').classList.add('hidden');
                 document.getElementById('view-' + tab).classList.remove('hidden');
                 if (tab === 'props') Panel.update(State.canvas.getActiveObject());
             },
@@ -3579,62 +2724,21 @@
                     State.canvas.discardActiveObject();
                     State.canvas.requestRenderAll();
                 }
-            },
-
-            setStyle: (key, val) => {
-                // 1. Conversions de type
-                if (key === 'size' || key === 'width') val = parseInt(val);
-                if (key === 'lock') State.defaults.lock = val;
-                else State.defaults[key] = val;
-
-                // 2. Mise à jour UI des couleurs
+            }, setStyle: (key, val) => {
+                if (key === 'size' || key === 'width') val = parseInt(val); if (key === 'lock') State.defaults.lock = val; else State.defaults[key] = val;
                 if (key === 'fill') document.getElementById('preview-fill').style.backgroundColor = val;
                 if (key === 'stroke') document.getElementById('preview-stroke').style.backgroundColor = val;
 
                 const objs = State.canvas.getActiveObjects();
-
                 objs.forEach(obj => {
-                    const target = obj.bgObj || obj;
-                    const txt = obj.txtObj || (obj.type === 'i-text' ? obj : null);
-
-                    if (key === 'size' && txt) {
-                        // --- MODIFICATION ICI ---
-                        // On applique la taille SAUF si c'est un TextField ou Dropdown
-                        // (car pour eux, la taille est pilotée par la hauteur)
-                        if (obj.ctype !== 'textfield' && obj.ctype !== 'dropdown' && obj.ctype !== 'textarea') {
-                            txt.set('fontSize', val);
-                        }
-
-                        // Gestion de la géométrie interne des groupes
-                        if (obj.ctype === 'textarea') {
-                            // --- CORRECTION ICI ---
-                            // (0,0) est le centre. Le haut est à -height/2.
-                            // On place le texte tout en haut + 4px de marge.
-                            txt.set({
-                                top: (-obj.height / 2) + 4,
-                                width: obj.width - 8
-                            });
-                        }
-                    }
-                    // -----------------------------------------
-
+                    const target = obj.bgObj || obj; const txt = obj.txtObj || (obj.type === 'i-text' ? obj : null);
                     if (key === 'fill') target.set('fill', val);
-
-                    if (key === 'stroke') {
-                        target.set('stroke', val);
-                        if (obj.ctype === 'label') obj.set('fill', val);
-                    }
-
+                    if (key === 'stroke') { target.set('stroke', val); if (obj.ctype === 'label') obj.set('fill', val); }
                     if (key === 'width') target.set('strokeWidth', val);
                     if (key === 'font' && txt) txt.set('fontFamily', val);
-
-                    // Gestion du verrouillage (inchangée)
+                    if (key === 'size' && txt) txt.set('fontSize', val);
                     if (key === 'lock') {
-                        if (obj.ctype === 'textfield') {
-                            obj.set('lockScalingY', val);
-                            if (val) obj.setControlsVisibility({ mt: false, mb: false });
-                            else obj.setControlsVisibility({ mt: true, mb: true });
-                        }
+                        if (obj.ctype === 'textfield') { obj.set('lockScalingY', val); if (val) obj.setControlsVisibility({ mt: false, mb: false }); else obj.setControlsVisibility({ mt: true, mb: true }); }
                         if (['checkbox', 'radio'].includes(obj.ctype)) {
                             obj.set({ lockScalingX: val, lockScalingY: val });
                             if (val) {
@@ -3645,12 +2749,7 @@
                         }
                     }
                 });
-
-                if (objs.length) {
-                    State.canvas.requestRenderAll();
-                    History.save();
-                    Panel.update(objs[0]);
-                }
+                if (objs.length) { State.canvas.requestRenderAll(); History.save(); Panel.update(objs[0]); }
             },
             deleteSelection: () => {
                 const a = State.canvas.getActiveObjects().filter(o => !o.isBackground);
@@ -3716,86 +2815,45 @@
                 line.isGuide = true; line.guideType = type; State.canvas.add(line);
             },
             clearGuides: () => { const guides = State.canvas.getObjects().filter(o => o.isGuide); if (guides.length) State.canvas.remove(...guides); },
+
             bindEvents: () => {
                 let isDrawing = false, sx, sy, ghost;
                 const C = State.canvas;
-                let isDragging = false;
-
-                // --- SÉCURITÉ ---
-                let ignoreClick = false; // Le drapeau de sécurité
+                let isDragging = false; let lx, ly;
 
                 // ============================================================
-                // 1. GESTION DE LA BARRE FLOTTANTE (WYSIWYG)
-                // ============================================================
-                C.on('text:editing:entered', () => {
-                    App.updateFloatBar();
-                });
-
-                C.on('text:editing:exited', () => {
-                    document.getElementById('float-bar').classList.add('hidden');
-
-                    // --- SÉCURITÉ ACTIVÉE ---
-                    // On vient de sortir d'un texte, on interdit le dessin pendant 0.2s
-                    // pour éviter que ce clic ne crée un nouvel objet
-                    ignoreClick = true;
-                    setTimeout(() => { ignoreClick = false; }, 200);
-                });
-
-                C.on('text:changed', () => {
-                    App.updateFloatBar();
-                });
-
-                // ============================================================
-                // 2. LE GARDIEN (UI)
+                // LE GARDIEN (SÉCURITÉ & UI)
                 // ============================================================
                 const checkRotation = () => {
                     const target = C.getActiveObject();
-                    if (!target) { Panel.update(null); return; }
 
-                    // Liste des types basiques interdits
-                    const noRotationTypes = ['textfield', 'textarea', 'checkbox', 'radio', 'dropdown', 'label', 'paragraph'];
-
-                    let shouldBan = false;
-
-                    if (target.type === 'activeSelection') {
-                        // Si la sélection multiple contient un élément interdit (dont le rectangle), on bloque tout
-                        shouldBan = target.getObjects().some(o =>
-                            noRotationTypes.includes(o.ctype) || o.type === 'rect' // <--- AJOUT : Bloque les Rectangles
-                        );
-                    } else {
-                        // 1. Vérification par type de formulaire (ctype)
-                        if (noRotationTypes.includes(target.ctype)) shouldBan = true;
-
-                        // 2. Vérification spécifique pour le RECTANGLE (type Fabric)
-                        if (target.type === 'rect') shouldBan = true; // <--- C'EST ICI QUE CA SE JOUE
+                    // Si rien n'est sélectionné, on vide le panneau
+                    if (!target) {
+                        Panel.update(null);
+                        return;
                     }
 
-                    // Application : On cache (false) ou affiche (true) la poignée 'mtr'
-                    target.setControlsVisibility({ mtr: !shouldBan });
-                    target.lockRotation = shouldBan;
+                    // 1. GESTION ROTATION (Code existant)
+                    const noRotationTypes = ['textfield', 'textarea', 'checkbox', 'radio', 'dropdown', 'label'];
+                    let shouldBan = false;
+                    if (target.type === 'activeSelection') shouldBan = target.getObjects().some(o => noRotationTypes.includes(o.ctype));
+                    else shouldBan = noRotationTypes.includes(target.ctype);
 
-                    Panel.update(target);
-                    Navigator.refresh();
+                    target.setControlsVisibility({ mtr: !shouldBan });
+                    if (shouldBan) target.lockRotation = true; else target.lockRotation = false;
+
+                    // 2. MISE À JOUR UI (C'est la ligne qui manquait !)
+                    Panel.update(target);      // <--- Met à jour le panneau de droite
+                    Navigator.refresh();       // <--- Met à jour la liste des calques à gauche
+
                     C.requestRenderAll();
                 };
 
-                // ============================================================
-                // 3. EVENTS SOURIS
-                // ============================================================
-                C.on('mouse:wheel', opt => {
-                    if (opt.e.ctrlKey) return;
-                    var d = opt.e.deltaY; var z = C.getZoom() * 0.999 ** d;
-                    if (z > 20) z = 20; if (z < 0.01) z = 0.01;
-                    C.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, z);
-                    opt.e.preventDefault(); opt.e.stopPropagation();
-                });
+                // --- EVENTS SOURIS ---
+                C.on('mouse:wheel', opt => { if (opt.e.ctrlKey) return; var d = opt.e.deltaY; var z = C.getZoom() * 0.999 ** d; if (z > 20) z = 20; if (z < 0.01) z = 0.01; C.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, z); opt.e.preventDefault(); opt.e.stopPropagation(); });
 
                 C.on('mouse:down', function (opt) {
-
-                    // --- VÉRIFICATION SÉCURITÉ ---
-                    if (ignoreClick) return; // Si on vient de valider un texte, on arrête tout ici.
-
-                    // SÉQUENCE
+                    // 1. SÉQUENCE
                     if (State.isSequencing) {
                         if (opt.target && ['textfield', 'textarea', 'checkbox', 'radio', 'dropdown'].includes(opt.target.ctype)) {
                             if (!State.sequenceList.includes(opt.target)) {
@@ -3806,7 +2864,7 @@
                         return;
                     }
 
-                    // MAIN / PAN
+                    // 2. MAIN / PAN
                     var e = opt.e;
                     if (e.altKey || e.code === 'Space' || State.mode === 'hand') {
                         this.isDragging = true;
@@ -3817,12 +2875,12 @@
                         return;
                     }
 
-                    // PAINTER
+                    // 3. REGLAGE PAINTER
                     if (State.mode === 'size-painter') return;
 
                     if (opt.e.shiftKey || opt.e.ctrlKey || opt.e.metaKey) return;
 
-                    // DESSIN
+                    // 4. DESSIN
                     if (State.mode !== 'select' && State.mode !== 'hand' && State.mode !== 'picker' && State.mode !== 'painter' && !opt.target) {
                         isDrawing = true;
                         const ptr = C.getPointer(opt.e);
@@ -3830,7 +2888,7 @@
                         const startSnap = App.snapMove(fakeStart);
                         sx = ptr.x + startSnap.x; sy = ptr.y + startSnap.y;
 
-                        if (['textfield', 'textarea', 'dropdown', 'rect', 'paragraph'].includes(State.mode)) {
+                        if (['textfield', 'textarea', 'dropdown', 'rect'].includes(State.mode)) {
                             ghost = new fabric.Rect({ left: sx, top: sy, width: 0, height: 0, fill: 'rgba(37,99,235,0.1)', stroke: '#2563eb', strokeWidth: 1, strokeDashArray: [4, 4], opacity: 1 });
                         }
                         else if (State.mode === 'circle') {
@@ -3897,7 +2955,7 @@
                         return;
                     }
 
-                    // PAINTER
+                    // Painter
                     if (State.mode === 'size-painter' && opt.target) {
                         const t = opt.target;
                         if (['checkbox', 'radio'].includes(t.ctype)) {
@@ -3920,7 +2978,6 @@
                         if (isClick) {
                             if (['textfield', 'dropdown'].includes(State.mode)) { w = 150; h = State.defaults.defHeight; }
                             else if (State.mode === 'textarea') { w = 250; h = State.defaults.defHeight * 3; }
-                            else if (State.mode === 'paragraph') { w = 300; h = 100; }
                             else if (['rect', 'circle'].includes(State.mode)) { w = 100; h = 100; }
                             else if (State.mode === 'line') { w = 100; h = 0; }
                             else if (['checkbox', 'radio'].includes(State.mode)) { w = State.defaults.boxSize; h = State.defaults.boxSize; }
@@ -3933,7 +2990,6 @@
 
                         let obj = null;
                         if (['textfield', 'textarea', 'dropdown'].includes(State.mode)) obj = Factory.createInputGroup(l, t, w, h, State.mode);
-                        else if (State.mode === 'paragraph') obj = Factory.createParagraph(l, t);
                         else if (State.mode === 'checkbox') obj = Factory.createCheckbox(l, t);
                         else if (State.mode === 'radio') obj = Factory.createRadio(l, t);
                         else if (State.mode === 'label') obj = Factory.createLabel(l, t);
@@ -3942,20 +2998,12 @@
                             else obj = Factory.createShape(State.mode, l, t, w, h);
                         }
 
-                        if (obj) {
-                            C.add(obj);
-                            C.setActiveObject(obj);
-                            Panel.update(obj);
-                            History.save();
-
-                            // J'AI ENLEVÉ App.setTool('select') ICI.
-                            // L'outil reste actif, mais le flag ignoreClick protège la sortie de texte.
-                        }
+                        if (obj) { C.add(obj); C.setActiveObject(obj); Panel.update(obj); History.save(); }
                     }
 
                     if (State.mode === 'select') C.selection = true;
                     State.canvas.clearContext(State.canvas.contextTop);
-                    checkRotation();
+                    checkRotation(); // <--- C'est lui qui va mettre à jour le panel maintenant
                 });
 
                 C.on('object:moving', e => {
@@ -3972,96 +3020,35 @@
                 C.on('object:scaling', e => { if (e.transform && e.transform.corner) App.snapScale(e.target, e.transform.corner); });
                 C.on('object:modified', () => App.clearGuides());
 
-                // DANS App.bindEvents ...
-
-
-
-                State.canvas.on('mouse:dblclick', (e) => {
-                    const t = e.target;
-                    if (!t) return;
-
-                    // 1. Dropdown : Pas d'édition
-                    if (t.ctype === 'dropdown') return;
-
-                    // 2. Checkbox / Radio
+                C.on('mouse:dblclick', o => {
+                    if (!o.target) return; const t = o.target;
                     if (t.ctype === 'checkbox' || t.ctype === 'radio') {
                         t.isChecked = !t.isChecked;
                         if (t.markObj) t.markObj.set('opacity', t.isChecked ? 1 : 0);
-                        State.canvas.requestRenderAll();
-                        Panel.update(t);
-                        History.save();
-                    }
-                    // 3. Label
-                    else if (t.ctype === 'label') {
-                        t.enterEditing();
-                        t.selectAll();
-                    }
-                    // 4. TEXTFIELD / TEXTAREA (Correction avec ignoreClick)
-                    else if (t.txtObj && (t.ctype === 'textfield' || t.ctype === 'textarea')) {
-                        const textObj = t.txtObj;
-
-                        // Calcul position absolue
-                        const matrix = t.calcTransformMatrix();
-                        const absPos = fabric.util.transformPoint({ x: textObj.left, y: textObj.top }, matrix);
-
-                        // On cache le vrai texte
-                        textObj.set('opacity', 0);
-                        t.addWithUpdate();
-
-                        // Création du clone
-                        const tempText = new fabric.Textbox(textObj.text, {
-                            left: absPos.x,
-                            top: absPos.y,
-                            width: textObj.width * t.scaleX,
-                            fontSize: textObj.fontSize * t.scaleY,
-                            fontFamily: textObj.fontFamily,
-                            textAlign: textObj.textAlign,
-                            splitByGrapheme: t.ctype === 'textarea',
-                            editable: true,
-                            hasControls: false,
-                            lockMovementX: true, lockMovementY: true,
-                            cursorColor: 'blue'
-                        });
-
-                        State.canvas.add(tempText);
-                        State.canvas.setActiveObject(tempText);
-                        tempText.enterEditing();
-                        tempText.selectAll();
-
-                        // --- QUAND L'ÉDITION SE TERMINE ---
-                        tempText.on('editing:exited', () => {
-                            // A. ACTIVER LA SÉCURITÉ ANTI-CRÉATION
-                            // On dit "Attention, je viens de finir d'éditer, ignore le prochain clic"
-                            ignoreClick = true;
-
-                            // B. Mise à jour du vrai texte
-                            textObj.set('text', tempText.text);
-                            textObj.set('opacity', 1);
-
-                            // C. Nettoyage
-                            State.canvas.remove(tempText);
-                            t.addWithUpdate();
-                            t.dirty = true;
-                            State.canvas.requestRenderAll();
-                            State.canvas.setActiveObject(t);
-                            History.save();
-
-                            // D. DÉSACTIVER LA SÉCURITÉ APRÈS UN COURT DÉLAI
-                            // Ce délai de 200ms permet au clic "mouse:down" (qui a déclenché la fin de l'édition)
-                            // d'être ignoré avant qu'on autorise à nouveau la création.
-                            setTimeout(() => {
-                                ignoreClick = false;
-                            }, 200);
+                        C.requestRenderAll(); Panel.update(t); History.save();
+                    } else if (t.ctype === 'label') {
+                        t.enterEditing(); t.selectAll();
+                    } else if (t.txtObj) {
+                        const items = t.getObjects(); t._restoreObjectsState(); C.remove(t); items.forEach(i => C.add(i)); C.setActiveObject(items[1]); items[1].enterEditing(); items[1].selectAll();
+                        items[1].on('editing:exited', () => {
+                            const grp = new fabric.Group(items, { left: t.left, top: t.top, subTargetCheck: true, lockScalingY: t.lockScalingY, lockRotation: true });
+                            const controls = { mtr: false };
+                            if (t.lockScalingY) Object.assign(controls, { mt: false, mb: false, ml: true, mr: true });
+                            grp.setControlsVisibility(controls);
+                            grp.set({ ctype: t.ctype, pid: t.pid, bStyle: t.bStyle, fmt: t.fmt, tAlign: t.tAlign, isRequired: t.isRequired, isReadOnly: t.isReadOnly });
+                            grp.bgObj = items[0]; grp.txtObj = items[1];
+                            if (t.ctype === 'radio') { grp.grp = t.grp; grp.val = t.val; }
+                            items[0].selectable = false; items[0].evented = false; items[1].selectable = false; items[1].evented = false;
+                            C.remove(...items); C.add(grp); C.setActiveObject(grp); History.save();
                         });
                     }
                 });
-
-
 
                 C.on('selection:created', checkRotation);
                 C.on('selection:updated', checkRotation);
                 C.on('selection:cleared', () => { Panel.update(null); Navigator.refresh(); });
             }
+
 
             , bindKeys: () => {
                 document.addEventListener('keydown', e => {
@@ -4078,14 +3065,7 @@
                     // B. Vérification de l'édition sur le Canvas (FabricJS)
                     const activeObj = State.canvas.getActiveObject();
                     const isCanvasEditing = activeObj && (activeObj.isEditing || (activeObj.type === 'i-text' && activeObj.isEditing));
-                    if (isCanvasEditing && e.key === 'Enter') {
-                        // Si c'est un champ marqué "Ligne Unique", on valide et on sort
-                        if (activeObj.isSingleLine) {
-                            e.preventDefault(); // Empêche le saut de ligne
-                            activeObj.exitEditing(); // Sort du mode édition
-                            return;
-                        }
-                    }
+
                     // Si l'une des conditions est vraie, on arrête tout (la touche fera son action par défaut : écrire)
                     if (isHtmlInput || isCanvasEditing) return;
 
@@ -4180,27 +3160,31 @@
         const Project = {
             // --- NOUVELLE FONCTION ---
             new: () => {
-                App.askConfirm(
-                    "Nouveau Projet",
-                    "Tout travail non sauvegardé sera perdu. Voulez-vous vraiment effacer tout ?",
-                    () => {
-                        // ... (Le reste de votre code de réinitialisation ici) ...
-                        State.pages = [];
-                        State.currentPage = 0;
-                        State.totalPages = 1;
-                        State.pdfBytes = null;
-                        State.sequenceList = [];
-                        State.history = { stack: [], idx: -1 };
-                        State.counts = { textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 };
-                        document.getElementById('doc-title').value = "Nouveau_Projet";
-                        App.loadBlank();
-                        Navigator.refresh();
-                        Panel.update(null);
-                        localStorage.removeItem('prof_toolbox_autosave');
+                if (!confirm("⚠️ Attention !\nTout travail non sauvegardé sera perdu.\nVoulez-vous vraiment créer un nouveau projet vierge ?")) return;
 
-                        App.showToast("Nouveau projet créé", "info");
-                    }
-                );
+                // 1. Réinitialisation des variables d'état
+                State.pages = [];
+                State.currentPage = 0;
+                State.totalPages = 1;
+                State.pdfBytes = null; // On oublie le PDF importé
+                State.sequenceList = [];
+                State.history = { stack: [], idx: -1 }; // Reset historique
+
+                // 2. Reset des compteurs d'ID pour repartir propre
+                State.counts = { textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 };
+
+                // 3. Reset du titre
+                document.getElementById('doc-title').value = "Nouveau_Projet";
+
+                // 4. Nettoyage du canvas et chargement page blanche
+                App.loadBlank();
+
+                // 5. Nettoyage UI
+                Navigator.refresh();
+                Panel.update(null);
+
+                // Optionnel : Supprimer l'auto-save pour ne pas recharger l'ancien projet au F5
+                localStorage.removeItem('prof_toolbox_autosave');
             },
             // -------------------------
 
@@ -4244,8 +3228,7 @@
                         State.pdfBytes = null;
 
                         App.loadPage(0);
-                        //App.showModal("Projet chargé", `${State.totalPages} page(s) récupérée(s).`);
-                        App.showToast("Projet chargé !", "");
+                        App.showModal("Projet chargé", `${State.totalPages} page(s) récupérée(s).`);
                     } catch (err) {
                         console.error(err);
                         App.showModal("Erreur", "Fichier projet invalide.");
@@ -4255,8 +3238,6 @@
                 e.target.value = '';
             }
         };
-
-
         document.getElementById('project-input').addEventListener('change', Project.load);
 
         document.getElementById('img-input').addEventListener('change', (e) => {
@@ -4269,16 +3250,8 @@
                     const maxWidth = 200;
                     if (img.width > maxWidth) img.scaleToWidth(maxWidth);
                     img.set({ left: 50, top: 50 });
-                    img.set({
-                        hasRotatingPoint: false,
-                        lockRotation: true
-                    });
-                    const defaultControls = fabric.Object.prototype.controls;
-                    img.controls = { ...defaultControls };  // Copie tous les contrôles par défaut
-                    delete img.controls.mtr;
                     img.set('ctype', 'image');
                     img.set('pid', Factory.getName('image'));
-                    img.setControlVisible('mtr', false);
                     Factory.ensureUniqueId(img);
                     img.srcObj = data;
                     State.canvas.add(img);
@@ -4296,7 +3269,6 @@
         const Panel = {
             ratioLocked: false,
             dom: {
-                dropdownVal: document.getElementById('p-dropdown-val'),
                 empty: document.getElementById('panel-empty'),
                 content: document.getElementById('panel-content'),
                 secConfig: document.getElementById('sec-config'),
@@ -4307,8 +3279,6 @@
                 boxFill: document.getElementById('box-fill'),
                 rowOpacity: document.getElementById('row-opacity'),
                 id: document.getElementById('p-id'),
-                rowFontSize: document.getElementById('row-font-size'),
-                fontSize: document.getElementById('p-font-size'),
                 fill: document.getElementById('p-fill'),
                 stroke: document.getElementById('p-stroke'),
                 width: document.getElementById('p-width'),
@@ -4330,8 +3300,7 @@
                 dimH: document.getElementById('p-dim-h'),
                 posX: document.getElementById('p-pos-x'),
                 posY: document.getElementById('p-pos-y'),
-                secDims: document.getElementById('sec-dims'),
-
+                secDims: document.getElementById('sec-dims')
             },
             toggleRatio: () => {
                 Panel.ratioLocked = !Panel.ratioLocked;
@@ -4346,18 +3315,17 @@
                     btn.classList.add('text-gray-400');
                 }
             },
-            // DANS L'OBJET Panel = { ... }
-
             update: (obj) => {
-                // 1. Gestion des groupes Radio (inchangée)
                 Panel.dom.batchRadio.classList.add('hidden');
+
                 if (obj && obj.type === 'activeSelection') {
-                    // ... (votre code existant pour la multisélection) ...
                     Panel.dom.empty.style.display = 'none';
                     Panel.dom.content.style.display = 'flex';
                     Panel.dom.secConfig.style.display = 'none';
                     Panel.dom.secDims.classList.add('hidden');
                     Panel.dom.secAlign.style.display = 'flex';
+
+                    // DETECT MULTI RADIOS
                     const allRadios = obj._objects.every(o => o.ctype === 'radio');
                     if (allRadios) {
                         Panel.dom.batchRadio.classList.remove('hidden');
@@ -4365,121 +3333,18 @@
                     }
                     return;
                 }
+
                 Panel.dom.secAlign.style.display = 'none';
 
-                // 2. Si rien n'est sélectionné
-                if (!obj) {
-                    Panel.dom.empty.style.display = 'flex';
-                    Panel.dom.content.style.display = 'none';
-                    return;
-                }
+                if (!obj) { Panel.dom.empty.style.display = 'flex'; Panel.dom.content.style.display = 'none'; return; }
+                Panel.dom.empty.style.display = 'none'; Panel.dom.content.style.display = 'flex';
 
-                // 3. Affichage du panneau
-                Panel.dom.empty.style.display = 'none';
-                Panel.dom.content.style.display = 'flex';
-
-                // === C'EST ICI LA NOUVEAUTÉ : MISE A JOUR DU HEADER ===
-                const txtTarget = obj.txtObj || (obj.type === 'i-text' ? obj : null);
-                const bgTarget = obj.bgObj || obj;
-
-                if (txtTarget) {
-                    Panel.dom.rowFontSize.style.display = 'grid';
-                    Panel.dom.fontSize.value = txtTarget.fontSize || 12;
-
-                    // CONDITION CLÉ :
-                    // Si c'est Textfield ou Dropdown -> Lecture Seule (Grisé)
-                    // Si c'est Textarea -> Modifiable
-                    if (['textfield', 'dropdown'].includes(obj.ctype)) {
-                        Panel.dom.fontSize.disabled = true;
-                        Panel.dom.fontSize.classList.add('bg-gray-100', 'text-gray-500');
-                        Panel.dom.fontSize.classList.remove('bg-white');
-                    } else {
-                        Panel.dom.fontSize.disabled = false;
-                        Panel.dom.fontSize.classList.remove('bg-gray-100', 'text-gray-500');
-                        Panel.dom.fontSize.classList.add('bg-white');
-                    }
-
-                } else {
-                    Panel.dom.rowFontSize.style.display = 'none';
-                }
-                Panel.dom.subDrop.classList.add('hidden');
-
-                if (obj.ctype === 'dropdown') {
-                    Panel.dom.subDrop.classList.remove('hidden');
-                    const optsArea = document.getElementById('p-opts');
-                    const valSelect = Panel.dom.dropdownVal;
-
-                    // Remplir TextArea
-                    optsArea.value = obj.opts || '';
-
-                    // Remplir Select
-                    valSelect.innerHTML = '';
-                    const options = (obj.opts || '').split('\n').filter(x => x.trim() !== '');
-
-                    if (options.length === 0) {
-                        const opt = document.createElement('option'); opt.text = "(Vide)"; valSelect.add(opt);
-                    } else {
-                        options.forEach(optText => {
-                            const opt = document.createElement('option');
-                            opt.value = optText; opt.text = optText;
-                            valSelect.add(opt);
-                        });
-                    }
-                    // Sélectionner valeur actuelle
-                    valSelect.value = obj.val || (obj.txtObj ? obj.txtObj.text : '');
-                }
-                if (txtTarget) {
-                    Panel.dom.rowFontSize.style.display = 'grid';
-                    Panel.dom.fontSize.value = txtTarget.fontSize || 14;
-                } else {
-                    Panel.dom.rowFontSize.style.display = 'none';
-                }
-                // A. Mise à jour de la Taille (g-size)
-                const gSize = document.getElementById('g-size');
-                if (gSize) {
-                    // Si c'est un objet texte (textarea, textfield...), on prend sa taille
-                    if (txtTarget) gSize.value = txtTarget.fontSize || 12;
-                    // Sinon (rectangle, cercle...), on laisse la valeur par défaut ou on grise
-                }
-
-                // B. Mise à jour de la Police (g-font)
-                const gFont = document.getElementById('g-font');
-                if (gFont && txtTarget) {
-                    gFont.value = txtTarget.fontFamily || 'Arial';
-                }
-
-                // C. Mise à jour des Couleurs et Bordures (g-fill, g-stroke, g-width)
-                const gFill = document.getElementById('g-fill');
-                const prevFill = document.getElementById('preview-fill');
-                if (gFill && prevFill) {
-                    const c = App.toHex(bgTarget.fill);
-                    gFill.value = c;
-                    prevFill.style.backgroundColor = c;
-                }
-
-                const gStroke = document.getElementById('g-stroke');
-                const prevStroke = document.getElementById('preview-stroke');
-                if (gStroke && prevStroke) {
-                    const c = App.toHex(bgTarget.stroke);
-                    gStroke.value = c;
-                    prevStroke.style.backgroundColor = c;
-                }
-
-                const gWidth = document.getElementById('g-width');
-                if (gWidth) {
-                    gWidth.value = bgTarget.strokeWidth || 0;
-                }
-                // =======================================================
-
-
-                // ... LE RESTE DE VOTRE FONCTION RESTE INCHANGÉ ...
-                // (Gestion de l'affichage du panneau de droite)
                 const isDraw = obj.ctype === 'draw' || obj.ctype === 'image';
                 Panel.dom.secConfig.style.display = isDraw ? 'none' : 'flex';
-                // ... etc ...
                 Panel.dom.rowOpacity.style.display = isDraw ? 'grid' : 'grid';
                 document.getElementById('toolbar-font').style.display = isDraw ? 'none' : 'flex';
 
+                // --- BLOC MODIFIÉ POUR AFFICHER LE BOUTON ACTIF ---
                 Panel.dom.rowFillCheck.classList.add('hidden');
                 if ((obj.ctype === 'draw' && obj.type !== 'line') || ['textfield', 'textarea', 'checkbox', 'radio', 'dropdown'].includes(obj.ctype)) {
                     Panel.dom.rowFillCheck.classList.remove('hidden');
@@ -4488,9 +3353,12 @@
                     Panel.dom.hasFill.checked = !isTransparent;
                     Panel.dom.boxFill.style.opacity = !isTransparent ? '1' : '0.3';
                 }
+                // --------------------------------------------------
 
+                // --- NOUVEAU : MISE A JOUR DES CASES REQUIS / LECTURE SEULE ---
                 if (Panel.dom.req) Panel.dom.req.checked = obj.isRequired || false;
                 if (Panel.dom.read) Panel.dom.read.checked = obj.isReadOnly || false;
+                // --------------------------------------------------------------
 
                 const target = obj.bgObj || obj;
                 Panel.dom.id.value = obj.pid || '';
@@ -4520,6 +3388,8 @@
                 Panel.dom.secDims.classList.remove('hidden');
                 Panel.dom.dimW.value = Math.round(obj.getScaledWidth());
                 Panel.dom.dimH.value = Math.round(obj.getScaledHeight());
+
+                // UPDATE POS X/Y
                 Panel.dom.posX.value = Math.round(obj.left);
                 Panel.dom.posY.value = Math.round(obj.top);
             },
@@ -4529,50 +3399,6 @@
 
                 objs.forEach(obj => {
                     const target = obj.bgObj || obj;
-                    const txt = obj.txtObj || (obj.type === 'i-text' ? obj : null);
-                    if (key === 'dropdownVal') {
-                        obj.val = val;                          // Sauvegarde la valeur par défaut
-                        if (obj.txtObj) {
-                            obj.txtObj.set('text', val);        // Met à jour le texte visible
-                            obj.txtObj.setCoords();             // Recalcule la position du texte dans le groupe
-                        }
-                        obj.dirty = true;                       // Indique au groupe qu'il a changé
-                        if (obj.type === 'group') {
-                            obj.addWithUpdate();                // Force le recalcul complet du groupe
-                        }
-                    }
-
-                    // --- OPTIONS DU DROPDOWN (quand on modifie la textarea) ---
-                    if (key === 'opts') {
-                        obj.opts = val;
-                        // Si la valeur par défaut actuelle n'existe plus dans les nouvelles options,
-                        // on la remet sur la première option (ou on garde l'ancien texte si liste vide)
-                        const newOptions = val.split('\n').map(o => o.trim()).filter(o => o !== '');
-                        if (newOptions.length > 0 && !newOptions.includes(obj.val)) {
-                            obj.val = newOptions[0];
-                            if (obj.txtObj) obj.txtObj.set('text', newOptions[0]);
-                        } else if (newOptions.length === 0) {
-                            if (obj.txtObj) obj.txtObj.set('text', '');
-                            obj.val = '';
-                        }
-                        // Rafraîchissement du panneau pour mettre à jour le <select> des valeurs par défaut
-                        setTimeout(() => Panel.update(obj), 0);
-                    }
-                    if (key === 'fontSize' && txt && (obj.ctype === 'label' || obj.ctype === 'textarea' || obj.ctype === 'paragraph')) {
-                        txt.set('fontSize', parseInt(val));
-
-                        // Repositionnement en HAUT si c'est un textarea
-                        if (obj.ctype === 'textarea') {
-                            txt.set({
-                                top: (-obj.height / 2) + 4,
-                                width: obj.width - 8
-                            });
-                        }
-                        obj.set('dirty', true);
-                        if (obj.type === 'group') obj.addWithUpdate();
-                    }
-
-
 
                     // --- NOUVEAU : SAUVEGARDE REQUIS / LECTURE SEULE ---
                     if (key === 'req') obj.isRequired = val;
@@ -4592,8 +3418,6 @@
                         obj.fmt = val;
                         if (val === 'number') { obj.tAlign = 'right'; }
                     }
-
-
                     if (key === 'textAlign') {
                         obj.tAlign = val;
                         if (obj.txtObj) obj.txtObj.set('textAlign', val);
@@ -4611,7 +3435,6 @@
                         }
                     }
                     if (key === 'dimH') {
-
                         const newH = parseInt(val);
                         if (newH > 0) {
                             if (Panel.ratioLocked) {
@@ -4620,8 +3443,6 @@
                                 Panel.dom.dimW.value = Math.round(obj.getScaledWidth());
                             } else {
                                 obj.scaleToHeight(newH);
-                                Panel.dom.fontSize.value = parseInt(newH * 0.7);
-                                // obj.txtObj.set('fontSize', newFontSize);
                             }
                         }
                     }
@@ -4633,45 +3454,11 @@
             }
         };
 
-
-
-
-
-
-
         // --- LISTENERS (Indispensable pour que les cases réagissent) ---
-        // --- LISTENER UNIQUE ET OPTIMISÉ ---
-        // J'ai fusionné tes deux listes et ajouté 'fontSize'
-        const propKeys = [
-            'id', 'fontSize', 'fill', 'stroke', 'width', 'opacity', 'bstyle',
-            'checked', 'grp', 'val', 'opts', 'dropdownVal', 'has-fill', 'fmt',
-            'dimW', 'dimH', 'posX', 'posY', 'req', 'read'
-        ];
-
-        propKeys.forEach(k => {
-            let elId = 'p-' + k;
-
-            // Gestion des exceptions d'ID
-            if (k === 'fontSize') elId = 'p-font-size';
-            else if (k === 'opts') elId = 'p-opts';
-            else if (k === 'dropdownVal') elId = 'p-dropdown-val'; // <--- NOUVEAU
-            else if (k === 'dimW') elId = 'p-dim-w';
-            else if (k === 'dimH') elId = 'p-dim-h';
-            else if (k === 'posX') elId = 'p-pos-x';
-            else if (k === 'posY') elId = 'p-pos-y';
-            else if (k === 'req') elId = 'p-req';
-            else if (k === 'read') elId = 'p-read';
-
-            const el = document.getElementById(elId);
-
+        ['id', 'fill', 'stroke', 'width', 'opacity', 'bstyle', 'checked', 'grp', 'val', 'opts', 'has-fill', 'fmt', 'dimW', 'dimH', 'posX', 'posY', 'req', 'read'].forEach(k => {
+            const el = document.getElementById(k === 'opts' ? 'p-opts' : (k === 'bstyle' ? 'p-bstyle' : (k === 'checked' ? 'p-checked' : (k === 'has-fill' ? 'p-has-fill' : (k === 'fmt' ? 'p-fmt' : (k === 'dimW' ? 'p-dim-w' : (k === 'dimH' ? 'p-dim-h' : (k === 'posX' ? 'p-pos-x' : (k === 'posY' ? 'p-pos-y' : (k === 'req' ? 'p-req' : (k === 'read' ? 'p-read' : 'p-' + k)))))))))));
             if (el) {
-                const eventType = (el.type === 'checkbox' || el.tagName === 'SELECT') ? 'change' : 'input';
-
-                el.addEventListener(eventType, e => {
-                    const val = el.type === 'checkbox' ? e.target.checked : e.target.value;
-                    Panel.apply(k, val);
-                });
-
+                el.addEventListener(el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input', e => Panel.apply(k, el.type === 'checkbox' ? e.target.checked : e.target.value));
                 if (el.tagName === 'INPUT') {
                     el.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter') el.blur();
@@ -4679,7 +3466,17 @@
                 }
             }
         });
-
+        ['id', 'fill', 'stroke', 'width', 'opacity', 'bstyle', 'checked', 'grp', 'val', 'opts', 'has-fill', 'fmt', 'dimW', 'dimH', 'posX', 'posY'].forEach(k => {
+            const el = document.getElementById(k === 'opts' ? 'p-opts' : (k === 'bstyle' ? 'p-bstyle' : (k === 'checked' ? 'p-checked' : (k === 'has-fill' ? 'p-has-fill' : (k === 'fmt' ? 'p-fmt' : (k === 'dimW' ? 'p-dim-w' : (k === 'dimH' ? 'p-dim-h' : (k === 'posX' ? 'p-pos-x' : (k === 'posY' ? 'p-pos-y' : 'p-' + k)))))))));
+            if (el) {
+                el.addEventListener(el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input', e => Panel.apply(k, el.type === 'checkbox' ? e.target.checked : e.target.value));
+                if (el.tagName === 'INPUT') {
+                    el.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') el.blur();
+                    });
+                }
+            }
+        });
         App.toHex = (c) => { if (!c || c === 'transparent') return '#ffffff'; if (c.startsWith('#')) return c.slice(0, 7); return '#000000'; };
 
         const Exporter = {
@@ -4696,10 +3493,6 @@
                 // --- A. CHARGEMENT DES POLICES STANDARD ---
                 const helveticaFont = await doc.embedFont(StandardFonts.Helvetica);
                 const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
-                // AJOUT : On charge aussi les italiques pour le WYSIWYG
-                const helveticaItalic = await doc.embedFont(StandardFonts.HelveticaOblique);
-                const helveticaBoldItalic = await doc.embedFont(StandardFonts.HelveticaBoldOblique);
-
                 const timesFont = await doc.embedFont(StandardFonts.TimesRoman);
                 const courierFont = await doc.embedFont(StandardFonts.Courier);
 
@@ -4708,15 +3501,6 @@
                     if (!hex || !hex.startsWith('#')) return undefined;
                     return rgb(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255);
                 };
-
-                // Helper pour choisir la police selon le style
-                const getFont = (isBold, isItalic) => {
-                    if (isBold && isItalic) return helveticaBoldItalic;
-                    if (isBold) return helveticaBold;
-                    if (isItalic) return helveticaItalic;
-                    return helveticaFont;
-                };
-
                 const getSafeId = (id, set) => { let n = id; let i = 1; while (set.has(n)) n = id + "_" + i++; set.add(n); return n; };
                 const usedIds = new Set();
 
@@ -4733,7 +3517,7 @@
                     const pageData = State.pages[i];
                     if (!pageData || !pageData.objects) continue;
 
-                    // 1. Fond
+                    // 1. D'ABORD, on cherche l'objet FOND pour se caler dessus
                     const bgRaw = pageData.objects.find(o => o.isBackground);
                     let bgLeft = 0, bgTop = 0, bgScaleW = 595;
 
@@ -4742,7 +3526,9 @@
                             fabric.util.enlivenObjects([bgRaw], (objs) => {
                                 const bg = objs[0];
                                 const p = bg.getPointByOrigin('left', 'top');
-                                bgLeft = p.x; bgTop = p.y; bgScaleW = bg.getScaledWidth();
+                                bgLeft = p.x;
+                                bgTop = p.y;
+                                bgScaleW = bg.getScaledWidth();
                                 resolve();
                             });
                         });
@@ -4752,14 +3538,16 @@
 
                     const ratio = pdfWidth / bgScaleW;
 
-                    // 2. Objets
+                    // 2. On traite les objets
                     await new Promise(resolve => {
                         fabric.util.enlivenObjects(pageData.objects, (fabricObjects) => {
 
                             for (const o of fabricObjects) {
-                                if (!o.ctype && o.type !== 'group' && o.ctype !== 'draw' && o.ctype !== 'image' && o.ctype !== 'label' && o.ctype !== 'paragraph') continue;
+                                // Ignore le fond et les objets non valides
+                                if (!o.ctype && o.type !== 'group' && o.ctype !== 'draw' && o.ctype !== 'image' && o.ctype !== 'label') continue;
                                 if (o.isBackground) continue;
 
+                                // --- COORDONNÉES PRÉCISES ---
                                 const p = o.getPointByOrigin('left', 'top');
                                 const relX = p.x - bgLeft;
                                 const relY = p.y - bgTop;
@@ -4771,6 +3559,7 @@
 
                                 const opts = { x: finalX, y: finalY, width: finalW, height: finalH };
 
+                                // Extraction des sous-objets
                                 let rect = o;
                                 let textObj = null;
                                 if (o.type === 'group' && o._objects && o._objects.length >= 1) {
@@ -4778,112 +3567,33 @@
                                     if (o._objects.length > 1) textObj = o._objects[1];
                                 }
 
-                                // --- 1. EXPORT LABELS (SIMPLE) --- 
+                                // --- 1. EXPORT LABELS (TEXTE) --- 
                                 if (o.ctype === 'label') {
                                     const txt = o.text || "Texte";
                                     const fontSize = o.fontSize * ratio;
+
+                                    // Choix de la police
                                     let fontToUse = helveticaFont;
                                     const fam = (o.fontFamily || "").toLowerCase();
                                     if (fam.includes('times')) fontToUse = timesFont;
                                     else if (fam.includes('courier')) fontToUse = courierFont;
                                     else if (fam.includes('arial') && (o.fontWeight === 'bold' || o.fontWeight > 500)) fontToUse = helveticaBold;
 
+                                    // Calcul Y spécifique pour le texte (Baseline)
                                     const textY = pdfHeight - (relY * ratio) - (fontSize * 0.88);
+
                                     page.drawText(txt, {
-                                        x: finalX, y: textY, size: fontSize, font: fontToUse,
-                                        color: toRgb(o.fill) || rgb(0, 0, 0), opacity: o.opacity
+                                        x: finalX,
+                                        y: textY,
+                                        size: fontSize,
+                                        font: fontToUse,
+                                        color: toRgb(o.fill) || rgb(0, 0, 0),
+                                        opacity: o.opacity
                                     });
                                     continue;
                                 }
 
-                                // --- 2. EXPORT PARAGRAPHE RICHE (WYSIWYG) ---
-                                else if (o.ctype === 'paragraph') {
-                                    // On utilise l'objet Fabric pour calculer les lignes et les styles
-                                    // Note : o est déjà un objet Fabric "enlivened" ici
-
-                                    const textLines = o._textLines;
-                                    const lineHeight = o.lineHeight || 1.16;
-                                    const fontSize = o.fontSize * ratio;
-                                    const defaultFill = o.fill;
-                                    const opacity = o.opacity || 1;
-
-                                    textLines.forEach((lineChars, lineIdx) => {
-                                        // Calcul Y de la ligne
-                                        // On descend : Y départ - (padding top) - (index ligne * hauteur ligne)
-                                        const lineY = pdfHeight - (relY * ratio) - (fontSize * 0.80) - (lineIdx * fontSize * lineHeight);
-
-                                        // Calcul Alignement X
-                                        let currentX = finalX;
-                                        const lineWidth = o.getLineWidth(lineIdx) * ratio;
-
-                                        if (o.textAlign === 'center') currentX += (finalW - lineWidth) / 2;
-                                        else if (o.textAlign === 'right') currentX += (finalW - lineWidth);
-
-                                        // --- LE DÉCOUPEUR DE STYLE ---
-                                        let bufferText = "";
-                                        let bufferStyle = o.getCompleteStyleDeclaration(lineIdx, 0) || {};
-
-                                        const flushBuffer = () => {
-                                            if (!bufferText) return;
-
-                                            // 1. Police & Style
-                                            const isBold = bufferStyle.fontWeight === 'bold' || o.fontWeight === 'bold';
-                                            const isItalic = bufferStyle.fontStyle === 'italic' || o.fontStyle === 'italic';
-                                            const fontToUse = getFont(isBold, isItalic);
-
-                                            // 2. Couleur
-                                            const fillColor = bufferStyle.fill || defaultFill;
-
-                                            // 3. Dessin
-                                            page.drawText(bufferText, {
-                                                x: currentX, y: lineY,
-                                                size: fontSize, font: fontToUse,
-                                                color: toRgb(fillColor) || rgb(0, 0, 0),
-                                                opacity: opacity
-                                            });
-
-                                            // 4. Avancer X
-                                            const width = fontToUse.widthOfTextAtSize(bufferText, fontSize);
-                                            currentX += width;
-
-                                            // 5. Souligné
-                                            if (bufferStyle.underline || o.underline) {
-                                                page.drawLine({
-                                                    start: { x: currentX - width, y: lineY - 2 },
-                                                    end: { x: currentX, y: lineY - 2 },
-                                                    thickness: 1 * ratio,
-                                                    color: toRgb(fillColor) || rgb(0, 0, 0),
-                                                    opacity: opacity
-                                                });
-                                            }
-                                        };
-
-                                        // Parcours caractères
-                                        for (let c = 0; c < lineChars.length; c++) {
-                                            const char = lineChars[c];
-                                            const style = o.getCompleteStyleDeclaration(lineIdx, c) || {};
-
-                                            // Changement de style ?
-                                            const styleChanged =
-                                                style.fontWeight !== bufferStyle.fontWeight ||
-                                                style.fontStyle !== bufferStyle.fontStyle ||
-                                                style.fill !== bufferStyle.fill ||
-                                                style.underline !== bufferStyle.underline;
-
-                                            if (styleChanged) {
-                                                flushBuffer();
-                                                bufferText = char;
-                                                bufferStyle = style;
-                                            } else {
-                                                bufferText += char;
-                                            }
-                                        }
-                                        flushBuffer(); // Fin de ligne
-                                    });
-                                    continue;
-                                }
-
-                                // --- 3. EXPORT IMAGES ---
+                                // --- 2. EXPORT IMAGES ---
                                 if (o.ctype === 'image' && o.srcObj) {
                                     (async () => {
                                         try {
@@ -4896,7 +3606,7 @@
                                     continue;
                                 }
 
-                                // --- 4. EXPORT DESSINS ---
+                                // --- 3. EXPORT DESSINS ---
                                 if (o.ctype === 'draw') {
                                     const op = {
                                         borderColor: toRgb(o.stroke),
@@ -4907,29 +3617,15 @@
                                     if (o.type === 'rect') page.drawRectangle({ ...opts, ...op });
                                     else if (o.type === 'ellipse') page.drawEllipse({ x: finalX + finalW / 2, y: finalY + finalH / 2, xScale: finalW / 2, yScale: finalH / 2, ...op });
                                     else if (o.type === 'line') {
-                                        // --- CORRECTION : CALCUL PRÉCIS DES POINTS ---
-                                        // On utilise la matrice de transformation pour récupérer les coordonnées réelles
-                                        // des deux extrémités (start/end), peu importe le sens ou la rotation.
-                                        const matrix = o.calcTransformMatrix();
-                                        const p1 = fabric.util.transformPoint({ x: o.x1, y: o.y1 }, matrix);
-                                        const p2 = fabric.util.transformPoint({ x: o.x2, y: o.y2 }, matrix);
-
-                                        const lX1 = (p1.x - bgLeft) * ratio;
-                                        const lY1 = pdfHeight - ((p1.y - bgTop) * ratio);
-                                        const lX2 = (p2.x - bgLeft) * ratio;
-                                        const lY2 = pdfHeight - ((p2.y - bgTop) * ratio);
-
-                                        page.drawLine({
-                                            start: { x: lX1, y: lY1 },
-                                            end: { x: lX2, y: lY2 },
-                                            color: toRgb(o.stroke),
-                                            thickness: o.strokeWidth * ratio,
-                                            opacity: o.opacity
-                                        });
+                                        const lX1 = (o.left - bgLeft) * ratio;
+                                        const lY1 = pdfHeight - ((o.top - bgTop) * ratio);
+                                        const lX2 = (o.left + o.width - bgLeft) * ratio;
+                                        const lY2 = pdfHeight - ((o.top + o.height - bgTop) * ratio);
+                                        page.drawLine({ start: { x: lX1, y: lY1 }, end: { x: lX2, y: lY2 }, color: toRgb(o.stroke), thickness: o.strokeWidth * ratio });
                                     }
                                 }
 
-                                // --- 5. EXPORT INPUTS ---
+                                // --- 4. EXPORT INPUTS ---
                                 else if (o.ctype) {
                                     const bg = (rect.fill && rect.fill !== 'transparent') ? toRgb(rect.fill) : undefined;
                                     const bc = toRgb(rect.stroke);
@@ -4940,6 +3636,7 @@
 
                                     try {
                                         let f;
+
                                         if (o.ctype === 'textfield') {
                                             f = form.createTextField(safeId);
                                             if (textObj && textObj.text) f.setText(textObj.text);
@@ -4950,64 +3647,14 @@
                                             else f.setAlignment(TextAlignment.Left);
                                             if (o.fmt === 'date' && (!textObj || !textObj.text)) f.setText('JJ/MM/AAAA');
                                         }
-
-                                        // DANS Exporter.download ...
-
-                                        // DANS Exporter.download ...
-                                        // DANS Exporter.download ...
-
                                         else if (o.ctype === 'textarea') {
-                                            // 1. Création du champ
                                             f = form.createTextField(safeId);
                                             f.enableMultiline();
-
-                                            // 2. Définition du texte
                                             if (textObj && textObj.text) f.setText(textObj.text);
-
-                                            // 3. RECUPERATION DE LA POLICE ET TAILLE (Depuis l'éditeur)
-                                            let fontToUse = helveticaFont;
-                                            if (textObj && textObj.fontFamily) {
-                                                const fam = textObj.fontFamily.toLowerCase();
-                                                if (fam.includes('times')) fontToUse = timesFont;
-                                                else if (fam.includes('courier')) fontToUse = courierFont;
-                                            }
-
-                                            // Calcul de la taille (Taille éditeur * Ratio PDF)
-                                            // Par défaut 12 si non défini
-                                            const fontSize = (textObj && textObj.fontSize) ? (textObj.fontSize * ratio) : (12 * ratio);
-
-                                            // --- LE FIX ULTIME POUR /DA ---
-                                            // Au lieu d'utiliser f.setFontSize() qui plante, on met à jour l'apparence complète manuellement.
-                                            // Cela contourne le bug "No /DA entry found".
-
-                                            try {
-                                                // Méthode standard (si elle marche)
-                                                f.updateAppearances(fontToUse);
-                                                f.setFontSize(fontSize);
-                                            } catch (e) {
-                                                // Méthode de secours (Force brute)
-                                                // On vérifie si acroField existe (accès bas niveau)
-                                                if (f.acroField) {
-                                                    const fontName = doc.fonts.find(f => f.embedder.font === fontToUse)?.name || 'Helv';
-
-                                                    // On construit la chaine /DA manuellement : "/NomPolice Taille Tf 0 g"
-                                                    // Exemple : "/Helv 12 Tf 0 g" (Police Helv, Taille 12, Couleur Noire)
-                                                    const daString = `/${fontName} ${fontSize} Tf 0 g`;
-
-                                                    // On l'injecte directement dans le PDF
-                                                    f.acroField.setDefaultAppearance(daString);
-                                                }
-                                            }
-                                            // -----------------------------
-
-                                            // 4. Placement sur la page
                                             f.addToPage(page, formOpts);
-
-                                            // 5. Alignement
                                             if (o.tAlign === 'center') f.setAlignment(TextAlignment.Center);
                                             else if (o.tAlign === 'right') f.setAlignment(TextAlignment.Right);
                                         }
-
                                         else if (o.ctype === 'checkbox') {
                                             f = form.createCheckBox(safeId);
                                             f.addToPage(page, formOpts);
@@ -5022,26 +3669,17 @@
                                         }
                                         else if (o.ctype === 'dropdown') {
                                             f = form.createDropdown(safeId);
-
-                                            // 1. On nettoie la liste des options (évite les lignes vides)
-                                            const options = (o.opts || "").split('\n').filter(line => line.trim() !== "");
-                                            f.setOptions(options);
-
+                                            f.setOptions((o.opts || "").split('\n'));
                                             f.addToPage(page, formOpts);
-
-                                            // 2. CORRECTION : On force la sélection de la valeur par défaut
-                                            // Si une valeur est définie et qu'elle existe bien dans la liste, on la sélectionne.
-                                            if (o.val && options.includes(o.val)) {
-                                                f.select(o.val);
-                                            } else if (options.length > 0) {
-                                                // Sécurité : Si pas de valeur par défaut, on prend la première
-                                                f.select(options[0]);
-                                            }
                                         }
+
+                                        // --- APPLIQUER OBLIGATOIRE / LECTURE SEULE ---
                                         if (f) {
                                             if (o.isRequired) f.setRequired(true);
                                             if (o.isReadOnly) f.enableReadOnly();
                                         }
+                                        // --------------------------------------------
+
                                     } catch (e) { console.error(e); }
                                 }
                             }
@@ -5050,10 +3688,13 @@
                     });
                 }
 
+                // --- AJOUT DES MÉTADONNÉES PRO ---
                 const title = document.getElementById('doc-title').value || "Formulaire";
                 doc.setTitle(title);
-                doc.setAuthor("Pdf Studio");
+                doc.setAuthor("Pdf Studio"); // Tu peux mettre ton nom ici
                 doc.setCreator("Généré par Pdf Studio");
+                doc.setProducer("Pdf Studio V1.0");
+                // ----------------------------------
 
                 const bytes = await doc.save();
                 const blob = new Blob([bytes], { type: 'application/pdf' });
@@ -5063,7 +3704,7 @@
                 link.click();
             }
         };
-
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
         document.getElementById('file-input').addEventListener('change', async e => {
             const f = e.target.files[0];
@@ -5113,9 +3754,6 @@
                     isBackground: true,
                     shadow: { color: 'rgba(0,0,0,0.1)', blur: 15 }
                 });
-                const defaultControls = fabric.Object.prototype.controls;
-                img.controls = { ...defaultControls };  // Copie tous les contrôles par défaut
-                delete img.controls.mtr;
 
                 // CRÉATION DU JSON DE LA PAGE
                 // On crée une "fausse" page qui contient juste cette image de fond pour l'instant
@@ -5135,59 +3773,7 @@
             // Reset de l'input pour pouvoir réimporter le même fichier si besoin
             e.target.value = '';
         });
-        if (window.pdfjsLib) {
-            // On force la version 3.4.120 pour qu'elle corresponde à votre fichier ext.js
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-        }
-        document.body.classList.add('codage');
-        function openDonationModal() {
-            document.getElementById('donation-modal').classList.remove('hidden');
-        }
-
-        function closeDonationModal() {
-            document.getElementById('donation-modal').classList.add('hidden');
-        }
     </script>
-
-    <div id="donation-modal"
-        class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex flex-col items-center justify-center backdrop-blur-sm transition-opacity">
-        <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100 p-6 text-center relative animate-bounce-short">
-
-            <button onclick="closeDonationModal()"
-                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                    </path>
-                </svg>
-            </button>
-
-            <div class="w-16 h-16 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                        clip-rule="evenodd" />
-                </svg>
-            </div>
-
-            <h3 class="text-xl font-bold text-slate-800 mb-3">Soutenir le projet</h3>
-
-            <div class="text-slate-600 text-sm mb-6 space-y-2 leading-relaxed">
-                <p>Cet outil est développé bénévolement pour aider professeurs et élèves.</p>
-                <p class="font-medium text-pink-600">Il n'y a pas de pub, pas d'inscription.</p>
-                <p>Si vous souhaitez soutenir ma démarche et l'évolution du projet, vous pouvez faire un don libre
-                    ci-dessous.</p>
-            </div>
-
-            <a href="https://www.paypal.com/donate/?hosted_button_id=VKZXDC5BM2GHA" target="_blank"
-                class="block w-full py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 mb-3 flex items-center justify-center gap-2">
-                <span>❤️</span> Faire un don
-            </a>
-
-            <button onclick="closeDonationModal()"
-                class="text-xs text-slate-400 hover:text-slate-600 underline py-2">Plus tard</button>
-        </div>
-    </div>
 </body>
 
 </html>
