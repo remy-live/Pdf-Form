@@ -7,6 +7,7 @@
     <title>Pdf Studio</title>
 
     <script src="ext.js"></script>
+    <script src="template.js"></script>
 
 
     <script>
@@ -502,6 +503,28 @@
 
 <body class="bg-bg h-screen w-screen flex flex-col text-text">
 
+    <div id="confirm-overlay"
+        class="fixed inset-0 bg-black/40 z-[110] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-96 max-w-[calc(100vw-32px)] p-5">
+            <h3 id="confirm-title" class="text-lg font-bold mb-2">Titre</h3>
+            <p id="confirm-msg" class="text-sm text-gray-600 mb-5 leading-relaxed whitespace-pre-line">Message...</p>
+            <div id="confirm-buttons" class="flex justify-end gap-2 flex-wrap"></div>
+        </div>
+    </div>
+
+    <div id="detect-bar"
+        class="hidden fixed bottom-16 left-1/2 -translate-x-1/2 bg-white border border-blue-200 shadow-2xl rounded-full pl-4 pr-2 py-2 z-[80] flex items-center gap-3 max-w-[calc(100vw-16px)]">
+        <i class="fa-solid fa-wand-magic-sparkles text-blue-600"></i>
+        <span id="detect-bar-text" class="text-xs font-bold text-gray-700 whitespace-nowrap">0 champs proposés</span>
+        <button onclick="Detect.acceptAll()"
+            class="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-700 transition whitespace-nowrap">
+            Tout accepter</button>
+        <button onclick="Detect.cancelAll()"
+            class="text-xs font-bold text-gray-500 hover:text-red-600 px-2 transition">Annuler</button>
+    </div>
+
+    <div id="toast-container"></div>
+
     <div id="modal-overlay"
         class="fixed inset-0 bg-black/40 z-[100] hidden flex items-center justify-center backdrop-blur-sm">
         <div id="modal-box" class="bg-white rounded-xl shadow-2xl w-80 p-5 transform transition-all">
@@ -572,39 +595,47 @@
                     oninput="App.setStyle('width', this.value)" title="Épaisseur Trait">
             </div>
 
-            <div class="flex items-center gap-2 px-2 border-l border-border pl-4">
-                <label class="flex items-center gap-2 cursor-pointer select-none border-r border-border pr-3 mr-1">
-                    <input type="checkbox" id="g-snap" class="accent-black w-4 h-4 rounded" checked
-                        onchange="State.snap=this.checked">
-                    <span class="text-[10px] font-bold text-gray-500">AIMANT</span>
-                </label>
-                <div class="flex items-center gap-3">
+            <button id="btn-settings" onclick="App.toggleSettings(event)"
+                class="w-8 h-8 flex items-center justify-center rounded-lg border border-border bg-bg text-gray-500 hover:text-black hover:bg-gray-100 transition"
+                title="Réglages de création (aimant, tailles par défaut...)">
+                <i class="fa-solid fa-gear text-xs"></i>
+            </button>
+        </div>
 
-                    <span class="text-[9px] font-bold text-gray-400 uppercase" title="Hauteur Champ Texte">
-                        Input</span>
-                    <input type="number" id="g-def-height" value="24"
-                        class="os-input w-12 text-center h-5 p-0 text-[10px]"
+        <div id="settings-pop"
+            class="hidden fixed top-[60px] right-4 bg-white border border-gray-200 rounded-xl shadow-2xl p-4 z-[70] w-64 flex flex-col gap-3">
+            <span class="text-[9px] font-bold uppercase text-gray-400">Réglages de création</span>
+
+            <label class="flex items-center justify-between cursor-pointer select-none">
+                <span class="text-xs font-medium text-gray-600">Aimant (alignement)</span>
+                <input type="checkbox" id="g-snap" class="accent-black w-4 h-4 rounded" checked
+                    onchange="State.snap=this.checked">
+            </label>
+
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-600" title="Hauteur Champ Texte">Hauteur champ (px)</span>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="g-def-height" value="24" class="os-input w-14 text-center text-[10px]"
                         onchange="State.defaults.defHeight = parseInt(this.value)">
-
                     <button id="btn-size-painter" onclick="App.setTool('size-painter')"
-                        class="mx-2 w-7 h-7 bg-gray-100 hover:bg-black hover:text-white text-gray-500 rounded flex items-center justify-center transition shadow-sm"
+                        class="w-7 h-7 bg-gray-100 hover:bg-black hover:text-white text-gray-500 rounded flex items-center justify-center transition shadow-sm"
                         title="Appliquer la taille par défaut au clic">
                         <i class="fa-solid fa-paintbrush text-xs"></i>
                     </button>
-
-
-                    <span class="text-[9px] font-bold text-gray-400 uppercase" title="Taille Case / Radio">
-                        Box</span>
-                    <input type="number" id="g-def-box" value="14" class="os-input w-12 text-center h-5 p-0 text-[10px]"
-                        onchange="State.defaults.boxSize = parseInt(this.value)">
-
-                    <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
-                        <input type="checkbox" id="g-lock" class="accent-black w-4 h-4 rounded" checked
-                            onchange="App.setStyle('lock', this.checked)">
-                        <span class="text-[10px] font-bold text-gray-500">FIXE</span>
-                    </label>
                 </div>
             </div>
+
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-600" title="Taille Case / Radio">Taille case (px)</span>
+                <input type="number" id="g-def-box" value="14" class="os-input w-14 text-center text-[10px]"
+                    onchange="State.defaults.boxSize = parseInt(this.value)">
+            </div>
+
+            <label class="flex items-center justify-between cursor-pointer select-none">
+                <span class="text-xs font-medium text-gray-600" title="Hauteur des champs fixe">Hauteur fixe</span>
+                <input type="checkbox" id="g-lock" class="accent-black w-4 h-4 rounded" checked
+                    onchange="App.setStyle('lock', this.checked)">
+            </label>
         </div>
 
         <div class="flex items-center gap-3">
@@ -736,7 +767,13 @@
             <div id="navigator-list" class="flex-1 overflow-y-auto overflow-x-hidden bg-white scrollbar-thin">
             </div>
 
-            <div class="p-2 border-t border-border grid grid-cols-3 gap-2 bg-gray-50 shrink-0">
+            <div class="p-2 border-t border-border grid grid-cols-4 gap-2 bg-gray-50 shrink-0">
+
+                <button onclick="App.showWelcome()"
+                    class="tool-btn text-[10px] h-8 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-black hover:border-slate-400 font-medium"
+                    title="Accueil & Modèles">
+                    <i class="fa-solid fa-shapes"></i>
+                </button>
 
                 <button onclick="Project.new()"
                     class="tool-btn text-[10px] h-8 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-black hover:border-slate-400 font-medium"
@@ -773,6 +810,43 @@
                 </button>
             </div>
 
+            <div id="welcome-overlay"
+                class="absolute inset-0 z-40 hidden flex items-center justify-center bg-black/20 p-4">
+                <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md flex flex-col gap-4 max-h-full overflow-y-auto relative">
+                    <button onclick="App.hideWelcome()"
+                        class="absolute top-3 right-3 text-gray-300 hover:text-black transition w-8 h-8 flex items-center justify-center"
+                        title="Fermer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div class="text-center mt-1">
+                        <div class="font-bold text-lg flex items-center justify-center gap-2"><i
+                                class="fa-solid fa-cube"></i> Pdf Studio</div>
+                        <p class="text-xs text-gray-500 mt-1">Transformez n'importe quel PDF en formulaire interactif.
+                        </p>
+                    </div>
+
+                    <button onclick="document.getElementById('file-input').click()"
+                        class="bg-active text-white rounded-xl p-4 flex items-center gap-4 hover:bg-gray-800 transition text-left">
+                        <i class="fa-solid fa-file-import text-xl"></i>
+                        <span class="flex flex-col">
+                            <span class="text-sm font-bold">Importer un PDF</span>
+                            <span class="text-[10px] opacity-70">ou glissez-le n'importe où sur la page</span>
+                        </span>
+                    </button>
+
+                    <button id="btn-welcome-blank" onclick="App.hideWelcome()"
+                        class="bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-4 hover:border-gray-400 transition text-left text-gray-700">
+                        <i class="fa-regular fa-file text-lg text-gray-400"></i>
+                        <span class="text-sm font-medium">Commencer sur une page blanche</span>
+                    </button>
+
+                    <div id="welcome-templates" class="hidden flex-col gap-2">
+                        <span class="text-[10px] font-bold uppercase text-gray-400">Ou partez d'un modèle</span>
+                        <div id="tpl-list" class="grid grid-cols-3 gap-2"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="absolute bottom-4 left-4 flex items-center gap-3 z-50">
 
                 <div class="flex items-center bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
@@ -792,6 +866,12 @@
                         class="w-8 h-8 flex items-center justify-center hover:bg-gray-50 text-gray-600 active:bg-gray-100 border-l border-gray-200 transition"
                         title="Zoomer (+)">
                         <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+
+                    <button onclick="App.fitScreen()"
+                        class="w-8 h-8 flex items-center justify-center hover:bg-gray-50 text-gray-600 active:bg-gray-100 border-l border-gray-200 transition"
+                        title="Ajuster la page à l'écran">
+                        <i class="fa-solid fa-compress text-xs"></i>
                     </button>
                 </div>
 
@@ -1211,9 +1291,10 @@
                             <h4 class="font-bold text-gray-800">Détection Automatique</h4>
                             <p class="text-xs text-gray-500 mt-1 leading-relaxed">
                                 Après avoir importé un PDF, cliquez sur <b class="bg-blue-50 text-blue-700 px-1
-                                rounded">Détection</b> : les lignes à remplir, les pointillés, les cases à cocher et
-                                les cellules de tableaux (même sans bordure extérieure) sont transformés en champs
-                                automatiquement. Vérifiez puis ajustez le résultat.
+                                rounded">Détection</b> : lignes à remplir, pointillés, cases à cocher, boutons radio
+                                (regroupés et nommés automatiquement) et cellules de tableaux (même sans bordure
+                                extérieure) sont proposés en bleu. Supprimez les champs en trop puis cliquez sur
+                                <b>Tout accepter</b> : l'ordre de tabulation est trié automatiquement.
                             </p>
                         </div>
                     </div>
@@ -1329,7 +1410,7 @@
                 try {
                     const json = JSON.stringify(Bank.items);
                     if (new Blob([json]).size > Bank.maxSize) {
-                        alert("⚠️ Banque pleine !");
+                        App.toast("Banque pleine : supprimez des éléments", 'error');
                         return false;
                     }
                     localStorage.setItem(Bank.storageKey, json);
@@ -1366,7 +1447,7 @@
             // --- CORRECTION MAJEURE ICI ---
             addFromSelection: () => {
                 const active = State.canvas.getActiveObject();
-                if (!active) { App.showModal("Erreur", "Sélectionnez un objet."); return; }
+                if (!active) { App.toast("Sélectionnez d'abord un objet sur la page", 'error'); return; }
 
                 // On clone pour ne pas toucher à l'original
                 active.clone((cloned) => {
@@ -1391,15 +1472,21 @@
                     else if (['i-text', 'text', 'textbox'].includes(active.type)) name = "Texte";
 
                     Bank.add('template', json, previewData, name);
-                    App.showModal("Sauvegardé", "Ajouté à la bibliothèque.");
+                    App.toast("Ajouté à la bibliothèque", 'success');
                 }, customProps); // <--- Ce 2ème argument est vital pour que clone() copie les props
             },
 
             remove: (id) => {
-                if (!confirm("Supprimer ?")) return;
-                Bank.items = Bank.items.filter(i => i.id !== id);
-                Bank.saveStorage();
-                Bank.render();
+                App.showConfirm("Supprimer", "Retirer cet élément de la bibliothèque ?", [
+                    {
+                        label: 'Supprimer', primary: true, onClick: () => {
+                            Bank.items = Bank.items.filter(i => i.id !== id);
+                            Bank.saveStorage();
+                            Bank.render();
+                        }
+                    },
+                    { label: 'Annuler' }
+                ]);
             },
 
             updateStorageUI: () => {
@@ -1453,6 +1540,15 @@
                 workspace.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
                 workspace.addEventListener('drop', (e) => {
                     e.preventDefault();
+
+                    // Glisser-déposer d'un fichier : PDF ou projet .json
+                    if (e.dataTransfer.files && e.dataTransfer.files.length) {
+                        const file = e.dataTransfer.files[0];
+                        if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) { App.importPdf(file); return; }
+                        if (/\.json$/i.test(file.name)) { Project.loadFile(file); return; }
+                        App.toast("Format non pris en charge (PDF ou projet .json)", 'error');
+                        return;
+                    }
 
                     const rawData = e.dataTransfer.getData('application/json');
                     if (!rawData) return;
@@ -2016,7 +2112,90 @@
                 C.viewportTransform[5] = 12 - C.pageOffset.y * z;
                 C.requestRenderAll();
             },
-            detectFields: () => { Detect.run(); },
+            detectFields: () => {
+                // Plusieurs pages ? On laisse le choix
+                if (State.totalPages > 1) {
+                    App.showConfirm("Détection", "Détecter les champs sur cette page ou sur tout le document ?", [
+                        { label: 'Tout le document', primary: true, onClick: () => Detect.runAll() },
+                        { label: 'Cette page', onClick: () => Detect.run() },
+                        { label: 'Annuler' }
+                    ]);
+                } else {
+                    Detect.run();
+                }
+            },
+            // ============================================================
+            // NOTIFICATIONS (Toasts non bloquants)
+            // ============================================================
+            toast: (msg, type = 'success', dur = 2800) => {
+                const cont = document.getElementById('toast-container');
+                if (!cont) return;
+                const icons = { success: 'fa-circle-check', info: 'fa-circle-info', error: 'fa-circle-exclamation' };
+                const el = document.createElement('div');
+                el.className = 'toast ' + type;
+                el.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span>${msg}</span>`;
+                cont.appendChild(el);
+                requestAnimationFrame(() => el.classList.add('show'));
+                setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, dur);
+            },
+            // Boîte de confirmation maison (remplace confirm() natif)
+            showConfirm: (title, msg, buttons) => {
+                document.getElementById('confirm-title').innerText = title;
+                document.getElementById('confirm-msg').innerText = msg;
+                const bar = document.getElementById('confirm-buttons');
+                bar.innerHTML = '';
+                buttons.forEach(b => {
+                    const btn = document.createElement('button');
+                    btn.className = b.primary
+                        ? 'bg-active text-white text-xs font-bold px-4 py-2 rounded hover:bg-gray-800 transition'
+                        : 'bg-gray-100 text-gray-700 text-xs font-bold px-4 py-2 rounded hover:bg-gray-200 transition';
+                    btn.innerText = b.label;
+                    btn.onclick = () => { App.hideConfirm(); if (b.onClick) b.onClick(); };
+                    bar.appendChild(btn);
+                });
+                document.getElementById('confirm-overlay').classList.remove('hidden');
+            },
+            hideConfirm: () => document.getElementById('confirm-overlay').classList.add('hidden'),
+            // Popover des réglages de création (header)
+            toggleSettings: (e) => {
+                if (e) e.stopPropagation();
+                document.getElementById('settings-pop').classList.toggle('hidden');
+            },
+            // Ajuste le zoom pour voir la page entière
+            fitScreen: () => {
+                const C = State.canvas;
+                if (!C || !C.pageW || !C.pageOffset) return;
+                const z = Math.max(0.1, Math.min((C.width - 32) / C.pageW, (C.height - 32) / C.pageH, 3));
+                C.setZoom(z);
+                C.viewportTransform[4] = (C.width - C.pageW * z) / 2 - C.pageOffset.x * z;
+                C.viewportTransform[5] = 16 - C.pageOffset.y * z;
+                C.requestRenderAll();
+            },
+            // ============================================================
+            // ÉCRAN D'ACCUEIL & MODÈLES
+            // ============================================================
+            showWelcome: () => {
+                App.renderTemplates();
+                document.getElementById('welcome-overlay').classList.remove('hidden');
+            },
+            hideWelcome: () => document.getElementById('welcome-overlay').classList.add('hidden'),
+            renderTemplates: () => {
+                const wrap = document.getElementById('welcome-templates');
+                const list = document.getElementById('tpl-list');
+                if (!wrap || !list) return;
+                if (typeof APP_MODELS === 'undefined' || !APP_MODELS.length) { wrap.classList.add('hidden'); return; }
+                wrap.classList.remove('hidden');
+                wrap.classList.add('flex');
+                list.innerHTML = '';
+                APP_MODELS.forEach((tpl, i) => {
+                    const el = document.createElement('button');
+                    el.className = 'border border-gray-200 rounded-lg overflow-hidden hover:border-blue-400 hover:shadow-md transition bg-white flex flex-col';
+                    el.innerHTML = `<img src="${tpl.thumbnail}" class="w-full h-20 object-cover object-top bg-gray-50 pointer-events-none">
+                        <span class="text-[9px] font-bold text-gray-600 p-1.5 truncate">${tpl.name}</span>`;
+                    el.onclick = () => Project.loadTemplate(i);
+                    list.appendChild(el);
+                });
+            },
             // Gestes tactiles : pincer = zoom, 2 doigts = déplacer,
             // appui long = menu contextuel, double-tap = double-clic
             initTouch: () => {
@@ -2128,7 +2307,8 @@
                 const saved = localStorage.getItem('prof_toolbox_autosave');
 
                 if (!saved) {
-                    console.log("Aucune sauvegarde trouvée.");
+                    // Premier lancement : on affiche l'écran d'accueil
+                    App.showWelcome();
                     return;
                 }
 
@@ -2137,41 +2317,42 @@
 
                     // Vérification basique pour ne pas charger n'importe quoi
                     if (!data.pages || !Array.isArray(data.pages)) {
-                        console.error("Sauvegarde corrompue");
+                        localStorage.removeItem('prof_toolbox_autosave');
+                        App.showWelcome();
                         return;
                     }
 
                     const date = new Date(data.timestamp).toLocaleString();
-                    if (confirm(`Une session précédente (${date}) a été trouvée.\nVoulez-vous la restaurer ?`)) {
+                    App.showConfirm("Session précédente", `Une session du ${date} a été trouvée.\nVoulez-vous la restaurer ?`, [
+                        {
+                            label: 'Restaurer', primary: true, onClick: () => {
+                                // 1. Restaurer les variables d'état
+                                State.pages = data.pages;
+                                State.totalPages = data.totalPages || data.pages.length;
 
-                        // 1. Restaurer les variables d'état
-                        State.pages = data.pages;
-                        State.totalPages = data.totalPages || data.pages.length;
+                                // 2. Restaurer les dimensions (TRÈS IMPORTANT pour l'alignement)
+                                if (data.dims) {
+                                    State.canvas.pageW = data.dims.w;
+                                    State.canvas.pageH = data.dims.h;
+                                    State.canvas.pageOffset = { x: data.dims.offX, y: data.dims.offY };
+                                    App.resize();
+                                }
 
-                        // 2. Restaurer les dimensions (TRÈS IMPORTANT pour l'alignement)
-                        if (data.dims) {
-                            State.canvas.pageW = data.dims.w;
-                            State.canvas.pageH = data.dims.h;
-                            State.canvas.pageOffset = { x: data.dims.offX, y: data.dims.offY };
-
-                            // On force le redimensionnement du viewport
-                            App.resize();
-                        }
-
-                        // 3. Charger la page (avec un petit délai pour être sûr que Fabric est prêt)
-                        setTimeout(() => {
-                            App.loadPage(data.currentPage || 0);
-                            App.fitPage();
-                            App.showModal("Restauration", "Votre session a été récupérée avec succès.");
-                        }, 100);
-                    } else {
-                        // Si l'utilisateur dit NON, on peut nettoyer pour ne pas redemander
-                        // localStorage.removeItem('prof_toolbox_autosave'); // Décommente si tu veux supprimer au refus
-                    }
+                                // 3. Charger la page (petit délai pour être sûr que Fabric est prêt)
+                                setTimeout(() => {
+                                    App.loadPage(data.currentPage || 0);
+                                    App.fitPage();
+                                    App.toast("Session restaurée", 'success');
+                                }, 100);
+                            }
+                        },
+                        { label: 'Non merci', onClick: () => App.showWelcome() }
+                    ]);
                 } catch (e) {
                     console.error("Erreur lors de la lecture de l'auto-save", e);
                     // Si c'est planté, on nettoie pour éviter que ça replante au prochain démarrage
                     localStorage.removeItem('prof_toolbox_autosave');
+                    App.showWelcome();
                 }
             },
             saveAuto: () => {
@@ -2243,36 +2424,42 @@
             },
 
             loadPage: (index) => {
-                State.canvas.clear();
-                const json = State.pages[index];
+                // Renvoie une promesse résolue quand la page est chargée
+                return new Promise((resolve) => {
+                    State.canvas.clear();
+                    const json = State.pages[index];
 
-                if (json) {
-                    // Si la page contient des données, on les charge
-                    State.canvas.loadFromJSON(json, () => {
-                        State.canvas.renderAll();
-                        App.restoreRefs(); // Important pour reconnecter bgObj/txtObj
+                    if (json) {
+                        // Si la page contient des données, on les charge
+                        State.canvas.loadFromJSON(json, () => {
+                            State.canvas.renderAll();
+                            App.restoreRefs(); // Important pour reconnecter bgObj/txtObj
 
-                        // On s'assure que le fond est bien non-sélectionnable
-                        const bg = State.canvas.getObjects().find(o => o.isBackground);
-                        if (bg) {
-                            bg.set({ selectable: false, evented: false, lockMovementX: true, lockMovementY: true });
-                            State.canvas.sendToBack(bg);
-                        }
+                            // On s'assure que le fond est bien non-sélectionnable
+                            const bg = State.canvas.getObjects().find(o => o.isBackground);
+                            if (bg) {
+                                bg.set({ selectable: false, evented: false, lockMovementX: true, lockMovementY: true });
+                                State.canvas.sendToBack(bg);
+                            }
 
-                        Navigator.refresh(); // Mise à jour de la liste des calques
-                    });
-                } else {
-                    // Si la page est vide (cas rare mais possible), on charge un fond blanc
-                    App.loadBlank();
-                }
-                State.currentPage = index;
-                App.updatePageIndicator();
+                            Navigator.refresh(); // Mise à jour de la liste des calques
+                            resolve();
+                        });
+                    } else {
+                        // Si la page est vide (cas rare mais possible), on charge un fond blanc
+                        App.loadBlank();
+                        resolve();
+                    }
+                    State.currentPage = index;
+                    App.updatePageIndicator();
+                });
             },
 
             changePage: (delta) => {
                 const newIndex = State.currentPage + delta;
                 // Vérification des limites (pas moins de 0, pas plus que le total)
                 if (newIndex >= 0 && newIndex < State.totalPages) {
+                    if (typeof Detect !== 'undefined') Detect.flush(); // Valide les champs détectés en attente
                     App.saveCurrentPage(); // Sauvegarder AVANT de partir
                     App.loadPage(newIndex); // Charger la nouvelle
                 }
@@ -2341,15 +2528,15 @@
 
                 // 3. NOUVEAU : On active visuellement le bouton Pinceau
                 const btnPainter = document.getElementById('btn-painter');
-                btnPainter.classList.remove('opacity-40');
-                btnPainter.classList.add('text-blue-600'); // Optionnel : mettre en couleur pour attirer l'oeil
+                if (btnPainter) {
+                    btnPainter.classList.remove('opacity-40');
+                    btnPainter.classList.add('text-blue-600');
+                }
 
                 // 4. UX Fluide : On passe automatiquement en mode Pinceau après la capture
                 App.setTool('painter');
 
-                // Petit feedback discret (Toast) au lieu d'une grosse modale bloquante
-                // (Tu peux garder App.showModal si tu préfères, mais c'est moins fluide)
-                console.log("Style copié !");
+                App.toast("Style copié — cliquez sur un objet pour l'appliquer", 'info');
             },
             pasteStyle: (target) => {
                 if (!target || !State.clipboardStyle) return;
@@ -2562,7 +2749,15 @@
                 });
 
                 // Cache le menu quand on clique ailleurs
-                document.addEventListener('click', () => App.hideCtx());
+                document.addEventListener('click', (e) => {
+                    App.hideCtx();
+                    // Ferme aussi le popover des réglages si on clique en dehors
+                    const pop = document.getElementById('settings-pop');
+                    if (pop && !pop.classList.contains('hidden')
+                        && !e.target.closest('#settings-pop') && !e.target.closest('#btn-settings')) {
+                        pop.classList.add('hidden');
+                    }
+                });
 
                 // 4. Chargement de la page blanche par défaut
                 App.loadBlank();
@@ -2915,7 +3110,7 @@
             },
 
 
-            autoSort: () => {
+            autoSort: (silent) => {
                 const objs = State.canvas.getObjects();
                 const formItems = objs.filter(o => o.ctype && !o.isBackground && !o.isGuide);
                 const others = objs.filter(o => !formItems.includes(o) && !o.isBackground);
@@ -2931,7 +3126,7 @@
                 formItems.forEach(o => State.canvas.add(o));
                 State.canvas.requestRenderAll();
                 History.save();
-                App.showModal("Tri Automatique", "L'ordre de tabulation a été réorganisé de haut en bas.");
+                if (!silent) App.toast("Ordre de tabulation réorganisé de haut en bas", 'info');
             },
             align: (mode) => {
                 const selection = State.canvas.getActiveObjects();
@@ -2989,7 +3184,7 @@
                     });
                     State.canvas.requestRenderAll();
                     History.save();
-                    App.showModal("Groupe Radio", "Le groupe '" + name + "' a été appliqué avec succès.");
+                    App.toast(`Groupe radio « ${name} » appliqué`, 'success');
                 }
             },
             copy: () => {
@@ -3537,7 +3732,15 @@
         const Project = {
             // --- NOUVELLE FONCTION ---
             new: () => {
-                if (!confirm("⚠️ Attention !\nTout travail non sauvegardé sera perdu.\nVoulez-vous vraiment créer un nouveau projet vierge ?")) return;
+                App.showConfirm("Nouveau projet", "Tout travail non sauvegardé sera perdu.\nCréer un nouveau projet vierge ?", [
+                    { label: 'Nouveau projet', primary: true, onClick: () => Project._reset() },
+                    { label: 'Annuler' }
+                ]);
+            },
+            _reset: () => {
+                if (typeof Detect !== 'undefined') Detect.pending = [];
+                const bar = document.getElementById('detect-bar');
+                if (bar) bar.classList.add('hidden');
 
                 // 1. Réinitialisation des variables d'état
                 State.pages = [];
@@ -3563,8 +3766,44 @@
 
                 // Optionnel : Supprimer l'auto-save pour ne pas recharger l'ancien projet au F5
                 localStorage.removeItem('prof_toolbox_autosave');
+                App.toast("Nouveau projet créé", 'info');
             },
             // -------------------------
+
+            // Charge un modèle de la galerie (template.js) sur une page blanche
+            loadTemplate: (index) => {
+                if (typeof APP_MODELS === 'undefined' || !APP_MODELS[index]) return;
+                const tpl = APP_MODELS[index];
+                App.hideWelcome();
+                App.loadBlank();
+                State.pdfBytes = null;
+                State.pdfDoc = null;
+
+                fabric.util.enlivenObjects(tpl.objects, (objs) => {
+                    const off = State.canvas.pageOffset;
+                    objs.forEach(o => {
+                        o.left += off.x;
+                        o.top += off.y;
+                        // Re-verrouillage standard des champs
+                        if (o.ctype && ['textfield', 'textarea', 'checkbox', 'radio', 'dropdown', 'label'].includes(o.ctype)) {
+                            o.lockRotation = true;
+                            o.setControlsVisibility({ mtr: false });
+                        }
+                        if (o.type === 'group' && o._objects) {
+                            o._objects.forEach(k => { k.selectable = false; k.evented = false; });
+                        }
+                        o.setCoords();
+                        State.canvas.add(o);
+                    });
+                    App.restoreRefs();
+                    State.canvas.requestRenderAll();
+                    Navigator.refresh();
+                    History.save();
+                    App.toast(`Modèle « ${tpl.name} » chargé`, 'success');
+                });
+
+                document.getElementById('doc-title').value = (tpl.name || 'Modele').replace(/\s+/g, '_');
+            },
 
             save: () => {
                 App.saveCurrentPage();
@@ -3587,6 +3826,11 @@
             load: (e) => {
                 const f = e.target.files[0];
                 if (!f) return;
+                Project.loadFile(f);
+                e.target.value = '';
+            },
+
+            loadFile: (f) => {
                 const r = new FileReader();
                 r.onload = (e) => {
                     try {
@@ -3608,14 +3852,14 @@
 
                         App.loadPage(0);
                         App.fitPage();
-                        App.showModal("Projet chargé", `${State.totalPages} page(s) récupérée(s).`);
+                        App.hideWelcome();
+                        App.toast(`Projet chargé : ${State.totalPages} page(s)`, 'success');
                     } catch (err) {
                         console.error(err);
-                        App.showModal("Erreur", "Fichier projet invalide.");
+                        App.toast("Fichier projet invalide", 'error');
                     }
                 };
                 r.readAsText(f);
-                e.target.value = '';
             }
         };
         document.getElementById('project-input').addEventListener('change', Project.load);
@@ -3953,11 +4197,18 @@
                     .map(sg => ({ a1: sg.s1, a2: sg.s2, b: Math.round((sg.pStart + sg.pEnd) / 2), len: sg.s2 - sg.s1 + 1, thick: sg.pEnd - sg.pStart + 1 }));
             },
 
+            // Champs proposés en attente de validation par l'utilisateur
+            pending: [],
+
+            // Lance la détection sur la page courante, en mode "proposition" :
+            // les champs apparaissent teintés en bleu et une barre permet de
+            // tout accepter ou tout annuler.
             run: async () => {
+                Detect.flush();
                 const C = State.canvas;
                 const bg = C.getObjects().find(o => o.isBackground);
                 if (!bg || bg.type !== 'image') {
-                    App.showModal("Détection", "Importez d'abord un PDF : la détection analyse le fond de la page affichée.");
+                    App.toast("Importez d'abord un PDF : la détection analyse le fond de page", 'info', 3500);
                     return;
                 }
                 App.showModal("Détection", "Analyse de la page en cours...");
@@ -3969,24 +4220,170 @@
                 } catch (err) {
                     console.error("Erreur détection :", err);
                     App.closeModal();
-                    setTimeout(() => App.showModal("Détection", "Une erreur est survenue pendant l'analyse."), 250);
+                    App.toast("Une erreur est survenue pendant l'analyse", 'error');
                     return;
                 }
 
                 App.closeModal();
-                setTimeout(() => {
-                    if (!result.created) {
-                        App.showModal("Détection", "Aucun nouveau champ détecté sur cette page.");
-                    } else {
-                        App.showModal("Détection terminée",
-                            `${result.created} champ(s) créé(s) :\n` +
-                            `• Cellules de tableau : ${result.counts.table}\n` +
-                            `• Lignes / pointillés : ${result.counts.line}\n` +
-                            `• Cases à cocher : ${result.counts.box}\n` +
-                            `• Après un libellé ":" : ${result.counts.hint}\n\n` +
-                            `Vérifiez le résultat puis supprimez ou ajustez les champs inutiles.`);
+                if (!result.objs.length) {
+                    App.toast("Aucun nouveau champ détecté sur cette page", 'info');
+                    return;
+                }
+                Detect.pending = result.objs;
+                Detect.showBar(result);
+            },
+
+            // Détection sur toutes les pages du document (acceptation directe)
+            runAll: async () => {
+                Detect.flush();
+                const original = State.currentPage;
+                let total = 0, pagesWith = 0;
+                App.showModal("Détection", "Analyse de toutes les pages...");
+                await new Promise(r => setTimeout(r, 60));
+                try {
+                    for (let i = 0; i < State.totalPages; i++) {
+                        App.saveCurrentPage();
+                        await App.loadPage(i);
+                        const bg = State.canvas.getObjects().find(o => o.isBackground);
+                        if (!bg || bg.type !== 'image') continue;
+                        const res = await Detect.analyse(bg);
+                        if (res.objs.length) {
+                            Detect.finalize(res.objs);
+                            App.autoSort(true); // Ordre de tabulation + sauvegarde historique
+                            total += res.objs.length;
+                            pagesWith++;
+                        }
+                        App.saveCurrentPage();
                     }
-                }, 250);
+                } catch (e) { console.error("Erreur détection multi-pages :", e); }
+                await App.loadPage(original);
+                App.closeModal();
+                App.toast(total ? `${total} champs créés sur ${pagesWith} page(s)` : "Aucun champ détecté",
+                    total ? 'success' : 'info', 4000);
+            },
+
+            showBar: (result) => {
+                const c = result.counts;
+                const parts = [];
+                if (c.table) parts.push(`${c.table} tableau`);
+                if (c.line) parts.push(`${c.line} ligne${c.line > 1 ? 's' : ''}`);
+                if (c.box) parts.push(`${c.box} case${c.box > 1 ? 's' : ''}`);
+                if (c.radio) parts.push(`${c.radio} radio${c.radio > 1 ? 's' : ''}`);
+                if (c.hint) parts.push(`${c.hint} libellé${c.hint > 1 ? 's' : ''}`);
+                document.getElementById('detect-bar-text').innerText =
+                    `${result.objs.length} champs proposés (${parts.join(', ')})`;
+                document.getElementById('detect-bar').classList.remove('hidden');
+                App.toast("Vérifiez les champs bleutés : supprimez les indésirables puis validez", 'info', 4200);
+            },
+
+            // Rend définitifs les champs proposés (fond transparent)
+            finalize: (objs) => {
+                objs.forEach(o => {
+                    const bg2 = o.bgObj || o;
+                    bg2.set({ fill: 'transparent' });
+                    bg2.dirty = true;
+                    o.dirty = true;
+                });
+                State.canvas.requestRenderAll();
+            },
+
+            acceptAll: () => {
+                const alive = Detect.pending.filter(o => State.canvas.contains(o));
+                Detect.pending = [];
+                document.getElementById('detect-bar').classList.add('hidden');
+                if (!alive.length) { Navigator.refresh(); return; }
+                Detect.finalize(alive);
+                App.autoSort(true); // Trie l'ordre de tabulation + sauvegarde
+                App.toast(`${alive.length} champ(s) ajouté(s), ordre de tabulation trié`, 'success');
+            },
+
+            cancelAll: () => {
+                const alive = Detect.pending.filter(o => State.canvas.contains(o));
+                if (alive.length) State.canvas.remove(...alive);
+                Detect.pending = [];
+                document.getElementById('detect-bar').classList.add('hidden');
+                State.canvas.discardActiveObject();
+                State.canvas.requestRenderAll();
+                Navigator.refresh();
+                App.toast("Détection annulée", 'info');
+            },
+
+            // Valide silencieusement les propositions en attente (changement de
+            // page, nouvel import...) pour ne jamais les perdre sans prévenir
+            flush: () => { if (Detect.pending && Detect.pending.length) Detect.acceptAll(); },
+
+            // ---------- NOMMAGE AUTOMATIQUE (via le texte du PDF) ----------
+            getTextItems: async (unit) => {
+                if (!State.pdfDoc || !window.pdfjsLib) return [];
+                const page = await State.pdfDoc.getPage(State.currentPage + 1);
+                const scale = State.pdfScale || 2;
+                const vp = page.getViewport({ scale });
+                const tc = await page.getTextContent();
+                return tc.items
+                    .filter(it => it.str && it.str.trim().length)
+                    .map(it => {
+                        const tx = pdfjsLib.Util.transform(vp.transform, it.transform);
+                        return { str: it.str, x: tx[4], y: tx[5], w: it.width * scale, fh: Math.hypot(tx[2], tx[3]) || 10 * unit };
+                    });
+            },
+
+            // Nettoie un libellé pour en faire un nom de champ PDF valide
+            cleanName: (s) => {
+                if (!s) return null;
+                let c = String(s).trim().replace(/\s*:\s*$/, '');
+                c = c.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                c = c.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+                return c ? c.slice(0, 30) : null;
+            },
+
+            // Texte le plus proche à gauche d'un point (même ligne de base)
+            labelLeftOf: (items, x, yRef, unit, maxDist) => {
+                let best = null;
+                items.forEach(it => {
+                    const end = it.x + it.w;
+                    if (Math.abs(it.y - yRef) > Math.max(it.fh * 0.9, 8 * unit)) return;
+                    if (end > x + 4 * unit) return;
+                    if (x - end > (maxDist || 80 * unit)) return;
+                    if (!best || end > best.x + best.w) best = it;
+                });
+                return best ? best.str : null;
+            },
+
+            // Texte le plus proche à droite d'un point (libellé d'une case / radio)
+            labelRightOf: (items, x, yRef, unit, maxDist) => {
+                let best = null;
+                items.forEach(it => {
+                    if (Math.abs(it.y - yRef) > Math.max(it.fh * 0.9, 8 * unit)) return;
+                    if (it.x < x - 2 * unit) return;
+                    if (it.x - x > (maxDist || 40 * unit)) return;
+                    if (!best || it.x < best.x) best = it;
+                });
+                return best ? best.str : null;
+            },
+
+            // En-tête de colonne le plus proche au-dessus d'une cellule
+            headerAbove: (items, x1, x2, yTop, yLimitTop, unit) => {
+                let best = null;
+                items.forEach(it => {
+                    const cx = it.x + it.w / 2;
+                    if (cx < x1 - 2 * unit || cx > x2 + 2 * unit) return;
+                    if (it.y >= yTop || it.y < yLimitTop - 4 * unit) return;
+                    if (!best || it.y > best.y) best = it;
+                });
+                return best ? best.str : null;
+            },
+
+            // Libellé de ligne à gauche d'une cellule (dans le tableau)
+            rowLabelLeft: (items, xLeft, y1, y2, xLimitLeft, unit) => {
+                let best = null;
+                items.forEach(it => {
+                    if (it.y < y1 || it.y > y2 + 4 * unit) return;
+                    const end = it.x + it.w;
+                    if (end > xLeft + 2 * unit) return;
+                    if (it.x < xLimitLeft - 6 * unit) return;
+                    if (!best || end > best.x + best.w) best = it;
+                });
+                return best ? best.str : null;
             },
 
             analyse: async (bg) => {
@@ -4024,6 +4421,11 @@
                     fieldH: Math.round(14 * unit),
                     tol: Math.max(3, Math.round(4 * unit))
                 };
+
+                // Texte du PDF (pour nommer les champs et trouver les libellés) —
+                // vide si le PDF d'origine n'est pas disponible
+                let textItems = [];
+                try { textItems = await Detect.getTextItems(unit); } catch (e) { console.warn("Texte PDF indisponible :", e); }
 
                 const hAll = Detect.scan(dark, W, H, true, P);
                 const vAll = Detect.scan(dark, W, H, false, P);
@@ -4073,6 +4475,134 @@
                         if (strips.filter(d => d > 0.25).length >= 2) continue;
                         boxes.push({ x: a.b, y: a.a1, w, h, checked: inner > 0.05 });
                     }
+                }
+
+                // --- 1bis. BOUTONS RADIO (petits cercles / anneaux) ---
+                // Composantes connexes de pixels sombres : un anneau a un cadre
+                // presque carré, des coins vides, les milieux de bords encrés
+                // et un trait fin.
+                const circles = [];
+                {
+                    const visited = new Uint8Array(W * H);
+                    const minD = Math.round(8 * unit), maxD = Math.round(26 * unit);
+                    const im1 = 2, im2 = Math.max(4, Math.round(2.5 * unit));
+                    for (let idx = 0; idx < dark.length; idx++) {
+                        if (!dark[idx] || visited[idx]) continue;
+                        const stack = [idx];
+                        visited[idx] = 1;
+                        let minX = W, maxX = 0, minY = H, maxY = 0, count = 0;
+                        while (stack.length) {
+                            const cur = stack.pop();
+                            const cy = (cur / W) | 0, cx = cur % W;
+                            count++;
+                            if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    if (!dx && !dy) continue;
+                                    const nx = cx + dx, ny = cy + dy;
+                                    if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+                                    const ni = ny * W + nx;
+                                    if (dark[ni] && !visited[ni]) { visited[ni] = 1; stack.push(ni); }
+                                }
+                            }
+                        }
+                        const w = maxX - minX + 1, h = maxY - minY + 1;
+                        if (w < minD || w > maxD || h < minD || h > maxD) continue;
+                        if (Math.abs(w - h) > P.tol) continue;
+                        const d = (w + h) / 2;
+                        const th = count / (Math.PI * d); // épaisseur approx. de l'anneau
+                        if (th < 0.8 || th > maxEdge) continue;
+                        // Coins vides (sinon : carré → géré par les cases à cocher).
+                        // On compare la MOYENNE des 4 coins : un cercle ~0.15
+                        // (un peu d'anticrénelage), un carré ~0.6
+                        const cWin = Math.max(2, Math.round(d * 0.18));
+                        const corners = [
+                            Detect.density(dark, W, H, minX, minY, cWin, cWin),
+                            Detect.density(dark, W, H, maxX - cWin, minY, cWin, cWin),
+                            Detect.density(dark, W, H, minX, maxY - cWin, cWin, cWin),
+                            Detect.density(dark, W, H, maxX - cWin, maxY - cWin, cWin, cWin)
+                        ];
+                        if (corners.reduce((s2, cd) => s2 + cd, 0) / 4 > 0.3) continue;
+                        if (corners.some(cd => cd > 0.45)) continue;
+                        // Milieux de bords encrés (l'anneau passe par là)
+                        const mWin = Math.max(3, Math.round(th + 2));
+                        const mids = [
+                            Detect.density(dark, W, H, minX + w / 2 - mWin / 2, minY, mWin, mWin),
+                            Detect.density(dark, W, H, minX + w / 2 - mWin / 2, maxY - mWin + 1, mWin, mWin),
+                            Detect.density(dark, W, H, minX, minY + h / 2 - mWin / 2, mWin, mWin),
+                            Detect.density(dark, W, H, maxX - mWin + 1, minY + h / 2 - mWin / 2, mWin, mWin)
+                        ];
+                        if (mids.filter(md => md > 0.3).length < 4) continue;
+                        // Isolement : rejet si l'encre touche le cercle sur 2 côtés
+                        // ou plus (lettres "o", "O", "0"...)
+                        const iStrips = [
+                            Detect.density(dark, W, H, minX - im2, minY, im2 - im1, h),
+                            Detect.density(dark, W, H, maxX + im1, minY, im2 - im1, h),
+                            Detect.density(dark, W, H, minX, minY - im2, w, im2 - im1),
+                            Detect.density(dark, W, H, minX, maxY + im1, w, im2 - im1)
+                        ];
+                        if (iStrips.filter(sd => sd > 0.25).length >= 2) continue;
+                        // Centre encré = déjà coché
+                        const cenWin = Math.max(2, Math.round(d * 0.35));
+                        const center = Detect.density(dark, W, H, minX + w / 2 - cenWin / 2, minY + h / 2 - cenWin / 2, cenWin, cenWin);
+                        circles.push({ x: minX, y: minY, w, h, checked: center > 0.2 });
+                    }
+                }
+
+                // Regroupement des cercles voisins (même ligne ou même colonne)
+                // en groupes radio ; un cercle isolé est ignoré (probable décor)
+                const radioProps = [];
+                {
+                    const grpOf = new Array(circles.length).fill(-1);
+                    let nextGrp = 0;
+                    for (let i = 0; i < circles.length; i++) {
+                        for (let j = i + 1; j < circles.length; j++) {
+                            const a = circles[i], b = circles[j];
+                            const ax = a.x + a.w / 2, ay = a.y + a.h / 2;
+                            const bx = b.x + b.w / 2, by = b.y + b.h / 2;
+                            const sameLine = Math.abs(ay - by) < a.h && Math.abs(ax - bx) < 170 * unit;
+                            const sameCol = Math.abs(ax - bx) < a.w && Math.abs(ay - by) < 45 * unit;
+                            if (!sameLine && !sameCol) continue;
+                            if (grpOf[i] === -1 && grpOf[j] === -1) { grpOf[i] = grpOf[j] = nextGrp++; }
+                            else if (grpOf[i] === -1) grpOf[i] = grpOf[j];
+                            else if (grpOf[j] === -1) grpOf[j] = grpOf[i];
+                            else if (grpOf[i] !== grpOf[j]) {
+                                const old = grpOf[j];
+                                for (let k = 0; k < grpOf.length; k++) if (grpOf[k] === old) grpOf[k] = grpOf[i];
+                            }
+                        }
+                    }
+                    const groupsMap = {};
+                    circles.forEach((c, i) => {
+                        if (grpOf[i] === -1) return; // cercle isolé
+                        (groupsMap[grpOf[i]] = groupsMap[grpOf[i]] || []).push(c);
+                    });
+                    const existingGrps = new Set(C.getObjects().filter(o => o.grp).map(o => o.grp));
+                    Object.values(groupsMap).forEach(members => {
+                        if (members.length < 2) return;
+                        members.sort((a, b) => (a.y - b.y) || (a.x - b.x));
+                        const f = members[0];
+                        // Nom du groupe : libellé à gauche du premier cercle (ex: "Sexe :")
+                        let grpName = textItems.length
+                            ? Detect.cleanName(Detect.labelLeftOf(textItems, f.x, f.y + f.h, unit, 130 * unit))
+                            : null;
+                        if (!grpName) grpName = 'Groupe_' + (State.counts.radiogroup++);
+                        while (existingGrps.has(grpName)) grpName += '_2';
+                        existingGrps.add(grpName);
+                        const seenVals = new Set();
+                        members.forEach((c, k) => {
+                            // Valeur : libellé à droite du cercle (ex: "Féminin")
+                            let val = textItems.length
+                                ? Detect.cleanName(Detect.labelRightOf(textItems, c.x + c.w, c.y + c.h, unit, 60 * unit))
+                                : null;
+                            if (!val) val = String.fromCharCode(65 + k);
+                            let vv = val, n = 2;
+                            while (seenVals.has(vv)) vv = val + '_' + (n++);
+                            seenVals.add(vv);
+                            radioProps.push({ type: 'radio', x: c.x, y: c.y, w: c.w, h: c.h, checked: c.checked, grpName, valName: vv });
+                        });
+                    });
                 }
 
                 // --- 2. LIGNES LONGUES (hors bords de cases) ---
@@ -4135,7 +4665,15 @@
                             const cell = { x: xs[col] + pad, y: ys[r] + pad, w: cw - pad * 2, h: rh - pad * 2 };
                             // Cellule contenant déjà du texte = en-tête / libellé : on saute
                             if (Detect.density(dark, W, H, cell.x + 2, cell.y + 2, cell.w - 4, cell.h - 4) > 0.012) continue;
-                            tableCells.push({ type: rh > 42 * unit ? 'textarea' : 'textfield', ...cell });
+                            // Nom auto : "LibelléDeLigne_EnTêteDeColonne" (ex: Maths_Note_1)
+                            let cellName = null;
+                            if (textItems.length) {
+                                const header = Detect.headerAbove(textItems, xs[col], xs[col + 1], ys[r], ys[0], unit);
+                                const rowLab = Detect.rowLabelLeft(textItems, xs[col], ys[r], ys[r + 1], xs[0], unit);
+                                const parts = [Detect.cleanName(rowLab), Detect.cleanName(header)].filter(Boolean);
+                                if (parts.length) cellName = parts.join('_');
+                            }
+                            tableCells.push({ type: rh > 42 * unit ? 'textarea' : 'textfield', ...cell, name: cellName });
                         }
                     }
                     hs.forEach(s => usedH.add(s));
@@ -4151,12 +4689,16 @@
                     // Et juste en dessous aussi : un trait "dans" du texte (barre de
                     // lettres en gras) a de l'encre immédiatement sous lui
                     if (Detect.density(dark, W, H, s.a1 + 2, s.b + 3, s.len - 4, Math.max(4, Math.round(4 * unit))) > 0.10) return;
-                    lineFields.push({ type: 'textfield', x: s.a1, y: s.b - fh, w: s.len, h: fh });
+                    // Nom auto : libellé à gauche de la ligne (ex: "Nom :")
+                    const lineName = textItems.length
+                        ? Detect.cleanName(Detect.labelLeftOf(textItems, s.a1, s.b, unit, 90 * unit))
+                        : null;
+                    lineFields.push({ type: 'textfield', x: s.a1, y: s.b - fh, w: s.len, h: fh, name: lineName });
                 });
 
                 // --- 5. LIBELLÉS "Nom :" sans ligne → champ après les deux-points ---
                 let hintFields = [];
-                try { hintFields = await Detect.textHints(dark, W, H, P, unit); } catch (e) { console.warn("Hints texte indisponibles :", e); }
+                try { hintFields = Detect.textHints(dark, W, H, P, unit, textItems); } catch (e) { console.warn("Hints texte indisponibles :", e); }
 
                 // --- 6. DÉDOUBLONNAGE + FILTRE avec les champs existants ---
                 const sx = bg.scaleX || 1, sy = bg.scaleY || 1;
@@ -4174,7 +4716,7 @@
                     return (ix * iy) / Math.min(a.w * a.h, b.w * b.h) > 0.3;
                 };
 
-                const counts = { table: 0, box: 0, line: 0, hint: 0 };
+                const counts = { table: 0, radio: 0, box: 0, line: 0, hint: 0 };
                 const accepted = [];
                 const consider = (list, kind) => {
                     list.forEach(p => {
@@ -4188,13 +4730,29 @@
                     });
                 };
                 consider(tableCells, 'table');
-                consider(boxes.map(b => ({ type: 'checkbox', ...b })), 'box');
+                consider(radioProps, 'radio');
+                consider(boxes.map(b => ({
+                    type: 'checkbox', ...b,
+                    // Nom auto : libellé à droite de la case (ex: "Interne")
+                    name: textItems.length
+                        ? Detect.cleanName(Detect.labelRightOf(textItems, b.x + b.w, b.y + b.h, unit, 60 * unit))
+                        : null
+                })), 'box');
                 consider(lineFields, 'line');
                 consider(hintFields, 'hint');
 
-                // --- 7. CRÉATION DES OBJETS FABRIC ---
+                // --- 7. CRÉATION DES OBJETS FABRIC (mode "proposition") ---
+                const TINT = 'rgba(59,130,246,0.12)'; // teinte bleue en attente de validation
                 const unitC = unit * sx; // pixels canvas par point PDF
-                let created = 0;
+                const usedPids = new Set(C.getObjects().filter(o => o.pid).map(o => o.pid));
+                const takeName = (base) => {
+                    if (!base) return null;
+                    let n = base, i = 2;
+                    while (usedPids.has(n)) n = base + '_' + (i++);
+                    usedPids.add(n);
+                    return n;
+                };
+                const createdObjs = [];
                 accepted.forEach(p => {
                     const l = bgPos.x + p.x * sx;
                     const t = bgPos.y + p.y * sy;
@@ -4207,41 +4765,44 @@
                         State.defaults.boxSize = Math.max(8, Math.round(Math.min(w, h)));
                         obj = Factory.createCheckbox(l, t);
                         State.defaults.boxSize = keep;
-                        obj.bgObj.set({ fill: 'transparent' });
+                        obj.bgObj.set({ fill: TINT });
+                        if (p.checked) { obj.isChecked = true; obj.markObj.set('opacity', 1); }
+                    } else if (p.type === 'radio') {
+                        const keep = State.defaults.boxSize;
+                        State.defaults.boxSize = Math.max(8, Math.round(Math.min(w, h)));
+                        obj = Factory.createRadio(l, t);
+                        State.defaults.boxSize = keep;
+                        obj.bgObj.set({ fill: TINT });
+                        if (p.grpName) obj.grp = p.grpName;
+                        if (p.valName) obj.val = p.valName;
                         if (p.checked) { obj.isChecked = true; obj.markObj.set('opacity', 1); }
                     } else {
                         obj = Factory.createInputGroup(l, t, w, h, p.type);
                         // Le trait / la bordure existe déjà sur le PDF : champ
                         // transparent à l'écran et sans bordure à l'export
                         obj.bStyle = 'none';
-                        obj.bgObj.set({ fill: 'transparent', stroke: '#9ca3af', strokeDashArray: [4, 4], strokeWidth: 1 });
+                        obj.bgObj.set({ fill: TINT, stroke: '#9ca3af', strokeDashArray: [4, 4], strokeWidth: 1 });
                         obj.txtObj.set('fontSize', Math.max(9, Math.round(Math.min(h * 0.55, 11 * unitC))));
                     }
 
-                    if (obj) { C.add(obj); created++; }
+                    if (obj) {
+                        // Nom automatique tiré des libellés du PDF
+                        const customPid = takeName(p.name);
+                        if (customPid) obj.pid = customPid;
+                        C.add(obj);
+                        createdObjs.push(obj);
+                    }
                 });
 
-                if (created) {
+                if (createdObjs.length) {
                     C.requestRenderAll();
                     Navigator.refresh();
-                    History.save();
                 }
-                return { created, counts };
+                return { objs: createdObjs, counts };
             },
 
-            // Champs déduits des libellés finissant par ":" (nécessite le PDF importé dans la session)
-            textHints: async (dark, W, H, P, unit) => {
-                if (!State.pdfDoc || !window.pdfjsLib) return [];
-                const page = await State.pdfDoc.getPage(State.currentPage + 1);
-                const scale = State.pdfScale || 2;
-                const vp = page.getViewport({ scale });
-                const tc = await page.getTextContent();
-                const items = tc.items
-                    .filter(it => it.str && it.str.trim().length)
-                    .map(it => {
-                        const tx = pdfjsLib.Util.transform(vp.transform, it.transform);
-                        return { str: it.str, x: tx[4], y: tx[5], w: it.width * scale, fh: Math.hypot(tx[2], tx[3]) || 10 * unit };
-                    });
+            // Champs déduits des libellés finissant par ":" (nécessite le texte du PDF)
+            textHints: (dark, W, H, P, unit, items) => {
                 const out = [];
                 items.forEach(it => {
                     if (!it.str.trim().endsWith(':')) return;
@@ -4257,7 +4818,7 @@
                     const y = it.y - h * 0.78;
                     // La zone doit être vierge (sinon un autre détecteur s'en charge)
                     if (Detect.density(dark, W, H, startX, y, w, h) > 0.01) return;
-                    out.push({ type: 'textfield', x: startX, y, w, h });
+                    out.push({ type: 'textfield', x: startX, y, w, h, name: Detect.cleanName(it.str) });
                 });
                 return out;
             }
@@ -4490,9 +5051,12 @@
         };
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-        document.getElementById('file-input').addEventListener('change', async e => {
-            const f = e.target.files[0];
+        // Import d'un PDF (déclenché par le bouton PDF, l'écran d'accueil ou un glisser-déposer)
+        App.importPdf = async (f) => {
             if (!f) return;
+
+            App.hideWelcome();
+            if (typeof Detect !== 'undefined') Detect.flush();
 
             // UI : Petit loading (optionnel mais sympa)
             App.showModal("Chargement", "Importation du PDF en cours...");
@@ -4559,6 +5123,26 @@
             App.loadPage(0);
             App.fitPage();
 
+            // On met le nom du document à jour à partir du fichier
+            const docTitle = document.getElementById('doc-title');
+            if (docTitle && f.name) docTitle.value = f.name.replace(/\.pdf$/i, '');
+
+            // On propose la détection automatique des champs
+            setTimeout(() => {
+                const multi = State.totalPages > 1;
+                const buttons = [];
+                if (multi) buttons.push({ label: 'Tout le document', primary: true, onClick: () => Detect.runAll() });
+                buttons.push({ label: multi ? 'Cette page' : 'Détecter', primary: !multi, onClick: () => Detect.run() });
+                buttons.push({ label: 'Plus tard' });
+                App.showConfirm("PDF importé",
+                    (multi ? `Le document contient ${State.totalPages} pages.\n` : '') +
+                    "Voulez-vous détecter automatiquement les champs (lignes, cases, radios, tableaux) ?", buttons);
+            }, 300);
+        };
+
+        document.getElementById('file-input').addEventListener('change', e => {
+            const f = e.target.files[0];
+            if (f) App.importPdf(f);
             // Reset de l'input pour pouvoir réimporter le même fichier si besoin
             e.target.value = '';
         });
