@@ -340,10 +340,453 @@
         }
 
         /* Rouge */
+
+        /* ==========================================================
+           RESPONSIVE — MOBILE & TABLETTE
+           ========================================================== */
+
+        /* --- Coque de l'application (flex vertical : header / contenu / barre du bas) --- */
+        body.app-shell {
+            height: 100vh;
+            height: 100dvh;
+            /* évite le "rebond" élastique iOS quand on manipule le canvas */
+            overscroll-behavior: none;
+        }
+
+        #app-main {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        /* Le canvas ne doit jamais déclencher le scroll / pinch natif du navigateur */
+        #workspace,
+        #workspace .canvas-container,
+        #workspace canvas {
+            touch-action: none;
+        }
+
+        /* Hauteur de la barre d'onglets du bas (mobile / tablette) */
+        :root {
+            --bar-h: 56px;
+            --bar-safe: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px));
+        }
+
+        /* --- Voile sombre derrière les tiroirs --- */
+        #mobile-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            z-index: 55;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s ease;
+        }
+
+        body.drawer-open #mobile-backdrop {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* --- Éléments réservés au mobile / tablette (masqués par défaut) --- */
+        #mobile-bottombar,
+        #btn-mobile-tools,
+        #btn-mobile-more,
+        .drawer-head,
+        .hdr-label,
+        .hdr-icon,
+        .nav-move {
+            display: none;
+        }
+
+        .bar-btn {
+            flex: 1 1 0;
+            min-width: 0;
+            height: 46px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+            color: #8e8e93;
+            border-radius: 10px;
+            transition: background .15s, color .15s;
+        }
+
+        .bar-btn i {
+            font-size: 16px;
+        }
+
+        .bar-btn.active {
+            color: #1c1c1e;
+            background: #ececf1;
+        }
+
+        .bar-btn.has-badge::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            margin-left: 8px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #2563eb;
+        }
+
+        /* Boutons monter / descendre un calque (alternative tactile au glisser-déposer) */
+        .nav-move {
+            align-items: center;
+            gap: 2px;
+            margin-left: auto;
+            padding-left: 4px;
+        }
+
+        .nav-mv {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            background: #f3f4f6;
+            color: #6b7280;
+            font-size: 9px;
+        }
+
+        .nav-mv:active {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        body.is-touch .nav-move {
+            display: flex;
+        }
+
+        /* --- Mode Aperçu (piloté par une classe, plus par des styles inline) --- */
+        body.preview-on #toolbar-main {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @media (min-width: 1024px) {
+            body.preview-on #sidebar-tools {
+                transform: translateX(-100%);
+            }
+
+            body.preview-on #panel-right {
+                transform: translateX(100%);
+            }
+
+            #mobile-backdrop {
+                display: none;
+            }
+        }
+
+        /* ==========================================================
+           TABLETTE & MOBILE ( < 1024px )
+           Les deux panneaux latéraux deviennent des tiroirs coulissants
+           ========================================================== */
+        @media (max-width: 1023px) {
+
+            #app-header {
+                height: 52px;
+                padding-left: 8px;
+                padding-right: 8px;
+                gap: 6px;
+            }
+
+            #hdr-left {
+                flex: 1 1 auto;
+                min-width: 0;
+                gap: 6px;
+            }
+
+            #hdr-sep,
+            #hdr-pencil {
+                display: none;
+            }
+
+            #hdr-title-wrap {
+                flex: 1 1 auto;
+                min-width: 0;
+                margin-left: 0;
+            }
+
+            #doc-title {
+                width: 100%;
+                max-width: 190px;
+                min-width: 0;
+                text-align: left;
+            }
+
+            #doc-title:focus {
+                width: 100%;
+            }
+
+            #btn-mobile-tools,
+            #btn-mobile-more {
+                display: flex;
+            }
+
+            /* --- Tiroirs latéraux ---
+               Ils s'arrêtent au-dessus de la barre du bas, qui reste
+               accessible pour passer d'un panneau à l'autre. */
+            #mobile-backdrop {
+                bottom: var(--bar-safe);
+            }
+
+            #sidebar-tools,
+            #panel-right {
+                position: fixed;
+                top: 0;
+                bottom: var(--bar-safe);
+                z-index: 60;
+                width: 300px;
+                max-width: 86vw;
+                box-shadow: 0 0 40px rgba(0, 0, 0, .28);
+                transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+            }
+
+            #sidebar-tools {
+                left: 0;
+                transform: translateX(-102%);
+            }
+
+            #panel-right {
+                right: 0;
+                transform: translateX(102%);
+            }
+
+            #sidebar-tools.is-open,
+            #panel-right.is-open {
+                transform: translateX(0);
+            }
+
+            .drawer-head {
+                display: flex;
+            }
+
+            /* --- Panneau "Style" (ex barre d'outils centrale) en menu déroulant --- */
+            #toolbar-main {
+                display: none;
+                position: fixed;
+                top: 58px;
+                left: 8px;
+                right: 8px;
+                z-index: 70;
+                background: #fff;
+                border: 1px solid #e5e5e5;
+                border-radius: 12px;
+                box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+                padding: 10px;
+                flex-wrap: wrap;
+                gap: 8px;
+                max-height: 62vh;
+                overflow-y: auto;
+            }
+
+            body.style-open #toolbar-main {
+                display: flex;
+            }
+
+            #toolbar-main>div {
+                flex-wrap: wrap;
+            }
+
+            #toolbar-main>div:last-child {
+                border-left: none;
+                padding-left: 0;
+                margin-left: 0;
+            }
+
+            /* --- Menu "..." du header --- */
+            #hdr-more-group {
+                display: none;
+                position: fixed;
+                top: 58px;
+                right: 8px;
+                z-index: 70;
+                flex-direction: column;
+                align-items: stretch;
+                background: #fff;
+                border: 1px solid #e5e5e5;
+                border-radius: 12px;
+                box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+                padding: 6px;
+                gap: 2px;
+                min-width: 215px;
+            }
+
+            body.more-open #hdr-more-group {
+                display: flex;
+            }
+
+            #hdr-more-group>button {
+                width: 100%;
+                height: 42px;
+                border-radius: 8px;
+                justify-content: flex-start;
+                gap: 12px;
+                padding: 0 12px;
+                font-size: 13px;
+                font-weight: 500;
+                color: #1c1c1e;
+                margin: 0;
+            }
+
+            #hdr-more-group>button i {
+                width: 18px;
+                text-align: center;
+            }
+
+            #hdr-more-group .hdr-label {
+                display: inline;
+            }
+
+            #hdr-more-group .hdr-icon {
+                display: inline-block;
+            }
+
+            #hdr-more-group .hdr-compact {
+                display: none;
+            }
+
+            /* --- Barre d'onglets du bas --- */
+            #mobile-bottombar {
+                display: flex;
+                position: relative;
+                z-index: 58;
+                min-height: var(--bar-h);
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+
+            #coord-display {
+                display: none;
+            }
+
+            /* Cibles tactiles plus généreuses dans les panneaux */
+            .tool-btn {
+                height: 44px;
+            }
+
+            .tab-btn {
+                padding: 14px 10px;
+                font-size: 12px;
+            }
+
+            .nav-item {
+                padding: 12px 10px;
+                font-size: 12px;
+            }
+
+            .nav-delete-btn {
+                opacity: 1;
+            }
+
+            .bank-del-btn {
+                opacity: 1;
+            }
+
+            #help-box {
+                width: 94vw;
+                height: 86vh;
+            }
+
+            #help-tabs {
+                overflow-x: auto;
+                gap: 18px;
+                padding-left: 16px;
+                padding-right: 16px;
+                scrollbar-width: none;
+            }
+
+            #help-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            #help-tabs button {
+                white-space: nowrap;
+            }
+        }
+
+        /* ==========================================================
+           MOBILE ( < 768px )
+           ========================================================== */
+        @media (max-width: 767px) {
+
+            #hdr-brand-text {
+                display: none;
+            }
+
+            #hdr-actions {
+                gap: 6px;
+            }
+
+            #help-box {
+                width: 100vw;
+                height: 100dvh;
+                max-height: 100dvh;
+                border-radius: 0;
+            }
+
+            #help-overlay {
+                padding: 0;
+            }
+
+            /* Tableau des raccourcis : une seule colonne sur téléphone
+               (le col-span-2 recréerait sinon une 2e colonne implicite) */
+            #hc-shortcuts .grid-cols-2 {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            #hc-shortcuts .col-span-2 {
+                grid-column: auto;
+            }
+
+            #modal-box {
+                width: 88vw;
+            }
+
+            #context-menu {
+                width: 210px;
+                font-size: 13px;
+            }
+
+            #context-menu button {
+                padding-top: 12px;
+                padding-bottom: 12px;
+            }
+
+            #toast-container {
+                left: 12px;
+                right: 12px;
+                bottom: 12px;
+            }
+
+            .toast {
+                width: 100%;
+            }
+
+            #page-nav {
+                padding: 6px 12px;
+                gap: 12px;
+            }
+        }
+
+        /* Écrans très étroits : on récupère de la place dans le header */
+        @media (max-width: 380px) {
+            #hdr-history {
+                display: none;
+            }
+        }
     </style>
 </head>
 
-<body class="bg-bg h-screen w-screen flex flex-col text-text">
+<body class="app-shell bg-bg h-screen w-screen flex flex-col text-text">
 
     <div id="modal-overlay"
         class="fixed inset-0 bg-black/40 z-[100] hidden flex items-center justify-center backdrop-blur-sm">
@@ -357,21 +800,29 @@
         </div>
     </div>
 
-    <header class="h-14 bg-panel border-b border-border flex items-center px-5 justify-between shrink-0 z-20">
-        <div class="flex items-center gap-4">
-            <div class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-cube"></i> Studio</div>
-            <div class="h-5 w-px bg-border mx-1"></div>
-            <div class="flex items-center ml-4 group">
+    <header id="app-header"
+        class="h-14 bg-panel border-b border-border flex items-center px-5 justify-between shrink-0 z-20">
+        <div id="hdr-left" class="flex items-center gap-4 min-w-0">
+            <button id="btn-mobile-tools" onclick="MobileUI.toggleDrawer('tools')"
+                class="w-9 h-9 items-center justify-center rounded-lg hover:bg-bg text-gray-600 shrink-0"
+                title="Outils et calques" aria-label="Ouvrir les outils">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="font-bold text-lg flex items-center gap-2 shrink-0"><i class="fa-solid fa-cube"></i> <span
+                    id="hdr-brand-text">Studio</span></div>
+            <div id="hdr-sep" class="h-5 w-px bg-border mx-1"></div>
+            <div id="hdr-title-wrap" class="flex items-center ml-4 group min-w-0">
                 <input type="text" id="doc-title" value="Mon_Formulaire"
                     class="bg-transparent text-gray-600 text-sm font-medium px-2 py-1 rounded border border-transparent hover:bg-gray-50 hover:text-gray-900 focus:bg-white focus:text-black focus:ring-1 focus:ring-gray-200 focus:outline-none transition-all duration-300 w-24 focus:w-64 text-right placeholder-gray-400"
                     placeholder="Nom...">
 
                 <span class="text-gray-400 text-xs ml-0.5 pt-0.5 select-none">.pdf</span>
 
-                <i class="fa-solid fa-pencil text-gray-300 text-[10px] ml-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                <i id="hdr-pencil"
+                    class="fa-solid fa-pencil text-gray-300 text-[10px] ml-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     onclick="document.getElementById('doc-title').focus()"></i>
             </div>
-            <div class="flex gap-1">
+            <div id="hdr-history" class="flex gap-1 shrink-0">
                 <button onclick="History.undo()"
                     class="w-8 h-8 flex items-center justify-center rounded hover:bg-bg text-slate-500 hover:text-black"
                     title="Annuler (Ctrl+Z)"><i class="fa-solid fa-arrow-rotate-left text-xs"></i></button>
@@ -450,42 +901,59 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <button id="btn-flow-toggle" onclick="App.toggleFlowLines()"
-                class="flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 rounded hover:text-blue-600 hover:border-blue-400 transition-all"
-                title="Afficher/Masquer le parcours de tabulation">
-                <i class="fa-solid fa-route text-[11px]"></i>
-            </button>
-            <button onclick="App.togglePreview()" id="btn-preview"
-                class="text-xs font-bold text-gray-500 hover:text-black hover:bg-bg px-3 py-2 rounded transition flex items-center gap-2"
-                title="Mode Aperçu">
-                <i class="fa-regular fa-eye"></i> </button>
-            <button onclick="document.getElementById('file-input').click()"
-                class="text-xs font-bold text-gray-500 hover:text-black hover:bg-bg px-3 py-2 rounded transition"
-                title="Importer un fichier PDF">PDF</button>
+        <div id="hdr-actions" class="flex items-center gap-3 shrink-0">
+            <div id="hdr-more-group" class="flex items-center gap-3">
+                <button id="btn-flow-toggle" onclick="App.toggleFlowLines()"
+                    class="flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 rounded hover:text-blue-600 hover:border-blue-400 transition-all"
+                    title="Afficher/Masquer le parcours de tabulation">
+                    <i class="fa-solid fa-route text-[11px]"></i><span class="hdr-label">Parcours de saisie</span>
+                </button>
+                <button onclick="App.togglePreview()" id="btn-preview"
+                    class="text-xs font-bold text-gray-500 hover:text-black hover:bg-bg px-3 py-2 rounded transition flex items-center gap-2"
+                    title="Mode Aperçu">
+                    <i class="fa-regular fa-eye"></i><span class="hdr-label">Mode aperçu</span> </button>
+                <button onclick="document.getElementById('file-input').click()"
+                    class="text-xs font-bold text-gray-500 hover:text-black hover:bg-bg px-3 py-2 rounded transition flex items-center gap-2"
+                    title="Importer un fichier PDF"><i class="fa-solid fa-file-import hdr-icon"></i><span
+                        class="hdr-compact">PDF</span><span class="hdr-label">Importer un PDF</span></button>
+
+                <button
+                    onclick="if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen();"
+                    class="text-gray-400 hover:text-blue-600 w-8 h-8 rounded-full border border-transparent hover:border-blue-100 hover:bg-blue-50 transition flex items-center justify-center ml-2"
+                    title="Plein Écran">
+                    <i class="fa-solid fa-expand"></i><span class="hdr-label">Plein écran</span>
+                </button>
+
+                <button onclick="App.toggleHelp()"
+                    class="text-gray-400 hover:text-blue-600 w-8 h-8 rounded-full border border-transparent hover:border-blue-100 hover:bg-blue-50 transition flex items-center justify-center ml-1"
+                    title="Centre d'aide et Raccourcis">
+                    <i class="fa-solid fa-circle-question text-lg"></i><span class="hdr-label">Aide et
+                        raccourcis</span>
+                </button>
+            </div>
 
             <button onclick="Exporter.download()"
-                class="bg-active text-white text-xs font-bold px-4 py-2 rounded shadow-md hover:bg-gray-800 transition flex items-center gap-2"
+                class="bg-active text-white text-xs font-bold px-4 py-2 rounded shadow-md hover:bg-gray-800 transition flex items-center gap-2 shrink-0"
                 title="Télécharger le document final">Export</button>
 
-            <button
-                onclick="if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen();"
-                class="text-gray-400 hover:text-blue-600 w-8 h-8 rounded-full border border-transparent hover:border-blue-100 hover:bg-blue-50 transition flex items-center justify-center ml-2"
-                title="Plein Écran">
-                <i class="fa-solid fa-expand"></i>
-            </button>
-
-            <button onclick="App.toggleHelp()"
-                class="text-gray-400 hover:text-blue-600 w-8 h-8 rounded-full border border-transparent hover:border-blue-100 hover:bg-blue-50 transition flex items-center justify-center ml-1"
-                title="Centre d'aide et Raccourcis">
-                <i class="fa-solid fa-circle-question text-lg"></i>
+            <button id="btn-mobile-more" onclick="MobileUI.toggleMore()"
+                class="w-9 h-9 items-center justify-center rounded-lg hover:bg-bg text-gray-600 shrink-0"
+                title="Plus d'options" aria-label="Plus d'options">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
             </button>
         </div>
     </header>
 
-    <div class="flex flex-1 h-[calc(100vh-56px)]">
+    <div id="app-main" class="flex flex-1 min-h-0">
         <aside id="sidebar-tools"
             class="w-[220px] bg-panel border-r border-border flex flex-col shrink-0 transition-transform duration-300 z-10">
+
+            <div class="drawer-head items-center justify-between px-3 py-2 border-b border-border bg-white shrink-0">
+                <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Outils &amp; Calques</span>
+                <button onclick="MobileUI.closeAll()"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500"
+                    aria-label="Fermer"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
 
             <div class="p-2 border-b border-border bg-white">
                 <span class="text-[9px] font-bold uppercase text-gray-400 ml-1 mb-2 block">Outils</span>
@@ -610,7 +1078,7 @@
                         <i class="fa-solid fa-minus text-xs"></i>
                     </button>
 
-                    <button onclick="App.resetZoom()"
+                    <button onclick="App.resetZoom()" id="btn-zoom-level"
                         class="px-2 h-8 flex items-center justify-center hover:bg-gray-50 text-gray-600 text-[10px] font-bold font-mono active:bg-gray-100 min-w-[50px] transition"
                         title="Réinitialiser (100%)">
                         100%
@@ -620,6 +1088,12 @@
                         class="w-8 h-8 flex items-center justify-center hover:bg-gray-50 text-gray-600 active:bg-gray-100 border-l border-gray-200 transition"
                         title="Zoomer (+)">
                         <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+
+                    <button onclick="App.fitToScreen()"
+                        class="w-8 h-8 flex items-center justify-center hover:bg-gray-50 text-gray-600 active:bg-gray-100 border-l border-gray-200 transition"
+                        title="Ajuster la page à l'écran">
+                        <i class="fa-solid fa-maximize text-xs"></i>
                     </button>
                 </div>
 
@@ -632,6 +1106,12 @@
 
         <aside id="panel-right"
             class="w-72 bg-panel border-l border-border flex flex-col shrink-0 z-10 transition-transform duration-300">
+            <div class="drawer-head items-center justify-between px-3 py-2 border-b border-border bg-white shrink-0">
+                <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Réglages</span>
+                <button onclick="MobileUI.closeAll()"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500"
+                    aria-label="Fermer"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
             <div class="flex border-b border-border bg-gray-50">
                 <button onclick="App.setSideTab('props')" id="tab-btn-props" class="tab-btn active">Propriétés</button>
                 <button onclick="App.setSideTab('bank')" id="tab-btn-bank" class="tab-btn">Banque</button>
@@ -851,6 +1331,23 @@
         </aside>
     </div>
 
+    <div id="mobile-backdrop" onclick="MobileUI.closeAll()"></div>
+
+    <nav id="mobile-bottombar" class="shrink-0 bg-panel border-t border-border items-center gap-1 px-2 py-1 select-none">
+        <button id="bar-tools" class="bar-btn relative" onclick="MobileUI.toggleDrawer('tools')">
+            <i class="fa-solid fa-toolbox"></i><span>Outils</span>
+        </button>
+        <button id="bar-style" class="bar-btn relative" onclick="MobileUI.toggleStyle()">
+            <i class="fa-solid fa-sliders"></i><span>Style</span>
+        </button>
+        <button id="bar-preview" class="bar-btn relative" onclick="App.togglePreview()">
+            <i class="fa-regular fa-eye"></i><span>Aperçu</span>
+        </button>
+        <button id="bar-props" class="bar-btn relative" onclick="MobileUI.toggleDrawer('props')">
+            <i class="fa-solid fa-list-check"></i><span>Propriétés</span>
+        </button>
+    </nav>
+
     <input type="file" id="file-input" class="hidden" accept="application/pdf">
     <input type="file" id="project-input" class="hidden" accept=".json">
     <input type="file" id="img-input" class="hidden" accept="image/png, image/jpeg, image/jpg">
@@ -866,7 +1363,7 @@
                         class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <div class="flex border-b border-gray-200 px-6 gap-6 text-sm font-medium text-gray-500">
+            <div id="help-tabs" class="flex border-b border-gray-200 px-6 gap-6 text-sm font-medium text-gray-500">
                 <button onclick="App.setHelpTab('tuto')" id="ht-tuto"
                     class="help-tab py-3 border-b-2 border-transparent hover:text-blue-600 active-tab">Tutoriel</button>
                 <button onclick="App.setHelpTab('shortcuts')" id="ht-shortcuts"
@@ -922,6 +1419,19 @@
                                     class="bg-black text-white px-1 rounded">Export</b> pour télécharger votre PDF
                                 final, prêt à être rempli !</p>
                         </div>
+                    </div>
+
+                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <h4 class="font-bold text-blue-800 text-xs mb-2 flex items-center gap-2"><i
+                                class="fa-solid fa-mobile-screen-button"></i> Sur mobile et tablette</h4>
+                        <p class="text-xs text-blue-700 leading-relaxed">
+                            • <b>Un doigt</b> : déplace la page (ou l'objet si vous partez d'un objet).
+                            <br>• <b>Deux doigts</b> : zoom et déplacement simultanés.
+                            <br>• <b>Appui long</b> : ouvre le menu (dupliquer, supprimer...).
+                            <br>• <b>Double tap</b> : coche une case / édite un texte.
+                            <br>• Les panneaux <b>Outils</b> et <b>Propriétés</b> s'ouvrent depuis la barre du bas.
+                            <br>• Dans la <b>Banque</b>, touchez un modèle pour l'insérer au centre de la page.
+                        </p>
                     </div>
                 </div>
 
@@ -1083,6 +1593,7 @@
     <script>
         
         document.addEventListener('DOMContentLoaded', () => {
+            MobileUI.init();
             App.init();
             Bank.init(); // <--- AJOUTER ICI
         });
@@ -1092,6 +1603,104 @@
         }
 
         const customProps = ['ctype', 'pid', 'grp', 'val', 'opts', 'bStyle', 'isChecked', 'fmt', 'tAlign', 'lockScalingX', 'lockScalingY', 'srcObj', 'id', 'isBackground', 'evented', 'selectable'];
+
+        // ============================================================
+        // INTERFACE MOBILE / TABLETTE
+        // Les deux panneaux latéraux deviennent des tiroirs coulissants,
+        // pilotés par la barre d'onglets du bas.
+        // ============================================================
+        const MobileUI = {
+            // Sous 1024px on bascule en mode "tiroirs" (cf. media queries)
+            isCompact: () => window.matchMedia('(max-width: 1023px)').matches,
+            isTouch: () => ('ontouchstart' in window) || navigator.maxTouchPoints > 0,
+
+            el: (name) => document.getElementById(name === 'tools' ? 'sidebar-tools' : 'panel-right'),
+
+            openDrawer: (name) => {
+                const target = MobileUI.el(name);
+                const other = MobileUI.el(name === 'tools' ? 'props' : 'tools');
+                if (!target) return;
+                other.classList.remove('is-open');
+                target.classList.add('is-open');
+                document.body.classList.add('drawer-open');
+                document.body.classList.remove('style-open', 'more-open');
+                MobileUI.sync();
+            },
+
+            toggleDrawer: (name) => {
+                const target = MobileUI.el(name);
+                if (target && target.classList.contains('is-open')) MobileUI.closeAll();
+                else MobileUI.openDrawer(name);
+            },
+
+            toggleStyle: () => {
+                const wasOpen = document.body.classList.contains('style-open');
+                MobileUI.closeAll();
+                if (!wasOpen) document.body.classList.add('style-open');
+                MobileUI.sync();
+            },
+
+            toggleMore: () => {
+                const wasOpen = document.body.classList.contains('more-open');
+                MobileUI.closeAll();
+                if (!wasOpen) document.body.classList.add('more-open');
+                MobileUI.sync();
+            },
+
+            closeAll: () => {
+                document.getElementById('sidebar-tools').classList.remove('is-open');
+                document.getElementById('panel-right').classList.remove('is-open');
+                document.body.classList.remove('drawer-open', 'style-open', 'more-open');
+                MobileUI.sync();
+            },
+
+            // Ferme les tiroirs après une action (choix d'un outil par ex.)
+            closeIfCompact: () => { if (MobileUI.isCompact()) MobileUI.closeAll(); },
+
+            // Petite pastille bleue sur "Propriétés" quand un objet est sélectionné
+            setHasSelection: (has) => {
+                const btn = document.getElementById('bar-props');
+                if (btn) btn.classList.toggle('has-badge', !!has);
+            },
+
+            sync: () => {
+                const body = document.body;
+                const map = {
+                    'bar-tools': document.getElementById('sidebar-tools').classList.contains('is-open'),
+                    'bar-props': document.getElementById('panel-right').classList.contains('is-open'),
+                    'bar-style': body.classList.contains('style-open'),
+                    'bar-preview': body.classList.contains('preview-on')
+                };
+                Object.keys(map).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.toggle('active', map[id]);
+                });
+            },
+
+            init: () => {
+                if (MobileUI.isTouch()) document.body.classList.add('is-touch');
+
+                // Retour au format bureau : on remet tout à plat
+                window.addEventListener('resize', () => {
+                    if (!MobileUI.isCompact()) MobileUI.closeAll();
+                });
+
+                // Échap ferme le panneau ouvert
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') MobileUI.closeAll();
+                });
+
+                // Un clic hors des menus déroulants les referme
+                document.addEventListener('pointerdown', (e) => {
+                    if (!document.body.classList.contains('style-open') && !document.body.classList.contains('more-open')) return;
+                    if (e.target.closest('#toolbar-main, #hdr-more-group, #bar-style, #btn-mobile-more')) return;
+                    document.body.classList.remove('style-open', 'more-open');
+                    MobileUI.sync();
+                }, true);
+
+                MobileUI.sync();
+            }
+        };
         // --- GESTION DE LA BANQUE (Corrigé) ---
         const Bank = {
             items: [],
@@ -1237,6 +1846,16 @@
                         e.dataTransfer.setData('application/json', JSON.stringify({ origin: 'bank', type: item.type, content: item.content }));
                         e.dataTransfer.effectAllowed = 'copy';
                     });
+
+                    // Tactile : le glisser-déposer HTML5 n'existe pas,
+                    // un simple appui insère l'élément au centre de la page.
+                    el.addEventListener('click', (ev) => {
+                        if (!document.body.classList.contains('is-touch')) return;
+                        if (ev.target.closest('[onclick]')) return;
+                        DropZone.insertAtViewCenter({ origin: 'bank', type: item.type, content: item.content });
+                        MobileUI.closeIfCompact();
+                    });
+
                     container.appendChild(el);
                 });
             }
@@ -1256,9 +1875,14 @@
                     try {
                         const data = JSON.parse(rawData);
                         if (data.origin !== 'bank') return;
+                        DropZone.insert(data, State.canvas.getPointer(e));
+                    } catch (err) { console.error("Erreur Drop:", err); }
+                });
+            },
 
-                        const pointer = State.canvas.getPointer(e);
-
+            // Point d'entrée commun : glisser-déposer (souris) ET simple appui (tactile)
+            insert: (data, pointer) => {
+                try {
                         if (data.type === 'template') {
                             const jsonContent = JSON.parse(data.content);
 
@@ -1388,7 +2012,17 @@
                                 History.save();
                             });
                         }
-                    } catch (err) { console.error("Erreur Drop:", err); }
+                } catch (err) { console.error("Erreur Insertion:", err); }
+            },
+
+            // Insertion au centre de la vue : équivalent tactile du glisser-déposer
+            insertAtViewCenter: (data) => {
+                const C = State.canvas;
+                const zoom = C.getZoom();
+                const vpt = C.viewportTransform;
+                DropZone.insert(data, {
+                    x: (C.getWidth() / 2 - vpt[4]) / zoom,
+                    y: (C.getHeight() / 2 - vpt[5]) / zoom
                 });
             }
         };
@@ -1447,6 +2081,20 @@
             dom: document.getElementById('navigator-list'),
             lastSelectedIndex: -1,
 
+            // Déplace un calque d'un cran dans la liste (alternative tactile au drag & drop)
+            move: (obj, dir) => {
+                const navObjs = State.canvas.getObjects().filter(o => !o.isBackground && !o.isGuide);
+                const pos = navObjs.indexOf(obj);
+                const neighbour = navObjs[pos + dir];
+                if (pos === -1 || !neighbour) return;
+
+                obj.moveTo(State.canvas.getObjects().indexOf(neighbour));
+                App.syncSequenceFromLayers();
+                State.canvas.requestRenderAll();
+                History.save();
+                Navigator.refresh();
+            },
+
             refresh: () => {
                 const list = Navigator.dom;
                 list.innerHTML = '';
@@ -1483,11 +2131,24 @@
                     div.innerHTML = `
                 <div class="flex items-center gap-2 flex-1 overflow-hidden pointer-events-none">
                     <span class="text-gray-300 w-4 text-[9px] text-center">${index + 1}</span>
-                    <i class="fa-solid ${icon} text-gray-400"></i> 
+                    <i class="fa-solid ${icon} text-gray-400"></i>
                     <span class="truncate text-[10px] font-medium">${label}</span>
                     ${seqBadge}
                 </div>
+                <div class="nav-move">
+                    <button class="nav-mv" data-dir="-1" title="Monter"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button class="nav-mv" data-dir="1" title="Descendre"><i class="fa-solid fa-chevron-down"></i></button>
+                </div>
             `;
+
+                    // Sur écran tactile, le glisser-déposer HTML5 n'existe pas :
+                    // ces deux boutons permettent de réordonner les calques au doigt.
+                    div.querySelectorAll('.nav-mv').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            Navigator.move(o, parseInt(btn.dataset.dir));
+                        });
+                    });
 
                     // --- Events Clic (Selection) ---
                     div.addEventListener('click', (e) => {
@@ -1763,19 +2424,55 @@
         };
         const App = {
             setZoom: (delta) => {
-                let zoom = State.canvas.getZoom();
+                const C = State.canvas;
+                let zoom = C.getZoom();
                 zoom += delta;
                 if (zoom > 5) zoom = 5;
                 if (zoom < 0.1) zoom = 0.1;
-                State.canvas.setZoom(zoom);
-                State.canvas.requestRenderAll();
+                // On zoome au centre du viewport (et pas sur le coin haut-gauche)
+                C.zoomToPoint(new fabric.Point(C.getWidth() / 2, C.getHeight() / 2), zoom);
+                App.updateZoomLabel();
+                C.requestRenderAll();
+            },
+            // Recadre la vue sur la page, quel que soit le zoom demandé
+            centerPage: (zoom) => {
+                const C = State.canvas;
+                if (!C || !C.pageW) return;
+                const off = C.pageOffset || { x: 0, y: 0 };
+                const pad = MobileUI.isCompact() ? 10 : 20;
+                const shownH = C.pageH * zoom;
+                // Si la page tient entièrement dans la vue, on la centre aussi verticalement
+                const top = shownH < C.getHeight() ? (C.getHeight() - shownH) / 2 : pad;
+
+                const vpt = C.viewportTransform.slice();
+                vpt[4] = (C.getWidth() - C.pageW * zoom) / 2 - off.x * zoom;
+                vpt[5] = top - off.y * zoom;
+                // setViewportTransform (et pas une écriture directe) : Fabric en profite
+                // pour recalculer les zones cliquables de tous les objets.
+                C.setViewportTransform(vpt);
             },
             resetZoom: () => {
                 State.canvas.setZoom(1);
-                // Centre la vue
-                State.canvas.viewportTransform[4] = (State.canvas.width - State.canvas.pageW) / 2;
-                State.canvas.viewportTransform[5] = 20;
-                State.canvas.requestRenderAll();
+                App.centerPage(1);
+                App.updateZoomLabel();
+            },
+            // Ajuste la page à la taille de l'écran (indispensable sur mobile :
+            // une page A4 fait 595px de large, plus que la plupart des téléphones)
+            fitToScreen: () => {
+                const C = State.canvas;
+                if (!C || !C.pageW || !C.pageH) return;
+                const pad = MobileUI.isCompact() ? 16 : 40;
+                const zx = (C.getWidth() - pad * 2) / C.pageW;
+                const zy = (C.getHeight() - pad * 2) / C.pageH;
+                let z = Math.min(zx, zy);
+                z = Math.min(5, Math.max(0.1, z));
+                C.setZoom(z);
+                App.centerPage(z);
+                App.updateZoomLabel();
+            },
+            updateZoomLabel: () => {
+                const el = document.getElementById('btn-zoom-level');
+                if (el && State.canvas) el.innerText = Math.round(State.canvas.getZoom() * 100) + '%';
             },
             checkAutoSave: () => {
                 const saved = localStorage.getItem('prof_toolbox_autosave');
@@ -1857,6 +2554,138 @@
                 }
             },
             hideCtx: () => { document.getElementById('context-menu').classList.add('hidden'); },
+
+            // Coordonnées d'un événement souris OU tactile
+            evtXY: (e) => {
+                const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+                return { x: t ? t.clientX : e.clientX, y: t ? t.clientY : e.clientY };
+            },
+            isTouchEvt: (e) => !!(e && (e.touches || e.changedTouches)),
+
+            // Menu contextuel : toujours affiché dans les limites de l'écran
+            showCtxAt: (x, y) => {
+                const menu = document.getElementById('context-menu');
+                menu.classList.remove('hidden');
+                const r = menu.getBoundingClientRect();
+                const left = Math.max(8, Math.min(x, window.innerWidth - r.width - 8));
+                const top = Math.max(8, Math.min(y, window.innerHeight - r.height - 8));
+                menu.style.left = left + 'px';
+                menu.style.top = top + 'px';
+                State.ctxOpenedAt = Date.now();
+            },
+
+            // ============================================================
+            // GESTES TACTILES (mobile / tablette)
+            // 2 doigts = zoom + déplacement, appui long = menu contextuel,
+            // double tap = équivalent du double-clic.
+            // ============================================================
+            bindTouch: () => {
+                const C = State.canvas;
+                const el = C.upperCanvasEl;
+                if (!el || !MobileUI.isTouch()) return;
+
+                // Poignées de redimensionnement plus faciles à attraper au doigt
+                fabric.Object.prototype.touchCornerSize = 30;
+
+                let pinch = null, lpTimer = null, lpStart = null, lastTap = 0;
+
+                const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+                const mid = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+                const fakeEvt = (x, y) => ({ clientX: x, clientY: y, target: el });
+                const cancelLongPress = () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+
+                el.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        cancelLongPress();
+                        // On annule proprement ce qui était en cours (dessin, déplacement, lasso)
+                        if (App.cancelDrawing) App.cancelDrawing();
+                        C._currentTransform = null;
+                        C._groupSelector = null;
+                        C.isDragging = false;
+
+                        pinch = {
+                            d: dist(e.touches[0], e.touches[1]) || 1,
+                            c: mid(e.touches[0], e.touches[1]),
+                            z: C.getZoom()
+                        };
+                        // On empêche Fabric de voir le 2e doigt (sinon il déplace l'objet)
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+
+                    if (e.touches.length === 1) {
+                        const t = e.touches[0];
+                        lpStart = { x: t.clientX, y: t.clientY };
+
+                        // --- Double tap = double clic ---
+                        const now = Date.now();
+                        if (now - lastTap < 320) {
+                            const target = C.findTarget(fakeEvt(t.clientX, t.clientY), false);
+                            if (target) {
+                                lastTap = 0;
+                                cancelLongPress();
+                                C.fire('mouse:dblclick', { target: target, e: e });
+                                return;
+                            }
+                        }
+                        lastTap = now;
+
+                        // --- Appui long = menu contextuel ---
+                        cancelLongPress();
+                        lpTimer = setTimeout(() => {
+                            lpTimer = null;
+                            const target = C.findTarget(fakeEvt(lpStart.x, lpStart.y), false);
+                            if (target && !target.isBackground) {
+                                C.setActiveObject(target);
+                                C.requestRenderAll();
+                                App.showCtxAt(lpStart.x, lpStart.y);
+                                if (navigator.vibrate) navigator.vibrate(15);
+                            }
+                        }, 500);
+                    }
+                }, { capture: true, passive: false });
+
+                // Capture sur le document : Fabric écoute en phase "bubble",
+                // on passe donc avant lui pour neutraliser le geste à 2 doigts.
+                document.addEventListener('touchmove', (e) => {
+                    if (pinch && e.touches.length === 2) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const d = dist(e.touches[0], e.touches[1]);
+                        const c = mid(e.touches[0], e.touches[1]);
+                        const rect = el.getBoundingClientRect();
+
+                        let z = pinch.z * (d / pinch.d);
+                        z = Math.min(5, Math.max(0.1, z));
+                        C.zoomToPoint(new fabric.Point(c.x - rect.left, c.y - rect.top), z);
+
+                        // Déplacement simultané (le centre des 2 doigts entraîne la page)
+                        const dx = c.x - pinch.c.x, dy = c.y - pinch.c.y;
+                        if (dx || dy) C.relativePan(new fabric.Point(dx, dy));
+                        pinch.c = c;
+
+                        App.updateZoomLabel();
+                        return;
+                    }
+
+                    if (lpTimer && e.touches.length === 1) {
+                        const t = e.touches[0];
+                        if (Math.hypot(t.clientX - lpStart.x, t.clientY - lpStart.y) > 12) cancelLongPress();
+                    }
+                }, { capture: true, passive: false });
+
+                const endTouch = (e) => {
+                    cancelLongPress();
+                    if (pinch && (!e.touches || e.touches.length < 2)) {
+                        pinch = null;
+                        C.selection = (State.mode === 'select');
+                    }
+                };
+                document.addEventListener('touchend', endTouch, { capture: true, passive: true });
+                document.addEventListener('touchcancel', endTouch, { capture: true, passive: true });
+            },
             // --- GESTION DE L'AIDE ---
             toggleHelp: () => {
                 const el = document.getElementById('help-overlay');
@@ -1919,6 +2748,8 @@
                 }
                 State.currentPage = index;
                 App.updatePageIndicator();
+                // Sur petit écran, une page A4 (595px) dépasse largement : on l'ajuste
+                if (MobileUI.isCompact()) setTimeout(() => App.fitToScreen(), 60);
             },
 
             changePage: (delta) => {
@@ -2190,9 +3021,20 @@
 
                 // 2. Gestion du redimensionnement & SCROLL (CORRECTIF BUG SÉLECTION)
                 App.resize();
+                let resizeTimer = null;
                 window.addEventListener('resize', () => {
                     App.resize();
                     State.canvas.calcOffset(); // Recalcule la position après resize
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => State.canvas.calcOffset(), 250);
+                });
+
+                // Rotation d'un téléphone / d'une tablette : on recadre la page
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => {
+                        App.resize();
+                        App.fitToScreen();
+                    }, 300);
                 });
 
                 // --> C'EST ICI LA MAGIE POUR LE CLIC QUI RATE <--
@@ -2206,18 +3048,23 @@
                     const target = State.canvas.findTarget(e);
                     if (target && !target.isBackground) {
                         State.canvas.setActiveObject(target);
-                        const menu = document.getElementById('context-menu');
-                        menu.style.left = e.clientX + 'px';
-                        menu.style.top = e.clientY + 'px';
-                        menu.classList.remove('hidden');
+                        App.showCtxAt(e.clientX, e.clientY);
                     }
                 });
 
                 // Cache le menu quand on clique ailleurs
-                document.addEventListener('click', () => App.hideCtx());
+                // (le délai évite qu'un appui long tactile ne le referme aussitôt)
+                document.addEventListener('click', () => {
+                    if (Date.now() - (State.ctxOpenedAt || 0) < 500) return;
+                    App.hideCtx();
+                });
+
+                // 3bis. Gestes tactiles (pinch, appui long, double tap)
+                App.bindTouch();
 
                 // 4. Chargement de la page blanche par défaut
                 App.loadBlank();
+                if (MobileUI.isCompact()) App.fitToScreen(); else App.updateZoomLabel();
 
                 // 5. Écouteurs d'événements Fabric
                 State.canvas.on('object:modified', History.save);
@@ -2247,31 +3094,9 @@
                         });
                     }
                 });
-                State.canvas.on('mouse:down', function (opt) {
-                    const evt = opt.e;
-                    if (State.mode === 'hand' || evt.altKey || evt.code === 'Space') {
-                        this.isDragging = true;
-                        this.selection = false;
-                        this.lastPosX = evt.clientX;
-                        this.lastPosY = evt.clientY;
-                        this.setCursor('grabbing');
-                    }
-                });
-
-                State.canvas.on('mouse:move', function (opt) {
-                    if (this.isDragging) {
-                        const e = opt.e;
-                        const delta = {
-                            x: e.clientX - this.lastPosX,
-                            y: e.clientY - this.lastPosY
-                        };
-                        this.relativePan(delta);
-                        this.lastPosX = e.clientX;
-                        this.lastPosY = e.clientY;
-                        // Optionnel mais fluide : force le rendu pendant le drag
-                        this.requestRenderAll();
-                    }
-                });
+                // NB : le déplacement (pan) est géré une seule fois, dans App.bindEvents().
+                // Les anciens écouteurs mouse:down / mouse:move faisaient double emploi ici
+                // (la page se déplaçait deux fois plus vite que le doigt / la souris).
 
                 State.canvas.on('mouse:up', function (opt) {
                     if (this.isDragging) {
@@ -2279,7 +3104,10 @@
                         this.selection = true;
                         this.setCursor(State.mode === 'hand' ? 'grab' : 'default');
 
-
+                        // Le déplacement modifie la matrice de vue "à la main" (pour rester fluide) :
+                        // on la ré-applique ici pour que Fabric recalcule les zones cliquables,
+                        // sinon les objets deviennent intouchables après un déplacement.
+                        this.setViewportTransform(this.viewportTransform);
                     }
                     State.snapLines = [];
                     State.canvas.requestRenderAll();
@@ -2464,24 +3292,21 @@
             togglePreview: () => {
                 State.isPreview = !State.isPreview;
                 const btn = document.getElementById('btn-preview');
-                const tb = document.getElementById('toolbar-main');
-                const side = document.getElementById('sidebar-tools');
-                const props = document.getElementById('panel-right');
+
+                // Le masquage des panneaux est géré en CSS (classe sur <body>),
+                // pour rester compatible avec les tiroirs mobiles.
+                document.body.classList.toggle('preview-on', State.isPreview);
 
                 if (State.isPreview) {
                     btn.classList.add('bg-blue-100', 'text-blue-600');
-                    tb.style.opacity = '0'; tb.style.pointerEvents = 'none';
-                    side.style.transform = 'translateX(-100%)';
-                    props.style.transform = 'translateX(100%)';
+                    MobileUI.closeAll();
                     State.canvas.discardActiveObject();
                     State.canvas.getObjects().forEach(o => o.selectable = false);
                 } else {
                     btn.classList.remove('bg-blue-100', 'text-blue-600');
-                    tb.style.opacity = '1'; tb.style.pointerEvents = 'all';
-                    side.style.transform = 'translateX(0)';
-                    props.style.transform = 'translateX(0)';
                     State.canvas.getObjects().forEach(o => { if (!o.isBackground) o.selectable = true; });
                 }
+                MobileUI.sync();
                 State.canvas.requestRenderAll();
             },
             syncSequenceFromDOM: function () {
@@ -2724,6 +3549,9 @@
                     State.canvas.discardActiveObject();
                     State.canvas.requestRenderAll();
                 }
+
+                // Sur mobile, on referme le tiroir pour laisser la place au dessin
+                MobileUI.closeIfCompact();
             }, setStyle: (key, val) => {
                 if (key === 'size' || key === 'width') val = parseInt(val); if (key === 'lock') State.defaults.lock = val; else State.defaults[key] = val;
                 if (key === 'fill') document.getElementById('preview-fill').style.backgroundColor = val;
@@ -2821,6 +3649,12 @@
                 const C = State.canvas;
                 let isDragging = false; let lx, ly;
 
+                // Permet aux gestes tactiles (pinch) d'annuler un tracé en cours
+                App.cancelDrawing = () => {
+                    if (ghost) { C.remove(ghost); ghost = null; }
+                    if (isDrawing) { isDrawing = false; App.clearGuides(); }
+                };
+
                 // ============================================================
                 // LE GARDIEN (SÉCURITÉ & UI)
                 // ============================================================
@@ -2850,7 +3684,7 @@
                 };
 
                 // --- EVENTS SOURIS ---
-                C.on('mouse:wheel', opt => { if (opt.e.ctrlKey) return; var d = opt.e.deltaY; var z = C.getZoom() * 0.999 ** d; if (z > 20) z = 20; if (z < 0.01) z = 0.01; C.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, z); opt.e.preventDefault(); opt.e.stopPropagation(); });
+                C.on('mouse:wheel', opt => { if (opt.e.ctrlKey) return; var d = opt.e.deltaY; var z = C.getZoom() * 0.999 ** d; if (z > 20) z = 20; if (z < 0.01) z = 0.01; C.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, z); App.updateZoomLabel(); opt.e.preventDefault(); opt.e.stopPropagation(); });
 
                 C.on('mouse:down', function (opt) {
                     // 1. SÉQUENCE
@@ -2866,11 +3700,16 @@
 
                     // 2. MAIN / PAN
                     var e = opt.e;
-                    if (e.altKey || e.code === 'Space' || State.mode === 'hand') {
+                    // Au doigt, un glissement sur une zone vide déplace la page :
+                    // c'est le geste attendu sur mobile (le lasso reste dispo à la souris).
+                    const touchPan = App.isTouchEvt(e) && !opt.target && State.mode === 'select';
+
+                    if (e.altKey || e.code === 'Space' || State.mode === 'hand' || touchPan) {
+                        const p = App.evtXY(e);
                         this.isDragging = true;
                         this.selection = false;
-                        this.lastPosX = e.clientX;
-                        this.lastPosY = e.clientY;
+                        this.lastPosX = p.x;
+                        this.lastPosY = p.y;
                         this.setCursor('grabbing');
                         return;
                     }
@@ -2905,12 +3744,13 @@
                 C.on('mouse:move', function (opt) {
                     if (this.isDragging) {
                         var e = opt.e;
+                        var p = App.evtXY(e);
                         var v = this.viewportTransform;
-                        v[4] += e.clientX - this.lastPosX;
-                        v[5] += e.clientY - this.lastPosY;
+                        v[4] += p.x - this.lastPosX;
+                        v[5] += p.y - this.lastPosY;
                         this.requestRenderAll();
-                        this.lastPosX = e.clientX;
-                        this.lastPosY = e.clientY;
+                        this.lastPosX = p.x;
+                        this.lastPosY = p.y;
                         return;
                     }
 
@@ -3021,7 +3861,13 @@
                 C.on('object:modified', () => App.clearGuides());
 
                 C.on('mouse:dblclick', o => {
-                    if (!o.target) return; const t = o.target;
+                    if (!o.target) return;
+                    // Au doigt, le double tap peut arriver deux fois (natif + synthétique) :
+                    // on ignore le doublon pour ne pas annuler l'action.
+                    const now = Date.now();
+                    if (now - (State.lastDblAt || 0) < 500) return;
+                    State.lastDblAt = now;
+                    const t = o.target;
                     if (t.ctype === 'checkbox' || t.ctype === 'radio') {
                         t.isChecked = !t.isChecked;
                         if (t.markObj) t.markObj.set('opacity', t.isChecked ? 1 : 0);
@@ -3317,6 +4163,7 @@
             },
             update: (obj) => {
                 Panel.dom.batchRadio.classList.add('hidden');
+                MobileUI.setHasSelection(!!obj);
 
                 if (obj && obj.type === 'activeSelection') {
                     Panel.dom.empty.style.display = 'none';
