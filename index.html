@@ -390,6 +390,12 @@
         }
 
         /* --- Éléments réservés au mobile / tablette (masqués par défaut) --- */
+        /* Annuler / Rétablir flottants : uniquement quand le header est compact,
+           où ils sont sinon difficiles à trouver */
+        #float-history {
+            display: none;
+        }
+
         #mobile-bottombar,
         #btn-mobile-tools,
         #btn-mobile-more,
@@ -545,7 +551,8 @@
             }
 
             #btn-hdr-style,
-            #btn-mobile-more {
+            #btn-mobile-more,
+            #float-history {
                 display: flex;
             }
 
@@ -1142,6 +1149,24 @@
                     <button onclick="App.setTool('line')" id="btn-line" class="tool-btn" title="Ligne (Dessin)">
                         <i class="fa-solid fa-minus"></i>
                     </button>
+
+                    <button onclick="App.setTool('eraser')" id="btn-eraser" class="tool-btn"
+                        title="Gomme : touchez ou balayez les champs à supprimer (E)">
+                        <i class="fa-solid fa-eraser"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1 mt-2">
+                    <button onclick="App.detectFields()"
+                        class="h-9 rounded-md bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
+                        title="Détecter automatiquement les champs du PDF">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Détection
+                    </button>
+                    <button onclick="App.showTemplates()"
+                        class="h-9 rounded-md bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
+                        title="Partir d'un modèle prêt à l'emploi">
+                        <i class="fa-solid fa-shapes"></i> Modèles
+                    </button>
                 </div>
             </div>
 
@@ -1204,6 +1229,20 @@
             </div>
 
             <div class="absolute bottom-4 left-4 flex items-center gap-3 z-50">
+
+                <div id="float-history"
+                    class="items-center bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
+                    <button onclick="History.undo()"
+                        class="w-9 h-9 flex items-center justify-center hover:bg-gray-50 text-gray-600 active:bg-gray-100 border-r border-gray-200 transition"
+                        title="Annuler">
+                        <i class="fa-solid fa-arrow-rotate-left text-xs"></i>
+                    </button>
+                    <button onclick="History.redo()"
+                        class="w-9 h-9 flex items-center justify-center hover:bg-gray-50 text-gray-600 active:bg-gray-100 transition"
+                        title="Rétablir">
+                        <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
+                    </button>
+                </div>
 
                 <div class="flex items-center bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
                     <button onclick="App.setZoom(-0.1)"
@@ -1567,6 +1606,8 @@
                             <br>• <b>Double tap</b> : coche une case / édite un texte.
                             <br>• Outil <b>Sélection au doigt</b> (3<sup>e</sup> icône des Outils) : encadrez
                             plusieurs champs d'un glissement, au lieu de déplacer la page.
+                            <br>• Outil <b>Gomme</b> : balayez du doigt les champs à supprimer.
+                            <br>• <b>Annuler / Rétablir</b> : dans l'en-tête et en bas à gauche de la page.
                             <br>• Les panneaux <b>Outils</b> et <b>Propriétés</b> s'ouvrent depuis la barre du bas.
                             <br>• Dans la <b>Banque</b>, touchez un modèle pour l'insérer au centre de la page.
                         </p>
@@ -1594,6 +1635,9 @@
                             </div>
                             <div class="flex justify-between mb-1"><span>Main (Pan)</span> <code
                                     class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">M</code>
+                            </div>
+                            <div class="flex justify-between mb-1"><span>Gomme</span> <code
+                                    class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">E</code>
                             </div>
                         </div>
                         <div class="bg-gray-50 p-3 rounded border border-gray-100">
@@ -2271,6 +2315,7 @@ const Detect = {
                 const lenP = horizontal ? H : W;
                 const lenS = horizontal ? W : H;
                 const minLen = P.minShort;
+                const minFill = P.minFill !== undefined ? P.minFill : 0.35;
                 const segs = [];
                 let active = [];
                 for (let p = 0; p < lenP; p++) {
@@ -2283,13 +2328,13 @@ const Detect = {
                             last = s; cnt++;
                         } else if (start !== -1 && s - last > P.maxGap) {
                             const L = last - start + 1;
-                            if (L >= minLen && cnt / L >= 0.35) runs.push({ s1: start, s2: last });
+                            if (L >= minLen && cnt / L >= minFill) runs.push({ s1: start, s2: last });
                             start = -1;
                         }
                     }
                     if (start !== -1) {
                         const L = last - start + 1;
-                        if (L >= minLen && cnt / L >= 0.35) runs.push({ s1: start, s2: last });
+                        if (L >= minLen && cnt / L >= minFill) runs.push({ s1: start, s2: last });
                     }
                     // Fusion avec les segments de la rangée précédente
                     const next = [];
@@ -2803,9 +2848,29 @@ const Detect = {
                     hs.forEach(s => usedH.add(s));
                 });
 
-                // --- 4. LIGNES ISOLÉES (soulignés, pointillés) → champs texte ---
+                // --- 4. LIGNES ISOLÉES (soulignés, pointillés, tirets) → champs texte ---
+                // Deuxième balayage, tolérant aux traits discontinus : on admet des
+                // trous bien plus larges et beaucoup moins d'encre. Il ne sert QU'ICI
+                // (pas pour les cases ni les tableaux), pour ne pas créer de faux
+                // positifs ailleurs. Le filtre d'épaisseur reste inchangé, c'est lui
+                // qui empêche les lignes de texte d'être prises pour des traits.
+                const Pdot = Object.assign({}, P, {
+                    maxGap: Math.max(4, Math.round(10 * unit)),
+                    minFill: 0.12
+                });
+                const hDot = Detect.scan(dark, W, H, true, Pdot)
+                    .filter(s => s.len >= P.minH && !(inBox(s.a1, s.b) && inBox(s.a2, s.b)));
+
+                // On ajoute les traits discontinus qui ne recouvrent pas déjà
+                // un trait plein trouvé par le balayage strict
+                const sameLine = (a, b) => Math.abs(a.b - b.b) <= P.tol
+                    && Math.min(a.a2, b.a2) - Math.max(a.a1, b.a1) > 0.5 * Math.min(a.len, b.len);
+                const hFieldLines = hLong.concat(
+                    hDot.filter(d => !hLong.some(s => sameLine(s, d)))
+                );
+
                 const lineFields = [];
-                hLong.forEach(s => {
+                hFieldLines.forEach(s => {
                     if (usedH.has(s)) return;
                     const fh = P.fieldH;
                     // La zone au-dessus doit être libre (sinon : souligné de titre)
@@ -4525,6 +4590,16 @@ const Detect = {
                     State.canvas.requestRenderAll();
                     State.canvas.defaultCursor = 'copy';
                 }
+                // Gomme : on touche (ou on balaye) les champs à supprimer
+                else if (t === 'eraser') {
+                    State.mode = 'eraser';
+                    State.touchMarquee = false;
+                    _uiActiveTool(t);
+                    State.canvas.selection = false;
+                    State.canvas.discardActiveObject();
+                    State.canvas.defaultCursor = 'not-allowed';
+                    State.canvas.requestRenderAll();
+                }
 
                 // 3. GESTION DU PINCEAU DE TAILLE (HAUT)
                 else if (t === 'size-painter') {
@@ -4659,6 +4734,28 @@ const Detect = {
                     if (isDrawing) { isDrawing = false; App.clearGuides(); }
                 };
 
+                // --- GOMME ---
+                let erasing = false, erasedCount = 0;
+                const eraseAt = (opt) => {
+                    const t = opt.target || C.findTarget(opt.e, false);
+                    if (!t || t.isBackground || t.isGuide) return;
+                    C.remove(t);
+                    // Fabric a pu amorcer un déplacement sur l'objet qu'on vient
+                    // de supprimer : on annule la transformation en cours.
+                    C._currentTransform = null;
+                    erasedCount++;
+                    C.requestRenderAll();
+                };
+                const endErasing = () => {
+                    erasing = false;
+                    if (!erasedCount) return;
+                    Panel.update(null);
+                    History.save();
+                    Navigator.refresh();
+                    App.toast(erasedCount > 1 ? `${erasedCount} éléments supprimés` : "Élément supprimé", 'success');
+                    erasedCount = 0;
+                };
+
                 // ============================================================
                 // LE GARDIEN (SÉCURITÉ & UI)
                 // ============================================================
@@ -4699,6 +4796,13 @@ const Detect = {
                                 C.requestRenderAll();
                             }
                         }
+                        return;
+                    }
+
+                    // 1bis. GOMME
+                    if (State.mode === 'eraser') {
+                        erasing = true;
+                        eraseAt(opt);
                         return;
                     }
 
@@ -4748,6 +4852,9 @@ const Detect = {
                 });
 
                 C.on('mouse:move', function (opt) {
+                    // Balayage à la gomme : on supprime tout ce que le doigt traverse
+                    if (erasing) { eraseAt(opt); return; }
+
                     if (this.isDragging) {
                         var e = opt.e;
                         var p = App.evtXY(e);
@@ -4794,6 +4901,8 @@ const Detect = {
                 });
 
                 C.on('mouse:up', function (opt) {
+                    if (erasing) { endErasing(); return; }
+
                     if (this.isDragging) {
                         this.isDragging = false;
                         this.selection = true;
@@ -4952,6 +5061,7 @@ const Detect = {
 
                     // Outils
                     if (e.key.toLowerCase() === 'm') App.setTool('hand');
+                    if (e.key.toLowerCase() === 'e' && !e.ctrlKey && !e.metaKey) App.setTool('eraser');
                     if (e.key.toLowerCase() === 'v' || e.key.toLowerCase() === 's' || e.key === 'Escape') App.setTool('select');
 
                     // Suppression
