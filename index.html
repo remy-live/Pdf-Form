@@ -7,6 +7,7 @@
     <title>Pdf Studio</title>
 
     <script src="ext.js"></script>
+    <script src="template.js"></script>
 
 
     <script>
@@ -365,8 +366,9 @@
             touch-action: none;
         }
 
-        /* Hauteur de la barre d'onglets du bas (mobile / tablette) */
+        /* Hauteur du header et de la barre d'onglets du bas */
         :root {
+            --hdr-h: 56px;
             --bar-h: 56px;
             --bar-safe: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px));
         }
@@ -391,6 +393,7 @@
         #mobile-bottombar,
         #btn-mobile-tools,
         #btn-mobile-more,
+        #btn-hdr-style,
         .drawer-head,
         .hdr-label,
         .hdr-icon,
@@ -466,6 +469,24 @@
             display: flex;
         }
 
+        /* Barre de validation de la détection automatique */
+        #detect-bar {
+            bottom: 76px;
+        }
+
+        /* Éléments réservés aux écrans tactiles */
+        .touch-only {
+            display: none;
+        }
+
+        body.is-touch .touch-only {
+            display: flex;
+        }
+
+        body.is-touch .touch-hide {
+            display: none;
+        }
+
         /* --- Mode Aperçu (piloté par une classe, plus par des styles inline) --- */
         body.preview-on #toolbar-main {
             opacity: 0;
@@ -487,31 +508,27 @@
         }
 
         /* ==========================================================
-           TABLETTE & MOBILE ( < 1024px )
-           Les deux panneaux latéraux deviennent des tiroirs coulissants
+           HEADER COMPACT ( < 1440px )
+           En dessous de ~1440px la barre d'outils centrale ne rentre plus :
+           elle chevauchait le titre et les boutons Annuler/Rétablir.
+           On la bascule en menu déroulant "Style", et les actions
+           secondaires dans le menu "...". Les panneaux latéraux, eux,
+           ne deviennent des tiroirs qu'en dessous de 1024px (bloc suivant).
            ========================================================== */
-        @media (max-width: 1023px) {
-
-            #app-header {
-                height: 52px;
-                padding-left: 8px;
-                padding-right: 8px;
-                gap: 6px;
-            }
+        @media (max-width: 1439px) {
 
             #hdr-left {
                 flex: 1 1 auto;
                 min-width: 0;
-                gap: 6px;
+                gap: 10px;
             }
 
-            #hdr-sep,
             #hdr-pencil {
                 display: none;
             }
 
             #hdr-title-wrap {
-                flex: 1 1 auto;
+                flex: 0 1 auto;
                 min-width: 0;
                 margin-left: 0;
             }
@@ -527,56 +544,19 @@
                 width: 100%;
             }
 
-            #btn-mobile-tools,
+            #btn-hdr-style,
             #btn-mobile-more {
                 display: flex;
             }
 
-            /* --- Tiroirs latéraux ---
-               Ils s'arrêtent au-dessus de la barre du bas, qui reste
-               accessible pour passer d'un panneau à l'autre. */
-            #mobile-backdrop {
-                bottom: var(--bar-safe);
-            }
-
-            #sidebar-tools,
-            #panel-right {
-                position: fixed;
-                top: 0;
-                bottom: var(--bar-safe);
-                z-index: 60;
-                width: 300px;
-                max-width: 86vw;
-                box-shadow: 0 0 40px rgba(0, 0, 0, .28);
-                transition: transform .28s cubic-bezier(.4, 0, .2, 1);
-            }
-
-            #sidebar-tools {
-                left: 0;
-                transform: translateX(-102%);
-            }
-
-            #panel-right {
-                right: 0;
-                transform: translateX(102%);
-            }
-
-            #sidebar-tools.is-open,
-            #panel-right.is-open {
-                transform: translateX(0);
-            }
-
-            .drawer-head {
-                display: flex;
-            }
-
-            /* --- Panneau "Style" (ex barre d'outils centrale) en menu déroulant --- */
+            /* --- Barre "Style" en menu déroulant --- */
             #toolbar-main {
                 display: none;
                 position: fixed;
-                top: 58px;
-                left: 8px;
+                top: calc(var(--hdr-h) + 6px);
+                left: auto;
                 right: 8px;
+                width: min(560px, calc(100vw - 16px));
                 z-index: 70;
                 background: #fff;
                 border: 1px solid #e5e5e5;
@@ -607,7 +587,7 @@
             #hdr-more-group {
                 display: none;
                 position: fixed;
-                top: 58px;
+                top: calc(var(--hdr-h) + 6px);
                 right: 8px;
                 z-index: 70;
                 flex-direction: column;
@@ -654,6 +634,89 @@
             #hdr-more-group .hdr-compact {
                 display: none;
             }
+        }
+
+        /* ==========================================================
+           TABLETTE & MOBILE ( < 1024px )
+           Les deux panneaux latéraux deviennent des tiroirs coulissants
+           ========================================================== */
+        @media (max-width: 1023px) {
+
+            :root {
+                --hdr-h: 52px;
+            }
+
+            #app-header {
+                height: 52px;
+                padding-left: 8px;
+                padding-right: 8px;
+                gap: 6px;
+            }
+
+            #hdr-left {
+                gap: 6px;
+            }
+
+            #hdr-sep {
+                display: none;
+            }
+
+            #hdr-title-wrap {
+                flex: 1 1 auto;
+            }
+
+            #btn-mobile-tools {
+                display: flex;
+            }
+
+            /* Le tiroir "Outils" remplace le bouton Style du header */
+            #btn-hdr-style {
+                display: none;
+            }
+
+            #toolbar-main {
+                left: 8px;
+                right: 8px;
+                width: auto;
+            }
+
+            /* --- Tiroirs latéraux ---
+               Ils s'arrêtent au-dessus de la barre du bas, qui reste
+               accessible pour passer d'un panneau à l'autre. */
+            #mobile-backdrop {
+                bottom: var(--bar-safe);
+            }
+
+            #sidebar-tools,
+            #panel-right {
+                position: fixed;
+                top: 0;
+                bottom: var(--bar-safe);
+                z-index: 60;
+                width: 300px;
+                max-width: 86vw;
+                box-shadow: 0 0 40px rgba(0, 0, 0, .28);
+                transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+            }
+
+            #sidebar-tools {
+                left: 0;
+                transform: translateX(-102%);
+            }
+
+            #panel-right {
+                right: 0;
+                transform: translateX(102%);
+            }
+
+            #sidebar-tools.is-open,
+            #panel-right.is-open {
+                transform: translateX(0);
+            }
+
+            .drawer-head {
+                display: flex;
+            }
 
             /* --- Barre d'onglets du bas --- */
             #mobile-bottombar {
@@ -666,6 +729,10 @@
 
             #coord-display {
                 display: none;
+            }
+
+            #detect-bar {
+                bottom: calc(var(--bar-safe) + 14px);
             }
 
             /* Cibles tactiles plus généreuses dans les panneaux */
@@ -787,6 +854,48 @@
 </head>
 
 <body class="app-shell bg-bg h-screen w-screen flex flex-col text-text">
+
+    <div id="toast-container"></div>
+
+    <div id="confirm-overlay"
+        class="fixed inset-0 bg-black/40 z-[110] hidden flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-96 max-w-full p-5">
+            <h3 id="confirm-title" class="text-lg font-bold mb-2">Titre</h3>
+            <p id="confirm-msg" class="text-sm text-gray-600 mb-5 leading-relaxed whitespace-pre-line">Message...</p>
+            <div id="confirm-buttons" class="flex justify-end gap-2 flex-wrap"></div>
+        </div>
+    </div>
+
+    <div id="detect-bar"
+        class="hidden fixed left-1/2 -translate-x-1/2 bg-white border border-blue-200 shadow-2xl rounded-full pl-4 pr-2 py-2 z-[80] flex items-center gap-3 max-w-[calc(100vw-16px)]">
+        <i class="fa-solid fa-wand-magic-sparkles text-blue-600"></i>
+        <span id="detect-bar-text" class="text-xs font-bold text-gray-700 whitespace-nowrap">0 champs proposés</span>
+        <button onclick="Detect.acceptAll()"
+            class="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-700 transition whitespace-nowrap">
+            Tout accepter</button>
+        <button onclick="Detect.cancelAll()"
+            class="text-xs font-bold text-gray-500 hover:text-red-600 px-2 transition">Annuler</button>
+    </div>
+
+    <div id="tpl-overlay"
+        class="fixed inset-0 bg-black/50 z-[120] hidden flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-[640px] max-w-full max-h-[85dvh] flex flex-col overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
+                <h3 class="font-bold text-gray-800 flex items-center gap-2"><i
+                        class="fa-solid fa-shapes text-blue-500"></i> Modèles prêts à l'emploi</h3>
+                <button onclick="App.hideTemplates()"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-200 text-gray-500"
+                    aria-label="Fermer"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5">
+                <p class="text-xs text-gray-500 mb-4">Le modèle choisi remplace le document en cours par une page
+                    prête à être adaptée.</p>
+                <div id="tpl-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                <p id="tpl-empty" class="hidden text-xs text-gray-400 italic text-center py-8">Aucun modèle
+                    disponible dans <code>template.js</code>.</p>
+            </div>
+        </div>
+    </div>
 
     <div id="modal-overlay"
         class="fixed inset-0 bg-black/40 z-[100] hidden flex items-center justify-center backdrop-blur-sm">
@@ -917,6 +1026,19 @@
                     title="Importer un fichier PDF"><i class="fa-solid fa-file-import hdr-icon"></i><span
                         class="hdr-compact">PDF</span><span class="hdr-label">Importer un PDF</span></button>
 
+                <button onclick="App.detectFields()"
+                    class="text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-2 rounded transition flex items-center gap-2"
+                    title="Détecter automatiquement les champs (lignes, cases, tableaux)">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i><span class="hdr-label">Détection
+                        automatique</span>
+                </button>
+
+                <button onclick="App.showTemplates()"
+                    class="text-xs font-bold text-gray-500 hover:text-black hover:bg-bg px-3 py-2 rounded transition flex items-center gap-2"
+                    title="Partir d'un modèle prêt à l'emploi">
+                    <i class="fa-solid fa-shapes"></i><span class="hdr-label">Modèles</span>
+                </button>
+
                 <button
                     onclick="if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen();"
                     class="text-gray-400 hover:text-blue-600 w-8 h-8 rounded-full border border-transparent hover:border-blue-100 hover:bg-blue-50 transition flex items-center justify-center ml-2"
@@ -931,6 +1053,12 @@
                         raccourcis</span>
                 </button>
             </div>
+
+            <button id="btn-hdr-style" onclick="MobileUI.toggleStyle()"
+                class="items-center gap-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-bg px-3 py-2 rounded transition shrink-0"
+                title="Police, couleurs et tailles par défaut">
+                <i class="fa-solid fa-sliders"></i> Style
+            </button>
 
             <button onclick="Exporter.download()"
                 class="bg-active text-white text-xs font-bold px-4 py-2 rounded shadow-md hover:bg-gray-800 transition flex items-center gap-2 shrink-0"
@@ -968,7 +1096,13 @@
                         <i class="fa-solid fa-hand"></i>
                     </button>
 
-                    <div class="col-span-2"></div>
+                    <button onclick="App.setTool('marquee')" id="btn-marquee" class="tool-btn touch-only"
+                        title="Sélection au doigt (encadrer plusieurs champs)">
+                        <i class="fa-solid fa-object-group"></i>
+                    </button>
+
+                    <div class="col-span-1 touch-hide"></div>
+                    <div class="col-span-1"></div>
 
                     <button onclick="App.setTool('textfield')" id="btn-textfield" class="tool-btn" title="Champ Texte">
                         <i class="fa-solid fa-i-cursor"></i>
@@ -1394,8 +1528,10 @@
                             2</div>
                         <div>
                             <h4 class="font-bold text-gray-800">Ajouter les Champs</h4>
-                            <p class="text-xs text-gray-500 mt-1">Utilisez la barre de gauche pour ajouter des zones de
-                                texte, cases à cocher, etc. Placez-les là où l'utilisateur devra écrire.</p>
+                            <p class="text-xs text-gray-500 mt-1">Utilisez le panneau <b>Outils</b> (à gauche sur
+                                ordinateur, via la barre du bas sur mobile) pour ajouter des zones de texte, cases à
+                                cocher, etc. Placez-les là où l'utilisateur devra écrire — ou laissez la
+                                <b>Détection automatique</b> les proposer pour vous.</p>
                         </div>
                     </div>
                     <div class="flex gap-4">
@@ -1429,8 +1565,22 @@
                             <br>• <b>Deux doigts</b> : zoom et déplacement simultanés.
                             <br>• <b>Appui long</b> : ouvre le menu (dupliquer, supprimer...).
                             <br>• <b>Double tap</b> : coche une case / édite un texte.
+                            <br>• Outil <b>Sélection au doigt</b> (3<sup>e</sup> icône des Outils) : encadrez
+                            plusieurs champs d'un glissement, au lieu de déplacer la page.
                             <br>• Les panneaux <b>Outils</b> et <b>Propriétés</b> s'ouvrent depuis la barre du bas.
                             <br>• Dans la <b>Banque</b>, touchez un modèle pour l'insérer au centre de la page.
+                        </p>
+                    </div>
+
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="font-bold text-gray-800 text-xs mb-2 flex items-center gap-2"><i
+                                class="fa-solid fa-wand-magic-sparkles text-blue-500"></i> Gagner du temps</h4>
+                        <p class="text-xs text-gray-600 leading-relaxed">
+                            • <b>Modèles</b> (menu ⋮) : partez d'un formulaire déjà construit.
+                            <br>• <b>Détection automatique</b> (menu ⋮) : après avoir importé un PDF, l'application
+                            repère les lignes à remplir et les cases à cocher, et vous propose les champs
+                            correspondants. Vérifiez la proposition, supprimez ce qui est en trop, puis
+                            <b>Tout accepter</b>.
                         </p>
                     </div>
                 </div>
@@ -1675,6 +1825,10 @@
                     const el = document.getElementById(id);
                     if (el) el.classList.toggle('active', map[id]);
                 });
+
+                // Bouton "Style" du header (visible entre 1024 et 1440px)
+                const hs = document.getElementById('btn-hdr-style');
+                if (hs) hs.classList.toggle('bg-bg', map['bar-style']);
             },
 
             init: () => {
@@ -1693,7 +1847,7 @@
                 // Un clic hors des menus déroulants les referme
                 document.addEventListener('pointerdown', (e) => {
                     if (!document.body.classList.contains('style-open') && !document.body.classList.contains('more-open')) return;
-                    if (e.target.closest('#toolbar-main, #hdr-more-group, #bar-style, #btn-mobile-more')) return;
+                    if (e.target.closest('#toolbar-main, #hdr-more-group, #bar-style, #btn-mobile-more, #btn-hdr-style')) return;
                     document.body.classList.remove('style-open', 'more-open');
                     MobileUI.sync();
                 }, true);
@@ -2075,6 +2229,723 @@
             totalPages: 1,    // Nombre total de pages
             sequenceList: [], // Pour stocker l'ordre temporaire
             isSequencing: false, canvas: null, mode: 'select', snap: true, isPreview: false, pdfBytes: null, clipboard: null, counts: { draw : 1, textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14 }
+        };
+
+        // ============================================================
+        // DÉTECTION AUTOMATIQUE DES CHAMPS
+        // Analyse l'image de la page (lignes, cases, tableaux) et le texte
+        // PDF pour proposer des champs. Porté depuis la branche
+        // claude/mobile-tablet-responsive-fields-sau09n.
+        // ============================================================
+const Detect = {
+
+            // Proportion de pixels sombres dans un rectangle
+            density: (dark, W, H, x, y, w, h) => {
+                const x1 = Math.max(0, Math.round(x)), y1 = Math.max(0, Math.round(y));
+                const x2 = Math.min(W, Math.round(x + w)), y2 = Math.min(H, Math.round(y + h));
+                let n = 0, tot = 0;
+                for (let yy = y1; yy < y2; yy++) {
+                    const row = yy * W;
+                    for (let xx = x1; xx < x2; xx++) { tot++; n += dark[row + xx]; }
+                }
+                return tot ? n / tot : 0;
+            },
+
+            // Regroupe des valeurs proches (positions de lignes quasi identiques)
+            cluster: (vals, tol) => {
+                const sorted = [...vals].sort((a, b) => a - b);
+                const out = [];
+                sorted.forEach(v => {
+                    const last = out[out.length - 1];
+                    if (last && v - last.max <= tol) { last.sum += v; last.n++; last.max = v; }
+                    else out.push({ sum: v, n: 1, max: v });
+                });
+                return out.map(c => Math.round(c.sum / c.n));
+            },
+
+            // Balaye l'image et renvoie les segments de ligne fine
+            // (horizontal=true : segments {a1..a2 en x, b=y} / sinon inversé).
+            // Tolère les pointillés (maxGap) et élimine les blocs de texte
+            // grâce au filtre d'épaisseur.
+            scan: (dark, W, H, horizontal, P) => {
+                const lenP = horizontal ? H : W;
+                const lenS = horizontal ? W : H;
+                const minLen = P.minShort;
+                const segs = [];
+                let active = [];
+                for (let p = 0; p < lenP; p++) {
+                    const runs = [];
+                    let start = -1, last = -1, cnt = 0;
+                    for (let s = 0; s < lenS; s++) {
+                        const isDark = horizontal ? dark[p * W + s] : dark[s * W + p];
+                        if (isDark) {
+                            if (start === -1) { start = s; cnt = 0; }
+                            last = s; cnt++;
+                        } else if (start !== -1 && s - last > P.maxGap) {
+                            const L = last - start + 1;
+                            if (L >= minLen && cnt / L >= 0.35) runs.push({ s1: start, s2: last });
+                            start = -1;
+                        }
+                    }
+                    if (start !== -1) {
+                        const L = last - start + 1;
+                        if (L >= minLen && cnt / L >= 0.35) runs.push({ s1: start, s2: last });
+                    }
+                    // Fusion avec les segments de la rangée précédente
+                    const next = [];
+                    runs.forEach(r => {
+                        let best = null;
+                        active.forEach(a => {
+                            if (a.taken) return;
+                            const ov = Math.min(a.s2, r.s2) - Math.max(a.s1, r.s1);
+                            const ref = Math.min(a.s2 - a.s1, r.s2 - r.s1) + 1;
+                            if (ov > 0.5 * ref && (!best || ov > best.ov)) best = { a, ov };
+                        });
+                        if (best) {
+                            const a = best.a;
+                            a.taken = true;
+                            a.s1 = Math.min(a.s1, r.s1); a.s2 = Math.max(a.s2, r.s2);
+                            a.pEnd = p;
+                            next.push(a);
+                        } else {
+                            next.push({ s1: r.s1, s2: r.s2, pStart: p, pEnd: p, taken: true });
+                        }
+                    });
+                    active.forEach(a => { if (!a.taken) segs.push(a); });
+                    next.forEach(a => a.taken = false);
+                    active = next;
+                }
+                segs.push(...active);
+                return segs
+                    .filter(sg => (sg.pEnd - sg.pStart + 1) <= P.maxThick && (sg.s2 - sg.s1 + 1) >= minLen)
+                    .map(sg => ({ a1: sg.s1, a2: sg.s2, b: Math.round((sg.pStart + sg.pEnd) / 2), len: sg.s2 - sg.s1 + 1, thick: sg.pEnd - sg.pStart + 1 }));
+            },
+
+            // Champs proposés en attente de validation par l'utilisateur
+            pending: [],
+
+            // Lance la détection sur la page courante, en mode "proposition" :
+            // les champs apparaissent teintés en bleu et une barre permet de
+            // tout accepter ou tout annuler.
+            run: async () => {
+                Detect.flush();
+                const C = State.canvas;
+                const bg = C.getObjects().find(o => o.isBackground);
+                if (!bg || bg.type !== 'image') {
+                    App.toast("Importez d'abord un PDF : la détection analyse le fond de page", 'info', 3500);
+                    return;
+                }
+                App.showModal("Détection", "Analyse de la page en cours...");
+                await new Promise(r => setTimeout(r, 60));
+
+                let result;
+                try {
+                    result = await Detect.analyse(bg);
+                } catch (err) {
+                    console.error("Erreur détection :", err);
+                    App.closeModal();
+                    App.toast("Une erreur est survenue pendant l'analyse", 'error');
+                    return;
+                }
+
+                App.closeModal();
+                if (!result.objs.length) {
+                    App.toast("Aucun nouveau champ détecté sur cette page", 'info');
+                    return;
+                }
+                Detect.pending = result.objs;
+                Detect.showBar(result);
+            },
+
+            // Détection sur toutes les pages du document (acceptation directe)
+            runAll: async () => {
+                Detect.flush();
+                const original = State.currentPage;
+                let total = 0, pagesWith = 0;
+                App.showModal("Détection", "Analyse de toutes les pages...");
+                await new Promise(r => setTimeout(r, 60));
+                try {
+                    for (let i = 0; i < State.totalPages; i++) {
+                        App.saveCurrentPage();
+                        await App.loadPage(i);
+                        const bg = State.canvas.getObjects().find(o => o.isBackground);
+                        if (!bg || bg.type !== 'image') continue;
+                        const res = await Detect.analyse(bg);
+                        if (res.objs.length) {
+                            Detect.finalize(res.objs);
+                            App.autoSort(true); // Ordre de tabulation + sauvegarde historique
+                            total += res.objs.length;
+                            pagesWith++;
+                        }
+                        App.saveCurrentPage();
+                    }
+                } catch (e) { console.error("Erreur détection multi-pages :", e); }
+                await App.loadPage(original);
+                App.closeModal();
+                App.toast(total ? `${total} champs créés sur ${pagesWith} page(s)` : "Aucun champ détecté",
+                    total ? 'success' : 'info', 4000);
+            },
+
+            showBar: (result) => {
+                const c = result.counts;
+                const parts = [];
+                if (c.table) parts.push(`${c.table} tableau`);
+                if (c.line) parts.push(`${c.line} ligne${c.line > 1 ? 's' : ''}`);
+                if (c.box) parts.push(`${c.box} case${c.box > 1 ? 's' : ''}`);
+                if (c.radio) parts.push(`${c.radio} radio${c.radio > 1 ? 's' : ''}`);
+                if (c.hint) parts.push(`${c.hint} libellé${c.hint > 1 ? 's' : ''}`);
+                document.getElementById('detect-bar-text').innerText =
+                    `${result.objs.length} champs proposés (${parts.join(', ')})`;
+                document.getElementById('detect-bar').classList.remove('hidden');
+                App.toast("Vérifiez les champs bleutés : supprimez les indésirables puis validez", 'info', 4200);
+            },
+
+            // Rend définitifs les champs proposés (fond transparent)
+            finalize: (objs) => {
+                objs.forEach(o => {
+                    const bg2 = o.bgObj || o;
+                    bg2.set({ fill: 'transparent' });
+                    bg2.dirty = true;
+                    o.dirty = true;
+                });
+                State.canvas.requestRenderAll();
+            },
+
+            acceptAll: () => {
+                const alive = Detect.pending.filter(o => State.canvas.contains(o));
+                Detect.pending = [];
+                document.getElementById('detect-bar').classList.add('hidden');
+                if (!alive.length) { Navigator.refresh(); return; }
+                Detect.finalize(alive);
+                App.autoSort(true); // Trie l'ordre de tabulation + sauvegarde
+                App.toast(`${alive.length} champ(s) ajouté(s), ordre de tabulation trié`, 'success');
+            },
+
+            cancelAll: () => {
+                const alive = Detect.pending.filter(o => State.canvas.contains(o));
+                if (alive.length) State.canvas.remove(...alive);
+                Detect.pending = [];
+                document.getElementById('detect-bar').classList.add('hidden');
+                State.canvas.discardActiveObject();
+                State.canvas.requestRenderAll();
+                Navigator.refresh();
+                App.toast("Détection annulée", 'info');
+            },
+
+            // Valide silencieusement les propositions en attente (changement de
+            // page, nouvel import...) pour ne jamais les perdre sans prévenir
+            flush: () => { if (Detect.pending && Detect.pending.length) Detect.acceptAll(); },
+
+            // ---------- NOMMAGE AUTOMATIQUE (via le texte du PDF) ----------
+            getTextItems: async (unit) => {
+                if (!State.pdfDoc || !window.pdfjsLib) return [];
+                const page = await State.pdfDoc.getPage(State.currentPage + 1);
+                const scale = State.pdfScale || 2;
+                const vp = page.getViewport({ scale });
+                const tc = await page.getTextContent();
+                return tc.items
+                    .filter(it => it.str && it.str.trim().length)
+                    .map(it => {
+                        const tx = pdfjsLib.Util.transform(vp.transform, it.transform);
+                        return { str: it.str, x: tx[4], y: tx[5], w: it.width * scale, fh: Math.hypot(tx[2], tx[3]) || 10 * unit };
+                    });
+            },
+
+            // Nettoie un libellé pour en faire un nom de champ PDF valide
+            cleanName: (s) => {
+                if (!s) return null;
+                let c = String(s).trim().replace(/\s*:\s*$/, '');
+                c = c.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                c = c.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+                return c ? c.slice(0, 30) : null;
+            },
+
+            // Texte le plus proche à gauche d'un point (même ligne de base)
+            labelLeftOf: (items, x, yRef, unit, maxDist) => {
+                let best = null;
+                items.forEach(it => {
+                    const end = it.x + it.w;
+                    if (Math.abs(it.y - yRef) > Math.max(it.fh * 0.9, 8 * unit)) return;
+                    if (end > x + 4 * unit) return;
+                    if (x - end > (maxDist || 80 * unit)) return;
+                    if (!best || end > best.x + best.w) best = it;
+                });
+                return best ? best.str : null;
+            },
+
+            // Texte le plus proche à droite d'un point (libellé d'une case / radio)
+            labelRightOf: (items, x, yRef, unit, maxDist) => {
+                let best = null;
+                items.forEach(it => {
+                    if (Math.abs(it.y - yRef) > Math.max(it.fh * 0.9, 8 * unit)) return;
+                    if (it.x < x - 2 * unit) return;
+                    if (it.x - x > (maxDist || 40 * unit)) return;
+                    if (!best || it.x < best.x) best = it;
+                });
+                return best ? best.str : null;
+            },
+
+            // En-tête de colonne le plus proche au-dessus d'une cellule
+            headerAbove: (items, x1, x2, yTop, yLimitTop, unit) => {
+                let best = null;
+                items.forEach(it => {
+                    const cx = it.x + it.w / 2;
+                    if (cx < x1 - 2 * unit || cx > x2 + 2 * unit) return;
+                    if (it.y >= yTop || it.y < yLimitTop - 4 * unit) return;
+                    if (!best || it.y > best.y) best = it;
+                });
+                return best ? best.str : null;
+            },
+
+            // Libellé de ligne à gauche d'une cellule (dans le tableau)
+            rowLabelLeft: (items, xLeft, y1, y2, xLimitLeft, unit) => {
+                let best = null;
+                items.forEach(it => {
+                    if (it.y < y1 || it.y > y2 + 4 * unit) return;
+                    const end = it.x + it.w;
+                    if (end > xLeft + 2 * unit) return;
+                    if (it.x < xLimitLeft - 6 * unit) return;
+                    if (!best || end > best.x + best.w) best = it;
+                });
+                return best ? best.str : null;
+            },
+
+            analyse: async (bg) => {
+                const C = State.canvas;
+                const el = bg._originalElement || bg._element;
+                const W = el.naturalWidth || el.width;
+                const H = el.naturalHeight || el.height;
+                if (!W || !H) throw new Error("Fond illisible");
+
+                const off = document.createElement('canvas');
+                off.width = W; off.height = H;
+                const ctx = off.getContext('2d', { willReadFrequently: true });
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, W, H);
+                ctx.drawImage(el, 0, 0, W, H);
+                const px = ctx.getImageData(0, 0, W, H).data;
+
+                // Binarisation
+                const dark = new Uint8Array(W * H);
+                for (let i = 0, j = 0; i < dark.length; i++, j += 4) {
+                    const lum = 0.299 * px[j] + 0.587 * px[j + 1] + 0.114 * px[j + 2];
+                    if (lum < 170) dark[i] = 1;
+                }
+
+                // Tous les seuils sont exprimés en "points PDF" (1 pt = W/595 px)
+                const unit = W / 595;
+                const P = {
+                    minShort: Math.max(5, Math.round(7 * unit)),
+                    minH: Math.round(22 * unit),
+                    minV: Math.round(16 * unit),
+                    maxGap: Math.max(2, Math.round(3 * unit)),
+                    maxThick: Math.max(3, Math.round(4 * unit)),
+                    boxMin: Math.round(7 * unit),
+                    boxMax: Math.round(30 * unit),
+                    fieldH: Math.round(14 * unit),
+                    tol: Math.max(3, Math.round(4 * unit))
+                };
+
+                // Texte du PDF (pour nommer les champs et trouver les libellés) —
+                // vide si le PDF d'origine n'est pas disponible
+                let textItems = [];
+                try { textItems = await Detect.getTextItems(unit); } catch (e) { console.warn("Texte PDF indisponible :", e); }
+
+                const hAll = Detect.scan(dark, W, H, true, P);
+                const vAll = Detect.scan(dark, W, H, false, P);
+
+                // --- 1. CASES À COCHER (petits carrés fermés) ---
+                const boxes = [];
+                const shortV = vAll.filter(s => s.len >= P.boxMin && s.len <= P.boxMax).sort((a, b) => a.b - b.b);
+                const shortH = hAll.filter(s => s.len >= P.boxMin && s.len <= P.boxMax * 1.5);
+                // Index des segments horizontaux par bande de y (perf)
+                const bandKey = (y) => Math.floor(y / (P.tol * 2 + 1));
+                const hIdx = {};
+                shortH.forEach(hs => { const k = bandKey(hs.b); (hIdx[k] = hIdx[k] || []).push(hs); });
+                const hNear = (y) => {
+                    const k = bandKey(y);
+                    return [...(hIdx[k - 1] || []), ...(hIdx[k] || []), ...(hIdx[k + 1] || [])];
+                };
+                // Une bordure de case est fine (~1pt) : les traits de lettres
+                // en gras sont plus épais et sont ainsi éliminés
+                const maxEdge = Math.max(4, Math.round(2 * unit));
+                for (let i = 0; i < shortV.length; i++) {
+                    for (let j = i + 1; j < shortV.length; j++) {
+                        const a = shortV[i], c = shortV[j];
+                        if (a.thick > maxEdge || c.thick > maxEdge) continue;
+                        const w = c.b - a.b;
+                        if (w > P.boxMax) break;
+                        if (w < P.boxMin) continue;
+                        if (Math.abs(a.a1 - c.a1) > P.tol || Math.abs(a.a2 - c.a2) > P.tol) continue;
+                        const h = a.a2 - a.a1;
+                        if (h < P.boxMin) continue;
+                        const ratio = w / h;
+                        if (ratio < 0.65 || ratio > 1.55) continue;
+                        const hasTop = hNear(a.a1).some(hs => hs.thick <= maxEdge && Math.abs(hs.b - a.a1) <= P.tol && hs.a1 <= a.b + P.tol && hs.a2 >= c.b - P.tol);
+                        const hasBot = hNear(a.a2).some(hs => hs.thick <= maxEdge && Math.abs(hs.b - a.a2) <= P.tol && hs.a1 <= a.b + P.tol && hs.a2 >= c.b - P.tol);
+                        if (!hasTop || !hasBot) continue;
+                        if (boxes.some(bx => Math.abs(bx.x - a.b) < P.tol * 2 && Math.abs(bx.y - a.a1) < P.tol * 2)) continue;
+                        const inner = Detect.density(dark, W, H, a.b + 3, a.a1 + 3, w - 6, h - 6);
+                        if (inner > 0.4) continue; // carré rempli = décor
+                        // Anti faux-positif (lettres en gras) : une vraie case est
+                        // isolée. Si l'encre touche la case sur 2 côtés ou plus, on rejette.
+                        const m1 = 2, m2 = Math.max(4, Math.round(2.5 * unit));
+                        const strips = [
+                            Detect.density(dark, W, H, a.b - m2, a.a1, m2 - m1, h),          // gauche
+                            Detect.density(dark, W, H, c.b + m1, a.a1, m2 - m1, h),          // droite
+                            Detect.density(dark, W, H, a.b, a.a1 - m2, w, m2 - m1),          // haut
+                            Detect.density(dark, W, H, a.b, a.a2 + m1, w, m2 - m1)           // bas
+                        ];
+                        if (strips.filter(d => d > 0.25).length >= 2) continue;
+                        boxes.push({ x: a.b, y: a.a1, w, h, checked: inner > 0.05 });
+                    }
+                }
+
+                // --- 1bis. BOUTONS RADIO (petits cercles / anneaux) ---
+                // Composantes connexes de pixels sombres : un anneau a un cadre
+                // presque carré, des coins vides, les milieux de bords encrés
+                // et un trait fin.
+                const circles = [];
+                {
+                    const visited = new Uint8Array(W * H);
+                    const minD = Math.round(8 * unit), maxD = Math.round(26 * unit);
+                    const im1 = 2, im2 = Math.max(4, Math.round(2.5 * unit));
+                    for (let idx = 0; idx < dark.length; idx++) {
+                        if (!dark[idx] || visited[idx]) continue;
+                        const stack = [idx];
+                        visited[idx] = 1;
+                        let minX = W, maxX = 0, minY = H, maxY = 0, count = 0;
+                        while (stack.length) {
+                            const cur = stack.pop();
+                            const cy = (cur / W) | 0, cx = cur % W;
+                            count++;
+                            if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    if (!dx && !dy) continue;
+                                    const nx = cx + dx, ny = cy + dy;
+                                    if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+                                    const ni = ny * W + nx;
+                                    if (dark[ni] && !visited[ni]) { visited[ni] = 1; stack.push(ni); }
+                                }
+                            }
+                        }
+                        const w = maxX - minX + 1, h = maxY - minY + 1;
+                        if (w < minD || w > maxD || h < minD || h > maxD) continue;
+                        if (Math.abs(w - h) > P.tol) continue;
+                        const d = (w + h) / 2;
+                        const th = count / (Math.PI * d); // épaisseur approx. de l'anneau
+                        if (th < 0.8 || th > maxEdge) continue;
+                        // Coins vides (sinon : carré → géré par les cases à cocher).
+                        // On compare la MOYENNE des 4 coins : un cercle ~0.15
+                        // (un peu d'anticrénelage), un carré ~0.6
+                        const cWin = Math.max(2, Math.round(d * 0.18));
+                        const corners = [
+                            Detect.density(dark, W, H, minX, minY, cWin, cWin),
+                            Detect.density(dark, W, H, maxX - cWin, minY, cWin, cWin),
+                            Detect.density(dark, W, H, minX, maxY - cWin, cWin, cWin),
+                            Detect.density(dark, W, H, maxX - cWin, maxY - cWin, cWin, cWin)
+                        ];
+                        if (corners.reduce((s2, cd) => s2 + cd, 0) / 4 > 0.3) continue;
+                        if (corners.some(cd => cd > 0.45)) continue;
+                        // Milieux de bords encrés (l'anneau passe par là)
+                        const mWin = Math.max(3, Math.round(th + 2));
+                        const mids = [
+                            Detect.density(dark, W, H, minX + w / 2 - mWin / 2, minY, mWin, mWin),
+                            Detect.density(dark, W, H, minX + w / 2 - mWin / 2, maxY - mWin + 1, mWin, mWin),
+                            Detect.density(dark, W, H, minX, minY + h / 2 - mWin / 2, mWin, mWin),
+                            Detect.density(dark, W, H, maxX - mWin + 1, minY + h / 2 - mWin / 2, mWin, mWin)
+                        ];
+                        if (mids.filter(md => md > 0.3).length < 4) continue;
+                        // Isolement : rejet si l'encre touche le cercle sur 2 côtés
+                        // ou plus (lettres "o", "O", "0"...)
+                        const iStrips = [
+                            Detect.density(dark, W, H, minX - im2, minY, im2 - im1, h),
+                            Detect.density(dark, W, H, maxX + im1, minY, im2 - im1, h),
+                            Detect.density(dark, W, H, minX, minY - im2, w, im2 - im1),
+                            Detect.density(dark, W, H, minX, maxY + im1, w, im2 - im1)
+                        ];
+                        if (iStrips.filter(sd => sd > 0.25).length >= 2) continue;
+                        // Centre encré = déjà coché
+                        const cenWin = Math.max(2, Math.round(d * 0.35));
+                        const center = Detect.density(dark, W, H, minX + w / 2 - cenWin / 2, minY + h / 2 - cenWin / 2, cenWin, cenWin);
+                        circles.push({ x: minX, y: minY, w, h, checked: center > 0.2 });
+                    }
+                }
+
+                // Regroupement des cercles voisins (même ligne ou même colonne)
+                // en groupes radio ; un cercle isolé est ignoré (probable décor)
+                const radioProps = [];
+                {
+                    const grpOf = new Array(circles.length).fill(-1);
+                    let nextGrp = 0;
+                    for (let i = 0; i < circles.length; i++) {
+                        for (let j = i + 1; j < circles.length; j++) {
+                            const a = circles[i], b = circles[j];
+                            const ax = a.x + a.w / 2, ay = a.y + a.h / 2;
+                            const bx = b.x + b.w / 2, by = b.y + b.h / 2;
+                            const sameLine = Math.abs(ay - by) < a.h && Math.abs(ax - bx) < 170 * unit;
+                            const sameCol = Math.abs(ax - bx) < a.w && Math.abs(ay - by) < 45 * unit;
+                            if (!sameLine && !sameCol) continue;
+                            if (grpOf[i] === -1 && grpOf[j] === -1) { grpOf[i] = grpOf[j] = nextGrp++; }
+                            else if (grpOf[i] === -1) grpOf[i] = grpOf[j];
+                            else if (grpOf[j] === -1) grpOf[j] = grpOf[i];
+                            else if (grpOf[i] !== grpOf[j]) {
+                                const old = grpOf[j];
+                                for (let k = 0; k < grpOf.length; k++) if (grpOf[k] === old) grpOf[k] = grpOf[i];
+                            }
+                        }
+                    }
+                    const groupsMap = {};
+                    circles.forEach((c, i) => {
+                        if (grpOf[i] === -1) return; // cercle isolé
+                        (groupsMap[grpOf[i]] = groupsMap[grpOf[i]] || []).push(c);
+                    });
+                    const existingGrps = new Set(C.getObjects().filter(o => o.grp).map(o => o.grp));
+                    Object.values(groupsMap).forEach(members => {
+                        if (members.length < 2) return;
+                        members.sort((a, b) => (a.y - b.y) || (a.x - b.x));
+                        const f = members[0];
+                        // Nom du groupe : libellé à gauche du premier cercle (ex: "Sexe :")
+                        let grpName = textItems.length
+                            ? Detect.cleanName(Detect.labelLeftOf(textItems, f.x, f.y + f.h, unit, 130 * unit))
+                            : null;
+                        if (!grpName) grpName = 'Groupe_' + (State.counts.radiogroup++);
+                        while (existingGrps.has(grpName)) grpName += '_2';
+                        existingGrps.add(grpName);
+                        const seenVals = new Set();
+                        members.forEach((c, k) => {
+                            // Valeur : libellé à droite du cercle (ex: "Féminin")
+                            let val = textItems.length
+                                ? Detect.cleanName(Detect.labelRightOf(textItems, c.x + c.w, c.y + c.h, unit, 60 * unit))
+                                : null;
+                            if (!val) val = String.fromCharCode(65 + k);
+                            let vv = val, n = 2;
+                            while (seenVals.has(vv)) vv = val + '_' + (n++);
+                            seenVals.add(vv);
+                            radioProps.push({ type: 'radio', x: c.x, y: c.y, w: c.w, h: c.h, checked: c.checked, grpName, valName: vv });
+                        });
+                    });
+                }
+
+                // --- 2. LIGNES LONGUES (hors bords de cases) ---
+                const inBox = (x, y) => boxes.some(bx => x >= bx.x - P.tol && x <= bx.x + bx.w + P.tol && y >= bx.y - P.tol && y <= bx.y + bx.h + P.tol);
+                const hLong = hAll.filter(s => s.len >= P.minH && !(inBox(s.a1, s.b) && inBox(s.a2, s.b)));
+                const vLong = vAll.filter(s => s.len >= P.minV && !(inBox(s.b, s.a1) && inBox(s.b, s.a2)));
+
+                // --- 3. TABLEAUX : regroupement des lignes qui se croisent ---
+                const items = [
+                    ...hLong.map(s => ({ t: 'h', s })),
+                    ...vLong.map(s => ({ t: 'v', s }))
+                ];
+                const parent = items.map((_, i) => i);
+                const find = (i) => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+                const union = (i, j) => { const a = find(i), b = find(j); if (a !== b) parent[a] = b; };
+                const xTol = Math.round(6 * unit);
+                for (let i = 0; i < items.length; i++) {
+                    for (let j = i + 1; j < items.length; j++) {
+                        if (items[i].t === items[j].t) continue;
+                        const h = items[i].t === 'h' ? items[i].s : items[j].s;
+                        const v = items[i].t === 'v' ? items[i].s : items[j].s;
+                        if (v.b >= h.a1 - xTol && v.b <= h.a2 + xTol && h.b >= v.a1 - xTol && h.b <= v.a2 + xTol) union(i, j);
+                    }
+                }
+                const comps = {};
+                items.forEach((it, i) => { const r = find(i); (comps[r] = comps[r] || []).push(it); });
+
+                const tableCells = [];
+                const usedH = new Set();
+                Object.values(comps).forEach(comp => {
+                    const hs = comp.filter(it => it.t === 'h').map(it => it.s);
+                    const vs = comp.filter(it => it.t === 'v').map(it => it.s);
+                    // Un tableau = un vrai maillage. (2 lignes + 1 colonne) ou
+                    // (1 ligne + 2 colonnes) suffisent : cela couvre les
+                    // tableaux SANS bordure extérieure.
+                    if (!((hs.length >= 2 && vs.length >= 1) || (hs.length >= 1 && vs.length >= 2))) return;
+
+                    let xs = Detect.cluster(vs.map(v => v.b), P.tol * 2);
+                    let ys = Detect.cluster(hs.map(h => h.b), P.tol * 2);
+
+                    // Bords extérieurs manquants : on les déduit de l'étendue
+                    // des lignes perpendiculaires
+                    const xMin = Math.min(...hs.map(h => h.a1), xs[0]);
+                    const xMax = Math.max(...hs.map(h => h.a2), xs[xs.length - 1]);
+                    const yMin = Math.min(...vs.map(v => v.a1), ys[0]);
+                    const yMax = Math.max(...vs.map(v => v.a2), ys[ys.length - 1]);
+                    if (xs[0] - xMin > P.tol * 2) xs.unshift(Math.round(xMin));
+                    if (xs[xs.length - 1] < xMax - P.tol * 2) xs.push(Math.round(xMax));
+                    if (ys[0] - yMin > P.tol * 2) ys.unshift(Math.round(yMin));
+                    if (ys[ys.length - 1] < yMax - P.tol * 2) ys.push(Math.round(yMax));
+                    if (xs.length < 2 || ys.length < 2) return;
+
+                    for (let r = 0; r < ys.length - 1; r++) {
+                        const rh = ys[r + 1] - ys[r];
+                        if (rh < 9 * unit || rh > 250 * unit) continue;
+                        for (let col = 0; col < xs.length - 1; col++) {
+                            const cw = xs[col + 1] - xs[col];
+                            if (cw < 14 * unit) continue;
+                            const pad = Math.max(2, Math.round(1.5 * unit));
+                            const cell = { x: xs[col] + pad, y: ys[r] + pad, w: cw - pad * 2, h: rh - pad * 2 };
+                            // Cellule contenant déjà du texte = en-tête / libellé : on saute
+                            if (Detect.density(dark, W, H, cell.x + 2, cell.y + 2, cell.w - 4, cell.h - 4) > 0.012) continue;
+                            // Nom auto : "LibelléDeLigne_EnTêteDeColonne" (ex: Maths_Note_1)
+                            let cellName = null;
+                            if (textItems.length) {
+                                const header = Detect.headerAbove(textItems, xs[col], xs[col + 1], ys[r], ys[0], unit);
+                                const rowLab = Detect.rowLabelLeft(textItems, xs[col], ys[r], ys[r + 1], xs[0], unit);
+                                const parts = [Detect.cleanName(rowLab), Detect.cleanName(header)].filter(Boolean);
+                                if (parts.length) cellName = parts.join('_');
+                            }
+                            tableCells.push({ type: rh > 42 * unit ? 'textarea' : 'textfield', ...cell, name: cellName });
+                        }
+                    }
+                    hs.forEach(s => usedH.add(s));
+                });
+
+                // --- 4. LIGNES ISOLÉES (soulignés, pointillés) → champs texte ---
+                const lineFields = [];
+                hLong.forEach(s => {
+                    if (usedH.has(s)) return;
+                    const fh = P.fieldH;
+                    // La zone au-dessus doit être libre (sinon : souligné de titre)
+                    if (Detect.density(dark, W, H, s.a1 + 2, s.b - fh - 2, s.len - 4, fh - 2) > 0.03) return;
+                    // Et juste en dessous aussi : un trait "dans" du texte (barre de
+                    // lettres en gras) a de l'encre immédiatement sous lui
+                    if (Detect.density(dark, W, H, s.a1 + 2, s.b + 3, s.len - 4, Math.max(4, Math.round(4 * unit))) > 0.10) return;
+                    // Nom auto : libellé à gauche de la ligne (ex: "Nom :")
+                    const lineName = textItems.length
+                        ? Detect.cleanName(Detect.labelLeftOf(textItems, s.a1, s.b, unit, 90 * unit))
+                        : null;
+                    lineFields.push({ type: 'textfield', x: s.a1, y: s.b - fh, w: s.len, h: fh, name: lineName });
+                });
+
+                // --- 5. LIBELLÉS "Nom :" sans ligne → champ après les deux-points ---
+                let hintFields = [];
+                try { hintFields = Detect.textHints(dark, W, H, P, unit, textItems); } catch (e) { console.warn("Hints texte indisponibles :", e); }
+
+                // --- 6. DÉDOUBLONNAGE + FILTRE avec les champs existants ---
+                const sx = bg.scaleX || 1, sy = bg.scaleY || 1;
+                const bgPos = bg.getPointByOrigin ? bg.getPointByOrigin('left', 'top') : { x: bg.left, y: bg.top };
+                const existing = C.getObjects()
+                    .filter(o => o.ctype && !o.isBackground)
+                    .map(o => {
+                        const r = o.getBoundingRect(true, true);
+                        return { x: (r.left - bgPos.x) / sx, y: (r.top - bgPos.y) / sy, w: r.width / sx, h: r.height / sy };
+                    });
+                const overlaps = (a, b) => {
+                    const ix = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+                    const iy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+                    if (ix <= 0 || iy <= 0) return false;
+                    return (ix * iy) / Math.min(a.w * a.h, b.w * b.h) > 0.3;
+                };
+
+                const counts = { table: 0, radio: 0, box: 0, line: 0, hint: 0 };
+                const accepted = [];
+                const consider = (list, kind) => {
+                    list.forEach(p => {
+                        if (accepted.length >= 400) return; // garde-fou
+                        if (p.w <= 2 || p.h <= 2) return;
+                        if (existing.some(e => overlaps(p, e))) return;
+                        if (accepted.some(e => overlaps(p, e))) return;
+                        p.kind = kind;
+                        accepted.push(p);
+                        counts[kind]++;
+                    });
+                };
+                consider(tableCells, 'table');
+                consider(radioProps, 'radio');
+                consider(boxes.map(b => ({
+                    type: 'checkbox', ...b,
+                    // Nom auto : libellé à droite de la case (ex: "Interne")
+                    name: textItems.length
+                        ? Detect.cleanName(Detect.labelRightOf(textItems, b.x + b.w, b.y + b.h, unit, 60 * unit))
+                        : null
+                })), 'box');
+                consider(lineFields, 'line');
+                consider(hintFields, 'hint');
+
+                // --- 7. CRÉATION DES OBJETS FABRIC (mode "proposition") ---
+                const TINT = 'rgba(59,130,246,0.12)'; // teinte bleue en attente de validation
+                const unitC = unit * sx; // pixels canvas par point PDF
+                const usedPids = new Set(C.getObjects().filter(o => o.pid).map(o => o.pid));
+                const takeName = (base) => {
+                    if (!base) return null;
+                    let n = base, i = 2;
+                    while (usedPids.has(n)) n = base + '_' + (i++);
+                    usedPids.add(n);
+                    return n;
+                };
+                const createdObjs = [];
+                accepted.forEach(p => {
+                    const l = bgPos.x + p.x * sx;
+                    const t = bgPos.y + p.y * sy;
+                    const w = p.w * sx;
+                    const h = p.h * sy;
+                    let obj = null;
+
+                    if (p.type === 'checkbox') {
+                        const keep = State.defaults.boxSize;
+                        State.defaults.boxSize = Math.max(8, Math.round(Math.min(w, h)));
+                        obj = Factory.createCheckbox(l, t);
+                        State.defaults.boxSize = keep;
+                        obj.bgObj.set({ fill: TINT });
+                        if (p.checked) { obj.isChecked = true; obj.markObj.set('opacity', 1); }
+                    } else if (p.type === 'radio') {
+                        const keep = State.defaults.boxSize;
+                        State.defaults.boxSize = Math.max(8, Math.round(Math.min(w, h)));
+                        obj = Factory.createRadio(l, t);
+                        State.defaults.boxSize = keep;
+                        obj.bgObj.set({ fill: TINT });
+                        if (p.grpName) obj.grp = p.grpName;
+                        if (p.valName) obj.val = p.valName;
+                        if (p.checked) { obj.isChecked = true; obj.markObj.set('opacity', 1); }
+                    } else {
+                        obj = Factory.createInputGroup(l, t, w, h, p.type);
+                        // Le trait / la bordure existe déjà sur le PDF : champ
+                        // transparent à l'écran et sans bordure à l'export
+                        obj.bStyle = 'none';
+                        obj.bgObj.set({ fill: TINT, stroke: '#9ca3af', strokeDashArray: [4, 4], strokeWidth: 1 });
+                        obj.txtObj.set('fontSize', Math.max(9, Math.round(Math.min(h * 0.55, 11 * unitC))));
+                    }
+
+                    if (obj) {
+                        // Nom automatique tiré des libellés du PDF
+                        const customPid = takeName(p.name);
+                        if (customPid) obj.pid = customPid;
+                        C.add(obj);
+                        createdObjs.push(obj);
+                    }
+                });
+
+                if (createdObjs.length) {
+                    C.requestRenderAll();
+                    Navigator.refresh();
+                }
+                return { objs: createdObjs, counts };
+            },
+
+            // Champs déduits des libellés finissant par ":" (nécessite le texte du PDF)
+            textHints: (dark, W, H, P, unit, items) => {
+                const out = [];
+                items.forEach(it => {
+                    if (!it.str.trim().endsWith(':')) return;
+                    const startX = it.x + it.w + Math.round(3 * unit);
+                    let endX = W - Math.round(25 * unit);
+                    items.forEach(o2 => {
+                        if (o2 === it) return;
+                        if (Math.abs(o2.y - it.y) < it.fh * 0.8 && o2.x > startX && o2.x < endX) endX = o2.x - Math.round(3 * unit);
+                    });
+                    const w = endX - startX;
+                    if (w < 35 * unit) return;
+                    const h = Math.max(it.fh * 1.4, P.fieldH);
+                    const y = it.y - h * 0.78;
+                    // La zone doit être vierge (sinon un autre détecteur s'en charge)
+                    if (Detect.density(dark, W, H, startX, y, w, h) > 0.01) return;
+                    out.push({ type: 'textfield', x: startX, y, w, h, name: Detect.cleanName(it.str) });
+                });
+                return out;
+            }
         };
 
         const Navigator = {
@@ -2555,6 +3426,96 @@
             },
             hideCtx: () => { document.getElementById('context-menu').classList.add('hidden'); },
 
+            // ============================================================
+            // NOTIFICATIONS (toasts non bloquants)
+            // ============================================================
+            toast: (msg, type = 'success', dur = 2800) => {
+                const cont = document.getElementById('toast-container');
+                if (!cont) return;
+                const icons = { success: 'fa-circle-check', info: 'fa-circle-info', error: 'fa-circle-exclamation' };
+                const el = document.createElement('div');
+                el.className = 'toast ' + type;
+                el.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span></span>`;
+                el.querySelector('span').innerText = msg;
+                cont.appendChild(el);
+                requestAnimationFrame(() => el.classList.add('show'));
+                setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, dur);
+            },
+
+            // Boîte de confirmation maison (remplace confirm() natif, illisible sur mobile)
+            showConfirm: (title, msg, buttons) => {
+                document.getElementById('confirm-title').innerText = title;
+                document.getElementById('confirm-msg').innerText = msg;
+                const bar = document.getElementById('confirm-buttons');
+                bar.innerHTML = '';
+                buttons.forEach(b => {
+                    const btn = document.createElement('button');
+                    btn.className = b.primary
+                        ? 'bg-active text-white text-xs font-bold px-4 py-2 rounded hover:bg-gray-800 transition'
+                        : 'bg-gray-100 text-gray-700 text-xs font-bold px-4 py-2 rounded hover:bg-gray-200 transition';
+                    btn.innerText = b.label;
+                    btn.onclick = () => { App.hideConfirm(); if (b.onClick) b.onClick(); };
+                    bar.appendChild(btn);
+                });
+                document.getElementById('confirm-overlay').classList.remove('hidden');
+            },
+            hideConfirm: () => document.getElementById('confirm-overlay').classList.add('hidden'),
+
+            // ============================================================
+            // DÉTECTION AUTOMATIQUE DES CHAMPS
+            // ============================================================
+            detectFields: () => {
+                MobileUI.closeAll();
+                if (typeof Detect === 'undefined') return;
+
+                if (State.totalPages > 1) {
+                    App.showConfirm("Détection automatique",
+                        "Détecter les champs sur cette page uniquement, ou sur tout le document ?", [
+                        { label: 'Tout le document', primary: true, onClick: () => Detect.runAll() },
+                        { label: 'Cette page', onClick: () => Detect.run() },
+                        { label: 'Annuler' }
+                    ]);
+                } else {
+                    Detect.run();
+                }
+            },
+
+            // ============================================================
+            // GALERIE DE MODÈLES (template.js)
+            // ============================================================
+            showTemplates: () => {
+                MobileUI.closeAll();
+                App.renderTemplates();
+                document.getElementById('tpl-overlay').classList.remove('hidden');
+            },
+            hideTemplates: () => document.getElementById('tpl-overlay').classList.add('hidden'),
+
+            renderTemplates: () => {
+                const list = document.getElementById('tpl-list');
+                const empty = document.getElementById('tpl-empty');
+                if (!list) return;
+                list.innerHTML = '';
+
+                if (typeof APP_MODELS === 'undefined' || !APP_MODELS.length) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+
+                APP_MODELS.forEach((tpl, i) => {
+                    const el = document.createElement('button');
+                    el.className = 'border border-gray-200 rounded-lg overflow-hidden hover:border-blue-400 hover:shadow-md transition bg-white flex flex-col text-left';
+                    el.innerHTML = `<img src="${tpl.thumbnail}" alt="" class="w-full h-24 object-cover object-top bg-gray-50 pointer-events-none">
+                        <span class="text-[10px] font-bold text-gray-700 px-2 pt-1.5 truncate"></span>
+                        <span class="text-[9px] text-gray-400 px-2 pb-1.5 truncate"></span>`;
+                    const spans = el.querySelectorAll('span');
+                    spans[0].innerText = tpl.name || 'Modèle';
+                    spans[1].innerText = tpl.category || '';
+                    el.onclick = () => Project.loadTemplate(i);
+                    list.appendChild(el);
+                });
+            },
+
             // Coordonnées d'un événement souris OU tactile
             evtXY: (e) => {
                 const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
@@ -2723,33 +3684,39 @@
                 State.pages[State.currentPage] = json;
             },
 
+            // Renvoie une promesse résolue quand la page est réellement chargée
+            // (la détection multi-pages enchaîne les pages et doit pouvoir attendre)
             loadPage: (index) => {
-                State.canvas.clear();
-                const json = State.pages[index];
+                return new Promise((resolve) => {
+                    State.canvas.clear();
+                    const json = State.pages[index];
 
-                if (json) {
-                    // Si la page contient des données, on les charge
-                    State.canvas.loadFromJSON(json, () => {
-                        State.canvas.renderAll();
-                        App.restoreRefs(); // Important pour reconnecter bgObj/txtObj
+                    if (json) {
+                        // Si la page contient des données, on les charge
+                        State.canvas.loadFromJSON(json, () => {
+                            State.canvas.renderAll();
+                            App.restoreRefs(); // Important pour reconnecter bgObj/txtObj
 
-                        // On s'assure que le fond est bien non-sélectionnable
-                        const bg = State.canvas.getObjects().find(o => o.isBackground);
-                        if (bg) {
-                            bg.set({ selectable: false, evented: false, lockMovementX: true, lockMovementY: true });
-                            State.canvas.sendToBack(bg);
-                        }
+                            // On s'assure que le fond est bien non-sélectionnable
+                            const bg = State.canvas.getObjects().find(o => o.isBackground);
+                            if (bg) {
+                                bg.set({ selectable: false, evented: false, lockMovementX: true, lockMovementY: true });
+                                State.canvas.sendToBack(bg);
+                            }
 
-                        Navigator.refresh(); // Mise à jour de la liste des calques
-                    });
-                } else {
-                    // Si la page est vide (cas rare mais possible), on charge un fond blanc
-                    App.loadBlank();
-                }
-                State.currentPage = index;
-                App.updatePageIndicator();
-                // Sur petit écran, une page A4 (595px) dépasse largement : on l'ajuste
-                if (MobileUI.isCompact()) setTimeout(() => App.fitToScreen(), 60);
+                            Navigator.refresh(); // Mise à jour de la liste des calques
+                            resolve();
+                        });
+                    } else {
+                        // Si la page est vide (cas rare mais possible), on charge un fond blanc
+                        App.loadBlank();
+                        resolve();
+                    }
+                    State.currentPage = index;
+                    App.updatePageIndicator();
+                    // Sur petit écran, une page A4 (595px) dépasse largement : on l'ajuste
+                    if (MobileUI.isCompact()) setTimeout(() => App.fitToScreen(), 60);
+                });
             },
 
             changePage: (delta) => {
@@ -3206,7 +4173,34 @@
                         ctx2.restore();
                     });
 
-                    // (Tu peux laisser ici tes Guides Magnétiques rouges s'ils ne sont pas déjà dessinés ailleurs)
+                    // --- C. LIGNES D'AIMANTATION ---
+                    // State.snapLines est rempli par App.smartGuides() pendant le
+                    // déplacement d'un objet ; c'est ici qu'on les matérialise.
+                    if (State.snap && State.snapLines && State.snapLines.length) {
+                        const w = State.canvas.getWidth();
+                        const h = State.canvas.getHeight();
+
+                        ctx2.save();
+                        ctx2.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+                        ctx2.strokeStyle = '#ff2d55';
+                        ctx2.lineWidth = 1;
+                        ctx2.setLineDash([5, 4]);
+
+                        State.snapLines.forEach(line => {
+                            ctx2.beginPath();
+                            if (line.vertical) {
+                                const x = Math.round(line.x * vpt[0] + vpt[4]) + 0.5;
+                                ctx2.moveTo(x, 0);
+                                ctx2.lineTo(x, h);
+                            } else {
+                                const y = Math.round(line.y * vpt[3] + vpt[5]) + 0.5;
+                                ctx2.moveTo(0, y);
+                                ctx2.lineTo(w, y);
+                            }
+                            ctx2.stroke();
+                        });
+                        ctx2.restore();
+                    }
                 });         // 6. Bindings globaux
                 App.bindEvents();
                 App.bindKeys();
@@ -3495,8 +4489,18 @@
                 // 2. GESTION DES OUTILS DE GAUCHE
                 if (t === 'select') {
                     State.mode = 'select';
+                    State.touchMarquee = false;
                     _uiActiveTool(t); // Active l'icône flèche à gauche
                     State.canvas.defaultCursor = 'default';
+                    State.canvas.selection = true;
+                }
+                // Outil "Sélection au doigt" : même mode que la flèche, mais
+                // un glissement sur une zone vide encadre au lieu de déplacer la page.
+                else if (t === 'marquee') {
+                    State.mode = 'select';
+                    State.touchMarquee = true;
+                    _uiActiveTool(t);
+                    State.canvas.defaultCursor = 'crosshair';
                     State.canvas.selection = true;
                 }
                 else if (t === 'hand') {
@@ -3701,8 +4705,10 @@
                     // 2. MAIN / PAN
                     var e = opt.e;
                     // Au doigt, un glissement sur une zone vide déplace la page :
-                    // c'est le geste attendu sur mobile (le lasso reste dispo à la souris).
-                    const touchPan = App.isTouchEvt(e) && !opt.target && State.mode === 'select';
+                    // c'est le geste attendu sur mobile. L'outil "Sélection au doigt"
+                    // (State.touchMarquee) rétablit l'encadrement de plusieurs champs.
+                    const touchPan = App.isTouchEvt(e) && !opt.target
+                        && State.mode === 'select' && !State.touchMarquee;
 
                     if (e.altKey || e.code === 'Space' || State.mode === 'hand' || touchPan) {
                         const p = App.evtXY(e);
@@ -4034,6 +5040,43 @@
             },
             // -------------------------
 
+            // Charge un modèle de la galerie (template.js) sur une page blanche
+            loadTemplate: (index) => {
+                if (typeof APP_MODELS === 'undefined' || !APP_MODELS[index]) return;
+                const tpl = APP_MODELS[index];
+
+                App.hideTemplates();
+                App.loadBlank();
+                State.pdfBytes = null;
+                State.pdfDoc = null;
+
+                fabric.util.enlivenObjects(tpl.objects || [], (objs) => {
+                    const off = State.canvas.pageOffset;
+                    objs.forEach(o => {
+                        o.left += off.x;
+                        o.top += off.y;
+                        // Re-verrouillage standard des champs de formulaire
+                        if (o.ctype && ['textfield', 'textarea', 'checkbox', 'radio', 'dropdown', 'label'].includes(o.ctype)) {
+                            o.lockRotation = true;
+                            o.setControlsVisibility({ mtr: false });
+                        }
+                        if (o.type === 'group' && o._objects) {
+                            o._objects.forEach(k => { k.selectable = false; k.evented = false; });
+                        }
+                        o.setCoords();
+                        State.canvas.add(o);
+                    });
+                    App.restoreRefs();
+                    State.canvas.requestRenderAll();
+                    Navigator.refresh();
+                    History.save();
+                    if (MobileUI.isCompact()) App.fitToScreen();
+                    App.toast(`Modèle « ${tpl.name} » chargé`, 'success');
+                }, '');
+
+                document.getElementById('doc-title').value = (tpl.name || 'Modele').replace(/\s+/g, '_');
+            },
+
             save: () => {
                 App.saveCurrentPage();
                 const data = {
@@ -4072,6 +5115,7 @@
                         // Si on charge un projet, on considère qu'on n'a plus le PDF d'origine en mémoire binaire
                         // (Sauf si on voulait stocker le PDF en base64 dans le JSON, mais ça ferait des fichiers énormes)
                         State.pdfBytes = null;
+                        State.pdfDoc = null;
 
                         App.loadPage(0);
                         App.showModal("Projet chargé", `${State.totalPages} page(s) récupérée(s).`);
@@ -4551,6 +5595,9 @@
                 link.click();
             }
         };
+        // NE PAS remplacer par le worker embarqué dans ext.js : celui-ci est en
+        // version 3.1.81 alors que l'API PDF.js chargée est en 3.4.120, et PDF.js
+        // refuse de démarrer sur un écart de version. Ce CDN doit rester joignable.
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
         document.getElementById('file-input').addEventListener('change', async e => {
@@ -4563,6 +5610,10 @@
             const ab = await f.arrayBuffer();
             State.pdfBytes = new Uint8Array(ab); // On garde le binaire pour l'export
             const pdf = await pdfjsLib.getDocument(URL.createObjectURL(new Blob([ab]))).promise;
+
+            // Gardés pour la détection automatique (lecture du texte de la page)
+            State.pdfDoc = pdf;
+            State.pdfScale = 2.0;
 
             // RESET TOTAL
             State.pages = [];
