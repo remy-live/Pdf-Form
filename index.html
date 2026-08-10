@@ -2927,7 +2927,7 @@ const Detect = {
 
                 // --- 5. LIBELLÉS "Nom :" sans ligne → champ après les deux-points ---
                 let hintFields = [];
-                try { hintFields = Detect.textHints(dark, W, H, P, unit, textItems); } catch (e) { console.warn("Hints texte indisponibles :", e); }
+                try { hintFields = Detect.textHints(dark, W, H, P, unit, textItems, vLong); } catch (e) { console.warn("Hints texte indisponibles :", e); }
 
                 // --- 6. DÉDOUBLONNAGE + FILTRE avec les champs existants ---
                 const sx = bg.scaleX || 1, sy = bg.scaleY || 1;
@@ -3031,23 +3031,56 @@ const Detect = {
             },
 
             // Champs déduits des libellés finissant par ":" (nécessite le texte du PDF)
-            textHints: (dark, W, H, P, unit, items) => {
+            // Champs déduits du texte : "Nom :", "7 × 100 =", "Réponse ....."
+            // On pose un champ dans l'espace libre qui suit le marqueur.
+            textHints: (dark, W, H, P, unit, items, vLines) => {
                 const out = [];
+                // Traits verticaux = bords de cellules : ils bornent le champ
+                const verticals = (vLines || []).map(s => ({
+                    x: s.b,
+                    y1: Math.min(s.a1, s.a2),
+                    y2: Math.max(s.a1, s.a2)
+                }));
+
                 items.forEach(it => {
-                    if (!it.str.trim().endsWith(':')) return;
+                    const raw = it.str.trim();
+                    const isEq = raw.endsWith('=');
+                    const isColon = raw.endsWith(':');
+                    const isDots = /[.…·]{3,}$/.test(raw);
+                    if (!isEq && !isColon && !isDots) return;
+
                     const startX = it.x + it.w + Math.round(3 * unit);
                     let endX = W - Math.round(25 * unit);
+
+                    // Autre texte sur la même ligne (colonne suivante d'un tableau...)
                     items.forEach(o2 => {
                         if (o2 === it) return;
                         if (Math.abs(o2.y - it.y) < it.fh * 0.8 && o2.x > startX && o2.x < endX) endX = o2.x - Math.round(3 * unit);
                     });
+
+                    // Bord de tableau : on s'arrête au premier trait vertical croisé
+                    verticals.forEach(v => {
+                        if (v.x <= startX || v.x >= endX) return;
+                        if (it.y < v.y1 - 2 || it.y > v.y2 + 2) return;
+                        endX = v.x - Math.round(2 * unit);
+                    });
+
                     const w = endX - startX;
-                    if (w < 35 * unit) return;
+                    // Un résultat de calcul tient sur peu de place : seuil abaissé
+                    if (w < (isEq ? 16 : 35) * unit) return;
+
                     const h = Math.max(it.fh * 1.4, P.fieldH);
                     const y = it.y - h * 0.78;
-                    // La zone doit être vierge (sinon un autre détecteur s'en charge)
-                    if (Detect.density(dark, W, H, startX, y, w, h) > 0.01) return;
-                    out.push({ type: 'textfield', x: startX, y, w, h, name: Detect.cleanName(it.str) });
+
+                    // La zone doit être vierge (sinon un autre détecteur s'en charge).
+                    // On sonde l'intérieur : dans un tableau, les bords de cellule
+                    // effleurent le champ sans qu'il soit occupé pour autant.
+                    const ins = Math.round(2 * unit);
+                    if (Detect.density(dark, W, H, startX + ins, y + ins, w - 2 * ins, h - 2 * ins) > 0.015) return;
+
+                    let name = Detect.cleanName(raw.replace(/[=:.…·\s]+$/, ''));
+                    if (!name) name = Detect.cleanName(Detect.labelLeftOf(items, it.x, it.y, unit, 90 * unit));
+                    out.push({ type: 'textfield', x: startX, y, w, h, name });
                 });
                 return out;
             }
