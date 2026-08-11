@@ -480,6 +480,14 @@
             bottom: 76px;
         }
 
+        /* "Page 1 / 10" doit rester sur une seule ligne : la largeur fixe
+           d'origine (80px) faisait passer le texte à la ligne dès 2 chiffres */
+        #page-indicator {
+            width: auto;
+            min-width: 5rem;
+            white-space: nowrap;
+        }
+
         /* Éléments réservés aux écrans tactiles */
         .touch-only {
             display: none;
@@ -917,11 +925,11 @@
         class="hidden fixed left-1/2 -translate-x-1/2 bg-white border border-blue-200 shadow-2xl rounded-full pl-4 pr-2 py-2 z-[80] flex items-center gap-3 max-w-[calc(100vw-16px)]">
         <i class="fa-solid fa-wand-magic-sparkles text-blue-600"></i>
         <span id="detect-bar-text" class="text-xs font-bold text-gray-700 whitespace-nowrap">0 champs proposés</span>
-        <button onclick="Detect.acceptAll()"
+        <button id="detect-accept" onclick="Detect.acceptAll()"
             class="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-blue-700 transition whitespace-nowrap">
             Tout accepter</button>
-        <button onclick="Detect.cancelAll()"
-            class="text-xs font-bold text-gray-500 hover:text-red-600 px-2 transition">Annuler</button>
+        <button id="detect-cancel" onclick="Detect.cancelAll()"
+            class="text-xs font-bold text-gray-500 hover:text-red-600 px-2 transition whitespace-nowrap">Annuler</button>
     </div>
 
     <div id="tpl-overlay"
@@ -2443,12 +2451,20 @@ const Detect = {
             },
 
             // Détection sur toutes les pages du document (acceptation directe)
+            // État "multi-pages" : sauvegarde de toutes les pages AVANT la
+            // détection, pour pouvoir tout annuler d'un geste
+            multi: null,
+
             runAll: async () => {
                 Detect.flush();
                 const original = State.currentPage;
                 let total = 0, pagesWith = 0;
                 App.showModal("Détection", "Analyse de toutes les pages...");
                 await new Promise(r => setTimeout(r, 60));
+
+                App.saveCurrentPage();
+                const snapshot = JSON.stringify(State.pages);
+
                 try {
                     for (let i = 0; i < State.totalPages; i++) {
                         App.saveCurrentPage();
@@ -2467,8 +2483,21 @@ const Detect = {
                 } catch (e) { console.error("Erreur détection multi-pages :", e); }
                 await App.loadPage(original);
                 App.closeModal();
-                App.toast(total ? `${total} champs créés sur ${pagesWith} page(s)` : "Aucun champ détecté",
-                    total ? 'success' : 'info', 4000);
+
+                if (!total) {
+                    App.toast("Aucun champ détecté", 'info', 4000);
+                    return;
+                }
+
+                // Barre de validation : Garder / Tout annuler (le document
+                // entier peut être restauré tel qu'il était avant l'analyse)
+                Detect.multi = { snapshot, original };
+                document.getElementById('detect-bar-text').innerText =
+                    `${total} champs créés sur ${pagesWith} page(s)`;
+                document.getElementById('detect-accept').innerText = "Garder";
+                document.getElementById('detect-cancel').innerText = "Tout annuler";
+                document.getElementById('detect-bar').classList.remove('hidden');
+                App.toast("Parcourez les pages pour vérifier, puis validez", 'info', 4200);
             },
 
             showBar: (result) => {
@@ -2496,10 +2525,24 @@ const Detect = {
                 State.canvas.requestRenderAll();
             },
 
+            // Remet les libellés d'origine de la barre (mode page unique)
+            resetBar: () => {
+                document.getElementById('detect-bar').classList.add('hidden');
+                document.getElementById('detect-accept').innerText = "Tout accepter";
+                document.getElementById('detect-cancel').innerText = "Annuler";
+            },
+
             acceptAll: () => {
+                // Mode multi-pages : les champs sont déjà appliqués, on garde tout
+                if (Detect.multi) {
+                    Detect.multi = null;
+                    Detect.resetBar();
+                    App.toast("Champs conservés sur tout le document", 'success');
+                    return;
+                }
                 const alive = Detect.pending.filter(o => State.canvas.contains(o));
                 Detect.pending = [];
-                document.getElementById('detect-bar').classList.add('hidden');
+                Detect.resetBar();
                 if (!alive.length) { Navigator.refresh(); return; }
                 Detect.finalize(alive);
                 App.autoSort(true); // Trie l'ordre de tabulation + sauvegarde
@@ -2507,10 +2550,23 @@ const Detect = {
             },
 
             cancelAll: () => {
+                // Mode multi-pages : on restaure le document tel qu'il était
+                // avant l'analyse (toutes pages confondues)
+                if (Detect.multi) {
+                    State.pages = JSON.parse(Detect.multi.snapshot);
+                    const back = Detect.multi.original;
+                    Detect.multi = null;
+                    Detect.resetBar();
+                    App.loadPage(back).then(() => {
+                        History.save();
+                        App.toast("Détection annulée sur tout le document", 'info');
+                    });
+                    return;
+                }
                 const alive = Detect.pending.filter(o => State.canvas.contains(o));
                 if (alive.length) State.canvas.remove(...alive);
                 Detect.pending = [];
-                document.getElementById('detect-bar').classList.add('hidden');
+                Detect.resetBar();
                 State.canvas.discardActiveObject();
                 State.canvas.requestRenderAll();
                 Navigator.refresh();
@@ -2519,7 +2575,7 @@ const Detect = {
 
             // Valide silencieusement les propositions en attente (changement de
             // page, nouvel import...) pour ne jamais les perdre sans prévenir
-            flush: () => { if (Detect.pending && Detect.pending.length) Detect.acceptAll(); },
+            flush: () => { if (Detect.multi || (Detect.pending && Detect.pending.length)) Detect.acceptAll(); },
 
             // ---------- NOMMAGE AUTOMATIQUE (via le texte du PDF) ----------
             getTextItems: async (unit) => {
