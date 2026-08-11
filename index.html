@@ -2741,6 +2741,30 @@ const Detect = {
                 const hAll = Detect.scan(dark, W, H, true, P);
                 const vAll = Detect.scan(dark, W, H, false, P);
 
+                // --- FILTRE ANTI FAUX-POSITIFS PAR LA COUCHE TEXTE ---
+                // Une "case" qui se superpose largement à un caractère du PDF est
+                // une lettre (O, D, carré typographique) ou un fragment de titre,
+                // pas un champ. Les vraies cases sont des graphiques : elles ne
+                // recouvrent jamais le rectangle d'un mot.
+                // Sans texte disponible (PDF scanné), le filtre est neutre.
+                const textBoxes = textItems.map(it => ({
+                    x: it.x, y: it.y - it.fh * 0.82, w: it.w, h: it.fh * 1.05
+                }));
+                const onText = (x, y, w, h, seuil) => {
+                    const area = w * h;
+                    if (!textBoxes.length || area <= 0) return false;
+                    let cover = 0;
+                    for (const t of textBoxes) {
+                        const ix = Math.min(x + w, t.x + t.w) - Math.max(x, t.x);
+                        const iy = Math.min(y + h, t.y + t.h) - Math.max(y, t.y);
+                        if (ix > 0 && iy > 0) {
+                            cover += ix * iy;
+                            if (cover / area > seuil) return true;
+                        }
+                    }
+                    return false;
+                };
+
                 // --- 1. CASES À COCHER (petits carrés fermés) ---
                 const boxes = [];
                 const shortV = vAll.filter(s => s.len >= P.boxMin && s.len <= P.boxMax).sort((a, b) => a.b - b.b);
@@ -2784,6 +2808,7 @@ const Detect = {
                             Detect.density(dark, W, H, a.b, a.a2 + m1, w, m2 - m1)           // bas
                         ];
                         if (strips.filter(d => d > 0.25).length >= 2) continue;
+                        if (onText(a.b, a.a1, w, h, 0.45)) continue; // lettre, pas une case
                         boxes.push({ x: a.b, y: a.a1, w, h, checked: inner > 0.05 });
                     }
                 }
@@ -2857,6 +2882,7 @@ const Detect = {
                         // Centre encré = déjà coché
                         const cenWin = Math.max(2, Math.round(d * 0.35));
                         const center = Detect.density(dark, W, H, minX + w / 2 - cenWin / 2, minY + h / 2 - cenWin / 2, cenWin, cenWin);
+                        if (onText(minX, minY, w, h, 0.45)) continue; // "o", "O", "0"...
                         circles.push({ x: minX, y: minY, w, h, checked: center > 0.2 });
                     }
                 }
