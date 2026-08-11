@@ -2338,8 +2338,10 @@
                 History.stack.push(JSON.stringify(raw));
                 if (History.stack.length > History.max) History.stack.shift(); else History.idx++;
 
-                // APPEL AUTO-SAVE
-                App.saveAuto(); // <--- C'est ici qu'on appelle la nouvelle fonction
+                // Auto-save différée : réécrire tout le document (plusieurs Mo
+                // avec les fonds de page) à chaque modification bloquait le fil
+                // principal et rendait les outils poussifs, la gomme surtout.
+                App.saveAutoDiffere();
 
                 Navigator.refresh();
             },
@@ -3669,6 +3671,19 @@ const Detect = {
                     localStorage.removeItem('prof_toolbox_autosave');
                 }
             },
+            // Programme une sauvegarde automatique après une accalmie, et la
+            // fait pendant un temps mort du navigateur si possible. Un geste
+            // continu (balayage à la gomme) n'écrit ainsi qu'une seule fois.
+            saveAutoDiffere: () => {
+                clearTimeout(App._autoTimer);
+                App._autoTimer = setTimeout(() => {
+                    App._autoTimer = null;
+                    const faire = () => { try { App.saveAuto(); } catch (e) { console.warn(e); } };
+                    if (window.requestIdleCallback) requestIdleCallback(faire, { timeout: 2000 });
+                    else faire();
+                }, 1200);
+            },
+
             saveAuto: () => {
                 // 1. On force la mise à jour de la page actuelle dans le tableau
                 // (Sinon State.pages[current] risque d'être vide ou obsolète)
@@ -3868,7 +3883,10 @@ const Detect = {
                         lastTap = now;
 
                         // --- Appui long = menu contextuel ---
+                        // (pas à la gomme : on efface en gardant le doigt appuyé,
+                        // le menu contextuel n'aurait aucun sens et volait le geste)
                         cancelLongPress();
+                        if (State.mode === 'eraser') return;
                         lpTimer = setTimeout(() => {
                             lpTimer = null;
                             const target = C.findTarget(fakeEvt(lpStart.x, lpStart.y), false);
@@ -4303,6 +4321,19 @@ const Detect = {
 
                 // 3bis. Gestes tactiles (pinch, appui long, double tap)
                 App.bindTouch();
+
+                // La sauvegarde automatique est différée : on la force quand
+                // l'utilisateur quitte ou masque l'onglet, pour ne rien perdre.
+                const sauverMaintenant = () => {
+                    if (!App._autoTimer) return;
+                    clearTimeout(App._autoTimer);
+                    App._autoTimer = null;
+                    try { App.saveAuto(); } catch (e) { console.warn(e); }
+                };
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') sauverMaintenant();
+                });
+                window.addEventListener('pagehide', sauverMaintenant);
 
                 // 4. Chargement de la page blanche par défaut
                 App.loadBlank();
@@ -4954,7 +4985,10 @@ const Detect = {
                     // de supprimer : on annule la transformation en cours.
                     C._currentTransform = null;
                     erasedCount++;
-                    C.requestRenderAll();
+                    // Rendu immédiat plutôt que différé à la frame suivante :
+                    // le dessin coûte ~2ms et l'effacement doit se voir tout de
+                    // suite sous le doigt.
+                    C.renderAll();
                 };
                 const endErasing = () => {
                     erasing = false;
