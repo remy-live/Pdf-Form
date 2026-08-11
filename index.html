@@ -746,6 +746,51 @@
                 display: none;
             }
 
+            /* --- Zoom et Annuler/Rétablir discrets ---
+               Le pincement à deux doigts fait l'essentiel du zoom : ces boutons
+               restent disponibles mais s'effacent visuellement. Ils reprennent
+               leur opacité pleine dès qu'on les touche. */
+            #float-controls {
+                bottom: 10px;
+                left: 10px;
+                gap: 6px;
+                opacity: .55;
+                transition: opacity .2s;
+            }
+
+            #float-controls:active,
+            #float-controls:focus-within,
+            #float-controls.is-awake {
+                opacity: 1;
+            }
+
+            #float-history,
+            #zoom-controls {
+                background: rgba(255, 255, 255, .82);
+                backdrop-filter: blur(6px);
+                box-shadow: none;
+                border-color: rgba(0, 0, 0, .08);
+            }
+
+            #float-history button,
+            #zoom-controls button {
+                width: 30px;
+                height: 30px;
+            }
+
+            #float-history button i,
+            #zoom-controls button i {
+                font-size: 10px;
+            }
+
+            #btn-zoom-level {
+                width: auto;
+                min-width: 38px;
+                height: 30px;
+                padding: 0 4px;
+                font-size: 9px;
+            }
+
             /* --- Empilement des barres flottantes du bas ---
                Sur petit écran, zoom + Annuler/Rétablir, navigation de pages et
                barre de détection se retrouvaient tous les trois collés en bas
@@ -1276,7 +1321,7 @@
                 </button>
             </div>
 
-            <div class="absolute bottom-4 left-4 flex items-center gap-3 z-50">
+            <div id="float-controls" class="absolute bottom-4 left-4 flex items-center gap-3 z-50">
 
                 <div id="float-history"
                     class="items-center bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
@@ -1292,7 +1337,8 @@
                     </button>
                 </div>
 
-                <div class="flex items-center bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
+                <div id="zoom-controls"
+                    class="flex items-center bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
                     <button onclick="App.setZoom(-0.1)"
                         class="w-8 h-8 flex items-center justify-center hover:bg-gray-50 text-gray-600 active:bg-gray-100 border-r border-gray-200 transition"
                         title="Dézoomer (-)">
@@ -3538,6 +3584,15 @@ const Detect = {
             updateZoomLabel: () => {
                 const el = document.getElementById('btn-zoom-level');
                 if (el && State.canvas) el.innerText = Math.round(State.canvas.getZoom() * 100) + '%';
+
+                // Les commandes sont volontairement effacées sur mobile : on les
+                // réveille le temps de lire la valeur après un zoom (pincement
+                // compris), puis elles se remettent en retrait.
+                const box = document.getElementById('float-controls');
+                if (!box) return;
+                box.classList.add('is-awake');
+                clearTimeout(App._awakeTimer);
+                App._awakeTimer = setTimeout(() => box.classList.remove('is-awake'), 1600);
             },
             checkAutoSave: () => {
                 const saved = localStorage.getItem('prof_toolbox_autosave');
