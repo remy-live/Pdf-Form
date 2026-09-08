@@ -564,6 +564,19 @@
                 display: flex;
             }
 
+            /* --- Empilement des barres flottantes du bas ---
+               Dès que Annuler/Rétablir apparaît, le bloc de gauche s'élargit et
+               rattrape la navigation de pages restée centrée ; plus bas encore,
+               la barre de validation de la détection venait s'ajouter par-dessus.
+               On les empile de bas en haut : commandes, pages, détection. */
+            #page-nav {
+                bottom: 64px;
+            }
+
+            #detect-bar {
+                bottom: 124px;
+            }
+
             /* --- Barre "Style" en menu déroulant --- */
             #toolbar-main {
                 display: none;
@@ -789,15 +802,6 @@
                 height: 30px;
                 padding: 0 4px;
                 font-size: 9px;
-            }
-
-            /* --- Empilement des barres flottantes du bas ---
-               Sur petit écran, zoom + Annuler/Rétablir, navigation de pages et
-               barre de détection se retrouvaient tous les trois collés en bas
-               et se recouvraient : la validation de la détection devenait
-               inatteignable. On les empile de bas en haut. */
-            #page-nav {
-                bottom: 64px;
             }
 
             #detect-bar {
@@ -1736,12 +1740,24 @@
                         </div>
                         <div class="bg-gray-50 p-3 rounded border border-gray-100">
                             <span class="block text-xs font-bold text-gray-400 uppercase mb-2">Navigation</span>
-                            <div class="flex justify-between mb-1"><span>Déplacer</span> <code
-                                    class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">Espace
-                                    + Clic</code>
+                            <div class="flex justify-between mb-1"><span>Monter / descendre</span> <code
+                                    class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">Molette</code>
+                            </div>
+                            <div class="flex justify-between mb-1"><span>Gauche / droite</span> <code
+                                    class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">Maj
+                                    + Molette</code>
                             </div>
                             <div class="flex justify-between mb-1"><span>Zoomer</span> <code
-                                    class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">Molette</code>
+                                    class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">Ctrl
+                                    + Molette</code>
+                            </div>
+                            <div class="flex justify-between mb-1"><span>Déplacer la feuille</span> <code
+                                    class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">Clic
+                                    molette</code>
+                            </div>
+                            <div class="flex justify-between mb-1"><span>Déplacer (variante)</span> <code
+                                    class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">Espace
+                                    + Clic</code>
                             </div>
                             <div class="flex justify-between mb-1"><span>Précision</span> <code
                                     class="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs text-black">Flèches</code>
@@ -3806,6 +3822,17 @@ const Detect = {
                 });
             },
 
+            // Pendant un défilement ou un déplacement, la matrice de vue est
+            // modifiée directement (fluide). Fabric ne recalcule alors pas les
+            // zones cliquables : on les resynchronise une fois le geste fini,
+            // sinon les objets deviennent intouchables là où on les voit.
+            resyncViewport: () => {
+                clearTimeout(App._vptTimer);
+                App._vptTimer = setTimeout(() => {
+                    if (State.canvas) State.canvas.setViewportTransform(State.canvas.viewportTransform);
+                }, 120);
+            },
+
             // Coordonnées d'un événement souris OU tactile
             evtXY: (e) => {
                 const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
@@ -4275,6 +4302,7 @@ const Detect = {
                 State.canvas = new fabric.Canvas('c', {
                     preserveObjectStacking: true,
                     fireRightClick: true,
+                    fireMiddleClick: true,   // clic molette = déplacement de la feuille
                     stopContextMenu: true,
                     backgroundColor: null
                 });
@@ -5029,7 +5057,40 @@ const Detect = {
                 };
 
                 // --- EVENTS SOURIS ---
-                C.on('mouse:wheel', opt => { if (opt.e.ctrlKey) return; var d = opt.e.deltaY; var z = C.getZoom() * 0.999 ** d; if (z > 20) z = 20; if (z < 0.01) z = 0.01; C.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, z); App.updateZoomLabel(); opt.e.preventDefault(); opt.e.stopPropagation(); });
+                // --- MOLETTE : comportement des visionneuses de documents ---
+                // Molette = faire défiler la feuille (haut / bas)
+                // Maj + molette = défilement horizontal
+                // Ctrl (ou Cmd) + molette = zoom centré sur le pointeur
+                // Un pavé tactile envoie deltaX : le défilement à deux doigts
+                // fonctionne donc dans les deux directions.
+                C.on('mouse:wheel', opt => {
+                    const e = opt.e;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (e.ctrlKey || e.metaKey) {
+                        let z = C.getZoom() * 0.999 ** e.deltaY;
+                        if (z > 20) z = 20;
+                        if (z < 0.05) z = 0.05;
+                        C.zoomToPoint({ x: e.offsetX, y: e.offsetY }, z);
+                        App.updateZoomLabel();
+                        App.resyncViewport();
+                        return;
+                    }
+
+                    let dx = e.deltaX, dy = e.deltaY;
+                    if (e.shiftKey && !dx) { dx = dy; dy = 0; }   // Maj = horizontal
+                    // deltaMode : 0 = pixels, 1 = lignes, 2 = pages
+                    if (e.deltaMode === 1) { dx *= 16; dy *= 16; }
+                    else if (e.deltaMode === 2) { dx *= C.getWidth(); dy *= C.getHeight(); }
+
+                    C.viewportTransform[4] -= dx;
+                    C.viewportTransform[5] -= dy;
+                    C.requestRenderAll();
+                    // Les zones cliquables sont recalculées une fois le
+                    // défilement terminé (voir App.resyncViewport)
+                    App.resyncViewport();
+                });
 
                 C.on('mouse:down', function (opt) {
                     // 1. SÉQUENCE
@@ -5057,8 +5118,12 @@ const Detect = {
                     // (State.touchMarquee) rétablit l'encadrement de plusieurs champs.
                     const touchPan = App.isTouchEvt(e) && !opt.target
                         && State.mode === 'select' && !State.touchMarquee;
+                    // Clic molette enfoncé = déplacement, comme dans la plupart
+                    // des éditeurs. On coupe le défilement automatique du navigateur.
+                    const middlePan = e.button === 1;
+                    if (middlePan) e.preventDefault();
 
-                    if (e.altKey || e.code === 'Space' || State.mode === 'hand' || touchPan) {
+                    if (e.altKey || e.code === 'Space' || State.mode === 'hand' || touchPan || middlePan) {
                         const p = App.evtXY(e);
                         this.isDragging = true;
                         this.selection = false;
