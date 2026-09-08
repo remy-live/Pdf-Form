@@ -39,15 +39,48 @@
             outline: none;
         }
 
-        /* Tool Button Compact Style */
+        /* Bouton d'outil : icône + libellé, pour ne pas avoir à deviner */
         .tool-btn {
             width: 100%;
-            height: 36px;
+            min-height: 34px;
             border-radius: 6px;
             transition: 0.1s;
             color: #636366;
             display: flex;
             align-items: center;
+            justify-content: flex-start;
+            gap: 7px;
+            padding: 4px 7px;
+            text-align: left;
+        }
+
+        .tool-lbl {
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.15;
+            min-width: 0;
+        }
+
+        /* Ligne Nouveau / Enregistrer / Ouvrir : trois libellés sur une largeur
+           serrée, on resserre pour qu'aucun ne soit tronqué */
+        #project-actions .tool-btn {
+            gap: 5px;
+            padding: 4px 5px;
+        }
+
+        #project-actions .tool-lbl {
+            font-size: 9px;
+        }
+
+        .tool-btn i {
+            width: 15px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* Les boutons sans libellé (bas du panneau : nouveau / ouvrir / enregistrer)
+           restent centrés */
+        .tool-btn:not(:has(.tool-lbl)) {
             justify-content: center;
         }
 
@@ -971,6 +1004,74 @@
 
 <body class="app-shell bg-bg h-screen w-screen flex flex-col text-text">
 
+    <div id="welcome-overlay"
+        class="fixed inset-0 bg-slate-900/60 z-[130] hidden flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-[720px] max-w-full max-h-[92dvh] overflow-y-auto p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-1">
+                <i class="fa-solid fa-cube text-xl"></i>
+                <h2 class="text-xl font-bold text-gray-900">Créer un formulaire PDF</h2>
+            </div>
+            <p class="text-sm text-gray-500 mb-6">Par où voulez-vous commencer ?</p>
+
+            <button id="welcome-resume" onclick="App.reprendreSession()"
+                class="hidden w-full text-left mb-4 p-4 rounded-xl border-2 border-blue-500 bg-blue-50 hover:bg-blue-100 transition flex items-center gap-4">
+                <div class="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="font-bold text-blue-900">Reprendre mon travail</div>
+                    <div id="welcome-resume-date" class="text-xs text-blue-700 truncate">Session précédente</div>
+                </div>
+            </button>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button onclick="App.demarrer('pdf')"
+                    class="p-5 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50/60 transition text-center flex flex-col items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                        <i class="fa-solid fa-file-import text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-sm text-gray-800">Importer un PDF</div>
+                        <div class="text-[11px] text-gray-500 mt-1 leading-snug">Ajoutez des champs
+                            par-dessus un document existant</div>
+                    </div>
+                </button>
+
+                <button onclick="App.demarrer('modele')"
+                    class="p-5 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50/60 transition text-center flex flex-col items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center">
+                        <i class="fa-solid fa-shapes text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-sm text-gray-800">Partir d'un modèle</div>
+                        <div class="text-[11px] text-gray-500 mt-1 leading-snug">Un formulaire déjà construit,
+                            à adapter</div>
+                    </div>
+                </button>
+
+                <button onclick="App.demarrer('blanc')"
+                    class="p-5 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50/60 transition text-center flex flex-col items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
+                        <i class="fa-regular fa-file text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-sm text-gray-800">Page blanche</div>
+                        <div class="text-[11px] text-gray-500 mt-1 leading-snug">Composer le formulaire
+                            de zéro</div>
+                    </div>
+                </button>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+                <p class="text-[11px] text-gray-400">Vous pourrez changer d'avis à tout moment depuis le menu.</p>
+                <button onclick="App.toggleHelp(); App.fermerAccueil()"
+                    class="text-xs font-bold text-gray-500 hover:text-blue-600 transition flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question"></i> Comment ça marche ?
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container"></div>
 
     <div id="confirm-overlay"
@@ -1095,32 +1196,35 @@
                 <label class="flex items-center gap-2 cursor-pointer select-none border-r border-border pr-3 mr-1">
                     <input type="checkbox" id="g-snap" class="accent-black w-4 h-4 rounded" checked
                         onchange="State.snap=this.checked">
-                    <span class="text-[10px] font-bold text-gray-500">AIMANT</span>
+                    <span class="text-[10px] font-bold text-gray-500"
+                        title="Aligne automatiquement les champs entre eux">Aligner</span>
                 </label>
                 <div class="flex items-center gap-3">
 
-                    <span class="text-[9px] font-bold text-gray-400 uppercase" title="Hauteur Champ Texte">
-                        Input</span>
+                    <span class="text-[10px] font-medium text-gray-500"
+                        title="Hauteur des lignes de texte que vous créez">
+                        Hauteur ligne</span>
                     <input type="number" id="g-def-height" value="24"
                         class="os-input w-12 text-center h-5 p-0 text-[10px]"
                         onchange="State.defaults.defHeight = parseInt(this.value)">
 
                     <button id="btn-size-painter" onclick="App.setTool('size-painter')"
                         class="mx-2 w-7 h-7 bg-gray-100 hover:bg-black hover:text-white text-gray-500 rounded flex items-center justify-center transition shadow-sm"
-                        title="Appliquer la taille par défaut au clic">
+                        title="Appliquer ces tailles à un champ existant en cliquant dessus">
                         <i class="fa-solid fa-paintbrush text-xs"></i>
                     </button>
 
 
-                    <span class="text-[9px] font-bold text-gray-400 uppercase" title="Taille Case / Radio">
-                        Box</span>
+                    <span class="text-[10px] font-medium text-gray-500" title="Taille des cases à cocher et des ronds">
+                        Taille case</span>
                     <input type="number" id="g-def-box" value="14" class="os-input w-12 text-center h-5 p-0 text-[10px]"
                         onchange="State.defaults.boxSize = parseInt(this.value)">
 
                     <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
                         <input type="checkbox" id="g-lock" class="accent-black w-4 h-4 rounded" checked
                             onchange="App.setStyle('lock', this.checked)">
-                        <span class="text-[10px] font-bold text-gray-500">FIXE</span>
+                        <span class="text-[10px] font-bold text-gray-500"
+                            title="Les nouveaux champs gardent la taille indiquée ci-dessus">Taille imposée</span>
                     </label>
                 </div>
             </div>
@@ -1190,7 +1294,7 @@
 
     <div id="app-main" class="flex flex-1 min-h-0">
         <aside id="sidebar-tools"
-            class="w-[220px] bg-panel border-r border-border flex flex-col shrink-0 transition-transform duration-300 z-10">
+            class="w-[248px] bg-panel border-r border-border flex flex-col shrink-0 transition-transform duration-300 z-10">
 
             <div class="drawer-head items-center justify-between px-3 py-2 border-b border-border bg-white shrink-0">
                 <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Outils &amp; Calques</span>
@@ -1202,74 +1306,85 @@
             <div class="p-2 border-b border-border bg-white">
                 <span class="text-[9px] font-bold uppercase text-gray-400 ml-1 mb-2 block">Outils</span>
 
-                <div class="grid grid-cols-4 gap-1">
+                <div class="grid grid-cols-2 gap-1">
                     <button onclick="App.setTool('select')" id="btn-select" class="tool-btn active"
-                        title="Sélection (V / S)">
-                        <i class="fa-solid fa-arrow-pointer"></i>
+                        title="Sélectionner et déplacer les champs (V)">
+                        <i class="fa-solid fa-arrow-pointer"></i><span class="tool-lbl">Sélectionner</span>
                     </button>
 
-                    <button onclick="App.setTool('hand')" id="btn-hand" class="tool-btn" title="Déplacer (M / Espace)">
-                        <i class="fa-solid fa-hand"></i>
+                    <button onclick="App.setTool('hand')" id="btn-hand" class="tool-btn"
+                        title="Déplacer la feuille (M / Espace)">
+                        <i class="fa-solid fa-hand"></i><span class="tool-lbl">Déplacer</span>
                     </button>
 
                     <button onclick="App.setTool('marquee')" id="btn-marquee" class="tool-btn touch-only"
-                        title="Sélection au doigt (encadrer plusieurs champs)">
-                        <i class="fa-solid fa-object-group"></i>
-                    </button>
-
-                    <div class="col-span-1 touch-hide"></div>
-                    <div class="col-span-1"></div>
-
-                    <button onclick="App.setTool('textfield')" id="btn-textfield" class="tool-btn" title="Champ Texte">
-                        <i class="fa-solid fa-i-cursor"></i>
-                    </button>
-
-                    <button onclick="App.setTool('textarea')" id="btn-textarea" class="tool-btn"
-                        title="Paragraphe (Multi-lignes)">
-                        <i class="fa-solid fa-paragraph"></i>
-                    </button>
-
-                    <button onclick="App.setTool('checkbox')" id="btn-checkbox" class="tool-btn" title="Case à cocher">
-                        <i class="fa-regular fa-square-check"></i>
-                    </button>
-
-                    <button onclick="App.setTool('radio')" id="btn-radio" class="tool-btn"
-                        title="Bouton Radio (Choix unique)">
-                        <i class="fa-regular fa-circle-dot"></i>
-                    </button>
-
-                    <button onclick="App.setTool('dropdown')" id="btn-dropdown" class="tool-btn" title="Menu Déroulant">
-                        <i class="fa-regular fa-square-caret-down"></i>
-                    </button>
-
-                    <button onclick="App.setTool('label')" id="btn-label" class="tool-btn"
-                        title="Étiquette / Titre (Texte fixe)">
-                        <i class="fa-solid fa-heading"></i>
-                    </button>
-
-                    <button onclick="App.setTool('rect')" id="btn-rect" class="tool-btn" title="Rectangle (Dessin)">
-                        <i class="fa-regular fa-square"></i>
-                    </button>
-
-                    <button onclick="App.setTool('circle')" id="btn-circle" class="tool-btn" title="Cercle (Dessin)">
-                        <i class="fa-regular fa-circle"></i>
-                    </button>
-
-                    <button onclick="App.setTool('line')" id="btn-line" class="tool-btn" title="Ligne (Dessin)">
-                        <i class="fa-solid fa-minus"></i>
+                        title="Encadrer plusieurs champs au doigt">
+                        <i class="fa-solid fa-object-group"></i><span class="tool-lbl">Encadrer</span>
                     </button>
 
                     <button onclick="App.setTool('eraser')" id="btn-eraser" class="tool-btn"
-                        title="Gomme : touchez ou balayez les champs à supprimer (E)">
-                        <i class="fa-solid fa-eraser"></i>
+                        title="Balayez les champs à supprimer (E)">
+                        <i class="fa-solid fa-eraser"></i><span class="tool-lbl">Gomme</span>
                     </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-1 mt-2">
+                <span class="text-[9px] font-bold uppercase text-gray-400 ml-1 mt-3 mb-2 block">À remplir par
+                    l'élève</span>
+
+                <div class="grid grid-cols-2 gap-1">
+                    <button onclick="App.setTool('textfield')" id="btn-textfield" class="tool-btn"
+                        title="Une ligne à remplir : nom, date, réponse courte">
+                        <i class="fa-solid fa-i-cursor"></i><span class="tool-lbl">Ligne de texte</span>
+                    </button>
+
+                    <button onclick="App.setTool('textarea')" id="btn-textarea" class="tool-btn"
+                        title="Zone de plusieurs lignes">
+                        <i class="fa-solid fa-paragraph"></i><span class="tool-lbl">Paragraphe</span>
+                    </button>
+
+                    <button onclick="App.setTool('checkbox')" id="btn-checkbox" class="tool-btn"
+                        title="Case à cocher indépendante">
+                        <i class="fa-regular fa-square-check"></i><span class="tool-lbl">Case à cocher</span>
+                    </button>
+
+                    <button onclick="App.setTool('radio')" id="btn-radio" class="tool-btn"
+                        title="Choix unique parmi plusieurs">
+                        <i class="fa-regular fa-circle-dot"></i><span class="tool-lbl">Choix unique</span>
+                    </button>
+
+                    <button onclick="App.setTool('dropdown')" id="btn-dropdown" class="tool-btn"
+                        title="Liste de choix déroulante">
+                        <i class="fa-regular fa-square-caret-down"></i><span class="tool-lbl">Liste déroulante</span>
+                    </button>
+                </div>
+
+                <span class="text-[9px] font-bold uppercase text-gray-400 ml-1 mt-3 mb-2 block">Décor (non
+                    modifiable)</span>
+
+                <div class="grid grid-cols-2 gap-1">
+                    <button onclick="App.setTool('label')" id="btn-label" class="tool-btn"
+                        title="Texte fixe : titre, consigne, étiquette">
+                        <i class="fa-solid fa-heading"></i><span class="tool-lbl">Texte fixe</span>
+                    </button>
+
+                    <button onclick="App.setTool('rect')" id="btn-rect" class="tool-btn" title="Rectangle">
+                        <i class="fa-regular fa-square"></i><span class="tool-lbl">Rectangle</span>
+                    </button>
+
+                    <button onclick="App.setTool('circle')" id="btn-circle" class="tool-btn" title="Cercle">
+                        <i class="fa-regular fa-circle"></i><span class="tool-lbl">Cercle</span>
+                    </button>
+
+                    <button onclick="App.setTool('line')" id="btn-line" class="tool-btn" title="Trait">
+                        <i class="fa-solid fa-minus"></i><span class="tool-lbl">Trait</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1 mt-3">
                     <button onclick="App.detectFields()"
                         class="h-9 rounded-md bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
-                        title="Détecter automatiquement les champs du PDF">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Détection
+                        title="Repérer automatiquement les zones à remplir du PDF">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Repérer
                     </button>
                     <button onclick="App.showTemplates()"
                         class="h-9 rounded-md bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
@@ -1280,19 +1395,21 @@
             </div>
 
             <div class="px-3 py-2 bg-gray-50 border-b border-border flex justify-between items-center shrink-0">
-                <span class="text-[10px] font-bold uppercase text-gray-400">Ordre</span>
+                <span class="text-[10px] font-bold uppercase text-gray-400"
+                    title="Ordre dans lequel l'élève passe d'un champ au suivant avec la touche Tabulation">Ordre de
+                    saisie</span>
 
                 <div class="flex items-center gap-2">
                     <button onclick="App.autoSort()"
                         class="bg-white border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-300 text-[10px] px-2 py-1 rounded flex items-center gap-1.5 transition shadow-sm"
-                        title="Tri Automatique (Haut vers Bas)">
-                        <i class="fa-solid fa-arrow-down-z-a"></i> Auto
+                        title="Ranger les champs de haut en bas, automatiquement">
+                        <i class="fa-solid fa-arrow-down-z-a"></i> Ranger
                     </button>
 
                     <button onclick="App.toggleSequenceMode()" id="btn-seq"
                         class="bg-white border border-gray-200 text-gray-600 hover:text-orange-600 hover:border-orange-300 text-[10px] px-2 py-1 rounded flex items-center gap-1.5 transition shadow-sm"
-                        title="Définir l'ordre manuellement">
-                        <i class="fa-solid fa-arrow-down-1-9"></i> Séquence
+                        title="Cliquer les champs un par un pour fixer l'ordre">
+                        <i class="fa-solid fa-arrow-down-1-9"></i> Numéroter
                     </button>
                 </div>
             </div>
@@ -1300,24 +1417,24 @@
             <div id="navigator-list" class="flex-1 overflow-y-auto overflow-x-hidden bg-white scrollbar-thin">
             </div>
 
-            <div class="p-2 border-t border-border grid grid-cols-3 gap-2 bg-gray-50 shrink-0">
+            <div id="project-actions" class="p-2 border-t border-border grid grid-cols-3 gap-1 bg-gray-50 shrink-0">
 
                 <button onclick="Project.new()"
-                    class="tool-btn text-[10px] h-8 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-black hover:border-slate-400 font-medium"
-                    title="Nouveau Projet (Tout effacer)">
-                    <i class="fa-solid fa-file-circle-plus"></i>
+                    class="tool-btn h-8 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-black hover:border-slate-400"
+                    title="Repartir de zéro (efface le document en cours)">
+                    <i class="fa-solid fa-file-circle-plus"></i><span class="tool-lbl">Nouveau</span>
                 </button>
 
                 <button onclick="Project.save()"
-                    class="tool-btn text-[10px] h-8 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-black hover:border-slate-400 font-medium"
-                    title="Sauvegarder Projet (Ctrl+S)">
-                    <i class="fa-solid fa-floppy-disk"></i>
+                    class="tool-btn h-8 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-black hover:border-slate-400"
+                    title="Enregistrer le travail en cours sur votre ordinateur, pour le reprendre plus tard (Ctrl+S)">
+                    <i class="fa-solid fa-floppy-disk"></i><span class="tool-lbl">Garder</span>
                 </button>
 
                 <button onclick="document.getElementById('project-input').click()"
-                    class="tool-btn text-[10px] h-8 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-black hover:border-slate-400 font-medium"
-                    title="Ouvrir Projet">
-                    <i class="fa-solid fa-folder-open"></i>
+                    class="tool-btn h-8 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-black hover:border-slate-400"
+                    title="Rouvrir un travail enregistré (fichier .json)">
+                    <i class="fa-solid fa-folder-open"></i><span class="tool-lbl">Ouvrir</span>
                 </button>
             </div>
         </aside>
@@ -1397,14 +1514,18 @@
             </div>
             <div class="flex border-b border-border bg-gray-50">
                 <button onclick="App.setSideTab('props')" id="tab-btn-props" class="tab-btn active">Propriétés</button>
-                <button onclick="App.setSideTab('bank')" id="tab-btn-bank" class="tab-btn">Banque</button>
+                <button onclick="App.setSideTab('bank')" id="tab-btn-bank" class="tab-btn">Mes éléments</button>
             </div>
 
             <div id="view-props" class="flex-1 flex flex-col overflow-hidden">
                 <div id="panel-empty"
-                    class="flex-1 flex flex-col items-center justify-center text-gray-300 p-6 text-center">
-                    <i class="fa-regular fa-object-group text-3xl mb-3 opacity-30"></i>
-                    <p class="text-xs">Sélectionnez un objet</p>
+                    class="flex-1 flex flex-col items-center justify-center text-gray-400 p-6 text-center">
+                    <i class="fa-regular fa-hand-pointer text-3xl mb-3 text-gray-300"></i>
+                    <p class="text-xs font-semibold text-gray-500 mb-1">Aucun champ sélectionné</p>
+                    <p class="text-[11px] leading-relaxed">Cliquez sur un champ de la page pour changer son nom,
+                        ses couleurs ou sa taille.</p>
+                    <p class="text-[11px] leading-relaxed mt-3 text-gray-400">Pour en créer un, choisissez un outil
+                        à gauche puis tracez un cadre sur la page.</p>
                 </div>
 
                 <div id="panel-content" class="flex-1 overflow-y-auto p-5 hidden flex flex-col gap-6">
@@ -1677,10 +1798,10 @@
                             2</div>
                         <div>
                             <h4 class="font-bold text-gray-800">Ajouter les Champs</h4>
-                            <p class="text-xs text-gray-500 mt-1">Utilisez le panneau <b>Outils</b> (à gauche sur
-                                ordinateur, via la barre du bas sur mobile) pour ajouter des zones de texte, cases à
-                                cocher, etc. Placez-les là où l'utilisateur devra écrire — ou laissez la
-                                <b>Détection automatique</b> les proposer pour vous.</p>
+                            <p class="text-xs text-gray-500 mt-1">Dans le panneau <b>Outils</b> (à gauche sur
+                                ordinateur, via la barre du bas sur mobile), choisissez ce que l'élève devra remplir :
+                                ligne de texte, case à cocher, choix unique... puis tracez un cadre sur la page.
+                                Le bouton <b>Repérer</b> peut aussi les proposer automatiquement.</p>
                         </div>
                     </div>
                     <div class="flex gap-4">
@@ -1690,7 +1811,7 @@
                         <div>
                             <h4 class="font-bold text-gray-800">Définir l'Ordre</h4>
                             <p class="text-xs text-gray-500 mt-1">Activez le bouton <b
-                                    class="bg-gray-100 px-1 rounded">Séquence</b> et cliquez sur vos champs dans l'ordre
+                                    class="bg-gray-100 px-1 rounded">Numéroter</b> et cliquez sur vos champs dans l'ordre
                                 (1, 2, 3...) pour définir le trajet de la touche Tabulation.</p>
                         </div>
                     </div>
@@ -1719,7 +1840,7 @@
                             <br>• Outil <b>Gomme</b> : balayez du doigt les champs à supprimer.
                             <br>• <b>Annuler / Rétablir</b> : dans l'en-tête et en bas à gauche de la page.
                             <br>• Les panneaux <b>Outils</b> et <b>Propriétés</b> s'ouvrent depuis la barre du bas.
-                            <br>• Dans la <b>Banque</b>, touchez un modèle pour l'insérer au centre de la page.
+                            <br>• Dans <b>Mes éléments</b>, touchez un modèle pour l'insérer au centre de la page.
                         </p>
                     </div>
 
@@ -1831,7 +1952,7 @@
                             <h4 class="font-bold text-gray-800">Ordre de Tabulation</h4>
                             <p class="text-xs text-gray-500 mt-1 leading-relaxed">
                                 Contrôlez l'ordre dans lequel l'utilisateur passe d'un champ à l'autre (touche Tab).
-                                <br>• <b>Mode Séquence</b> : Cliquez sur vos champs dans l'ordre (1, 2, 3...).
+                                <br>• <b>Numéroter</b> : Cliquez sur vos champs dans l'ordre (1, 2, 3...).
                                 <br>• <b>Vue Flux (Route)</b> : Affiche des flèches bleues pour visualiser le parcours.
                                 <br>• <b>Liste Latérale</b> : Glissez-déposez les calques pour réorganiser l'ordre.
                             </p>
@@ -1844,12 +1965,12 @@
                             <i class="fa-solid fa-shapes"></i>
                         </div>
                         <div>
-                            <h4 class="font-bold text-gray-800">Banque & Dessin</h4>
+                            <h4 class="font-bold text-gray-800">Mes éléments &amp; dessin</h4>
                             <p class="text-xs text-gray-500 mt-1 leading-relaxed">
                                 • <b>Dessin</b> : Ajoutez des rectangles, cercles, lignes ou images pour décorer ou
                                 masquer
                                 des zones.
-                                <br>• <b>Banque (Modèles)</b> : Sauvegardez vos champs complexes (ex: un groupe de
+                                <br>• <b>Mes éléments</b> : Sauvegardez vos champs complexes (ex: un groupe de
                                 boutons
                                 Radio pré-configuré) pour les réutiliser sur d'autres pages ou projets.
                             </p>
@@ -2054,7 +2175,7 @@
                 try {
                     const json = JSON.stringify(Bank.items);
                     if (new Blob([json]).size > Bank.maxSize) {
-                        alert("⚠️ Banque pleine !");
+                        App.toast("Espace de stockage plein : supprimez des éléments enregistrés", 'error', 4000);
                         return false;
                     }
                     localStorage.setItem(Bank.storageKey, json);
@@ -3650,53 +3771,82 @@ const Detect = {
                 clearTimeout(App._awakeTimer);
                 App._awakeTimer = setTimeout(() => box.classList.remove('is-awake'), 1600);
             },
-            checkAutoSave: () => {
-                const saved = localStorage.getItem('prof_toolbox_autosave');
+            // ============================================================
+            // ÉCRAN D'ACCUEIL
+            // Point d'entrée unique : reprendre le travail en cours, importer
+            // un PDF, partir d'un modèle, ou page blanche.
+            // ============================================================
+            ouvrirAccueil: () => {
+                const ov = document.getElementById('welcome-overlay');
+                if (!ov) return;
 
-                if (!saved) {
-                    console.log("Aucune sauvegarde trouvée.");
-                    return;
+                // Proposition de reprise si une session a été sauvegardée
+                const data = App.lireAutoSave();
+                const bouton = document.getElementById('welcome-resume');
+                if (data) {
+                    const d = new Date(data.timestamp);
+                    document.getElementById('welcome-resume-date').innerText =
+                        `${data.pages.length} page(s) — ${d.toLocaleDateString()} à ${d.toLocaleTimeString().slice(0, 5)}`;
+                    bouton.classList.remove('hidden');
+                } else {
+                    bouton.classList.add('hidden');
                 }
+                ov.classList.remove('hidden');
+            },
+            fermerAccueil: () => document.getElementById('welcome-overlay').classList.add('hidden'),
 
+            demarrer: (quoi) => {
+                App.fermerAccueil();
+                if (quoi === 'pdf') document.getElementById('file-input').click();
+                else if (quoi === 'modele') App.showTemplates();
+                else App.toast("Choisissez un outil dans le panneau Outils, puis tracez un cadre sur la page", 'info', 4500);
+            },
+
+            reprendreSession: () => {
+                App.fermerAccueil();
+                const data = App.lireAutoSave();
+                if (!data) { App.toast("Sauvegarde introuvable", 'error'); return; }
+                App.restaurerAutoSave(data);
+            },
+
+            // Lecture seule de la sauvegarde automatique (null si absente/illisible)
+            lireAutoSave: () => {
+                const saved = localStorage.getItem('prof_toolbox_autosave');
+                if (!saved) return null;
                 try {
                     const data = JSON.parse(saved);
-
-                    // Vérification basique pour ne pas charger n'importe quoi
-                    if (!data.pages || !Array.isArray(data.pages)) {
-                        console.error("Sauvegarde corrompue");
-                        return;
-                    }
-
-                    const date = new Date(data.timestamp).toLocaleString();
-                    if (confirm(`Une session précédente (${date}) a été trouvée.\nVoulez-vous la restaurer ?`)) {
-
-                        // 1. Restaurer les variables d'état
-                        State.pages = data.pages;
-                        State.totalPages = data.totalPages || data.pages.length;
-
-                        // 2. Restaurer les dimensions (TRÈS IMPORTANT pour l'alignement)
-                        if (data.dims) {
-                            State.canvas.pageW = data.dims.w;
-                            State.canvas.pageH = data.dims.h;
-                            State.canvas.pageOffset = { x: data.dims.offX, y: data.dims.offY };
-
-                            // On force le redimensionnement du viewport
-                            App.resize();
-                        }
-
-                        // 3. Charger la page (avec un petit délai pour être sûr que Fabric est prêt)
-                        setTimeout(() => {
-                            App.loadPage(data.currentPage || 0);
-                            App.showModal("Restauration", "Votre session a été récupérée avec succès.");
-                        }, 100);
-                    } else {
-                        // Si l'utilisateur dit NON, on peut nettoyer pour ne pas redemander
-                        // localStorage.removeItem('prof_toolbox_autosave'); // Décommente si tu veux supprimer au refus
-                    }
+                    if (!data.pages || !Array.isArray(data.pages) || !data.pages.length) return null;
+                    return data;
                 } catch (e) {
-                    console.error("Erreur lors de la lecture de l'auto-save", e);
-                    // Si c'est planté, on nettoie pour éviter que ça replante au prochain démarrage
+                    console.error("Sauvegarde illisible", e);
                     localStorage.removeItem('prof_toolbox_autosave');
+                    return null;
+                }
+            },
+
+            restaurerAutoSave: (data) => {
+                try {
+                    // 1. Restaurer les variables d'état
+                    State.pages = data.pages;
+                    State.totalPages = data.totalPages || data.pages.length;
+
+                    // 2. Restaurer les dimensions (TRÈS IMPORTANT pour l'alignement)
+                    if (data.dims) {
+                        State.canvas.pageW = data.dims.w;
+                        State.canvas.pageH = data.dims.h;
+                        State.canvas.pageOffset = { x: data.dims.offX, y: data.dims.offY };
+                        App.resize();
+                    }
+
+                    // 3. Charger la page (petit délai pour être sûr que Fabric est prêt)
+                    setTimeout(() => {
+                        App.loadPage(data.currentPage || 0);
+                        App.toast("Votre travail a été récupéré", 'success');
+                    }, 100);
+                } catch (e) {
+                    console.error("Erreur lors de la restauration", e);
+                    localStorage.removeItem('prof_toolbox_autosave');
+                    App.toast("La session précédente n'a pas pu être récupérée", 'error');
                 }
             },
             // Programme une sauvegarde automatique après une accalmie, et la
@@ -4268,13 +4418,13 @@ const Detect = {
 
                     btn.innerHTML = '<i class="fa-solid fa-check"></i> Terminer';
                     btn.classList.add('font-bold', 'bg-orange-100', 'px-2', 'rounded');
-                    App.showModal("Mode Séquence", "Cliquez sur les champs un par un dans l'ordre souhaité (1, 2, 3...).\nLes champs déjà cliqués deviendront verts.");
+                    App.toast("Cliquez les champs un par un dans l'ordre de saisie voulu", 'info', 4500);
                 } else {
                     // DÉSACTIVATION & APPLICATION
                     State.mode = 'select';
                     State.canvas.defaultCursor = 'default';
 
-                    btn.innerHTML = '<i class="fa-solid fa-arrow-down-1-9"></i> Séquence';
+                    btn.innerHTML = '<i class="fa-solid fa-arrow-down-1-9"></i> Numéroter';
                     btn.classList.remove('font-bold', 'bg-orange-100', 'px-2', 'rounded');
 
                     // On réorganise vraiment les objets maintenant
@@ -4551,10 +4701,10 @@ const Detect = {
                 App.bindEvents();
                 App.bindKeys();
 
-                // 7. VÉRIFICATION AUTO-SAVE
+                // 7. ÉCRAN D'ACCUEIL (propose aussi de reprendre la session)
                 setTimeout(() => {
-                    App.checkAutoSave();
-                }, 500);
+                    App.ouvrirAccueil();
+                }, 400);
             },
             showModal: (title, msg) => {
                 document.getElementById('modal-title').innerText = title;
@@ -6097,10 +6247,22 @@ const Detect = {
 
             // Terminé : On charge la page 0 (la première)
             App.closeModal();
+            App.fermerAccueil();
             App.loadPage(0);
 
             // Reset de l'input pour pouvoir réimporter le même fichier si besoin
             e.target.value = '';
+
+            // Guidage : l'étape suivante la plus utile est la détection,
+            // on la propose au lieu d'attendre que l'utilisateur la trouve.
+            setTimeout(() => {
+                const n = State.totalPages;
+                App.showConfirm("PDF importé",
+                    `${n} page${n > 1 ? 's' : ''} chargée${n > 1 ? 's' : ''}.\n\nVoulez-vous repérer automatiquement les zones à remplir (lignes, cases à cocher, tableaux) ?`, [
+                    { label: 'Repérer les champs', primary: true, onClick: () => App.detectFields() },
+                    { label: 'Je place moi-même' }
+                ]);
+            }, 600);
         });
     </script>
 </body>
