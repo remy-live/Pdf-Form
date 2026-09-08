@@ -475,6 +475,17 @@
             display: flex;
         }
 
+        /* Garde-fou : si la place manque, le champ titre est rogné au lieu de
+           déborder par-dessus les boutons voisins (un input ne se coupe pas
+           tout seul, il dessine son texte hors de son cadre). */
+        #hdr-title-wrap {
+            overflow: hidden;
+        }
+
+        #doc-title {
+            min-width: 0;
+        }
+
         /* Barre de validation de la détection automatique */
         #detect-bar {
             bottom: 76px;
@@ -523,13 +534,14 @@
 
         /* ==========================================================
            HEADER COMPACT ( < 1440px )
-           En dessous de ~1440px la barre d'outils centrale ne rentre plus :
-           elle chevauchait le titre et les boutons Annuler/Rétablir.
-           On la bascule en menu déroulant "Style", et les actions
-           secondaires dans le menu "...". Les panneaux latéraux, eux,
+           Le header complet (marque + titre + Annuler/Rétablir + barre de
+           style + actions) réclame ~1560px. En dessous, le conteneur du titre
+           était écrasé et son champ débordait par-dessus Annuler/Rétablir.
+           On bascule donc la barre de style en menu déroulant "Style" et les
+           actions secondaires dans le menu "...". Les panneaux latéraux, eux,
            ne deviennent des tiroirs qu'en dessous de 1024px (bloc suivant).
            ========================================================== */
-        @media (max-width: 1439px) {
+        @media (max-width: 1599px) {
 
             #hdr-left {
                 flex: 1 1 auto;
