@@ -678,6 +678,56 @@
             color: #48484a;
         }
 
+        /* --- Dépôt d'un fichier sur la page --- */
+        /* Au-dessus de l'écran d'accueil : c'est justement là qu'on dépose
+           son PDF en arrivant. */
+        #drop-overlay {
+            position: fixed;
+            inset: 10px;
+            z-index: 140;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #2563eb;
+            border-radius: 16px;
+            background: rgba(239, 246, 255, .97);
+            pointer-events: none;
+        }
+
+        body.drop-on #drop-overlay {
+            display: flex;
+        }
+
+        /* Carte opaque : le voile peut recouvrir l'écran d'accueil, le texte
+           doit rester lisible par-dessus. */
+        .drop-carte {
+            text-align: center;
+            color: #1d4ed8;
+            padding: 28px 32px;
+            max-width: 380px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 16px 48px rgba(37, 99, 235, .18);
+        }
+
+        .drop-carte i {
+            font-size: 34px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .drop-titre {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .drop-aide {
+            font-size: 12px;
+            color: #3b82f6;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
         /* --- Couleurs et épaisseur, à portée de clic dans le header --- */
         #hdr-style-quick {
             display: flex;
@@ -816,8 +866,9 @@
             border-top: 1px dashed #c7c7cc;
         }
 
-        /* --- Aimant : interrupteur permanent du header --- */
-        #btn-hdr-snap {
+        /* --- Aimant et verrou : interrupteurs permanents du header --- */
+        #btn-hdr-snap,
+        #btn-hdr-verrou {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -832,12 +883,13 @@
             transition: background .15s, color .15s, border-color .15s;
         }
 
-        #btn-hdr-snap:hover {
+        #btn-hdr-snap:hover,
+        #btn-hdr-verrou:hover {
             background: #f2f2f7;
             color: #1c1c1e;
         }
 
-        /* Actif = les champs s'alignent sur leurs voisins */
+        /* Aimant actif = les champs s'alignent sur leurs voisins */
         #btn-hdr-snap[aria-pressed="true"] {
             background: #eef2ff;
             border-color: #c7d2fe;
@@ -846,6 +898,30 @@
 
         #btn-hdr-snap[aria-pressed="true"]:hover {
             background: #e0e7ff;
+        }
+
+        /* Verrou fermé = la taille des champs ne bouge plus. Ambre, pour le
+           distinguer de l'aimant d'un coup d'œil. */
+        #btn-hdr-verrou[aria-pressed="true"] {
+            background: #fef3c7;
+            border-color: #fcd34d;
+            color: #b45309;
+        }
+
+        #btn-hdr-verrou[aria-pressed="true"]:hover {
+            background: #fde68a;
+        }
+
+        /* Les deux cadenas cohabitent, le CSS montre celui qui convient.
+           (La bibliothèque d'icônes remplace le <i> par un <svg> : on ne peut
+           pas se contenter de changer sa classe en JavaScript.) */
+        #btn-hdr-verrou .ico-ferme,
+        #btn-hdr-verrou[aria-pressed="true"] .ico-ouvert {
+            display: none !important;
+        }
+
+        #btn-hdr-verrou[aria-pressed="true"] .ico-ferme {
+            display: inline-block !important;
         }
 
         /* --- Menu "..." du header --- */
@@ -1214,10 +1290,9 @@
             #hdr-style-quick {
                 display: none;
             }
-        }
 
-        /* Écrans très étroits : on récupère de la place dans le header */
-        @media (max-width: 380px) {
+            /* Annuler / Rétablir sont déjà en flottant sur le document : les
+               garder aussi dans le header écraserait le nom du fichier. */
             #hdr-history {
                 display: none;
             }
@@ -1534,6 +1609,12 @@
                 <i class="fa-solid fa-magnet"></i>
             </button>
 
+            <button id="btn-hdr-verrou" onclick="App.basculerVerrouTaille()" aria-pressed="false"
+                title="Taille des champs : libre. Cliquez pour la verrouiller.">
+                <i class="fa-solid fa-lock-open ico-ouvert"></i>
+                <i class="fa-solid fa-lock ico-ferme"></i>
+            </button>
+
             <button id="btn-hdr-style" onclick="MobileUI.toggleStyle()"
                 class="items-center gap-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-bg px-3 py-2 rounded transition shrink-0"
                 title="Police, couleurs et tailles par défaut">
@@ -1706,6 +1787,15 @@
 
         <main id="workspace" class="flex-1 bg-[#d4d4d8] relative overflow-hidden flex justify-center items-center">
             <div class="canvas-box relative"><canvas id="c"></canvas></div>
+
+            <div id="drop-overlay">
+                <div class="drop-carte">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <div class="drop-titre">Déposez votre PDF ici</div>
+                    <div class="drop-aide">Il deviendra le fond du formulaire. Une image, elle, se pose sur la page.
+                    </div>
+                </div>
+            </div>
 
             <div id="page-nav"
                 class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 px-4 py-2 rounded-full shadow-lg flex items-center gap-4 z-50 hidden">
@@ -1958,6 +2048,16 @@
                                 <input type="number" id="p-pos-y" class="os-input w-full">
                             </div>
                         </div>
+
+                        <label id="row-as-default"
+                            class="hidden flex items-start gap-2 mt-3 cursor-pointer select-none">
+                            <input type="checkbox" id="p-as-default" class="accent-black w-4 h-4 rounded mt-[1px]"
+                                onchange="Panel.utiliserCommeDefaut(this.checked)">
+                            <span class="text-[11px] text-gray-600 leading-snug">Utiliser cette taille pour les
+                                prochains
+                                <span id="p-as-default-aide" class="block text-[10px] text-gray-400"></span>
+                            </span>
+                        </label>
                     </div>
                     <div class="mt-auto pt-4"><button onclick="App.deleteSelection()"
                             class="w-full bg-white text-red-500 border border-red-100 hover:bg-red-50 py-2 rounded text-xs font-bold transition shadow-sm">Supprimer</button>
@@ -2299,6 +2399,7 @@
             App.init();
             App.majStyleUI();
             App.setAimant(State.snap);
+            App.setVerrouTaille(State.sizeLock);
             Bank.init(); // <--- AJOUTER ICI
         });
         if (window.fabric) {
@@ -2306,7 +2407,7 @@
             fabric.Text.prototype.textBaseline = 'top'; fabric.IText.prototype.textBaseline = 'top'; fabric.Textbox.prototype.textBaseline = 'top';
         }
 
-        const customProps = ['ctype', 'pid', 'grp', 'val', 'opts', 'bStyle', 'isChecked', 'fmt', 'tAlign', 'lockScalingX', 'lockScalingY', 'srcObj', 'id', 'isBackground', 'evented', 'selectable'];
+        const customProps = ['ctype', 'pid', 'grp', 'val', 'opts', 'bStyle', 'isChecked', 'fmt', 'tAlign', 'lockScalingX', 'lockScalingY', 'srcObj', 'id', 'isBackground', 'evented', 'selectable', 'refTaille'];
 
         // ============================================================
         // INTERFACE MOBILE / TABLETTE
@@ -2792,7 +2893,7 @@
             currentPage: 0,  // Index de la page active (commence à 0)
             totalPages: 1,    // Nombre total de pages
             sequenceList: [], // Pour stocker l'ordre temporaire
-            isSequencing: false, canvas: null, mode: 'select', snap: true, isPreview: false, pdfBytes: null, clipboard: null, counts: { draw : 1, textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14 }
+            isSequencing: false, canvas: null, mode: 'select', snap: true, sizeLock: false, isPreview: false, pdfBytes: null, clipboard: null, counts: { draw : 1, textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14 }
         };
 
         // ============================================================
@@ -5023,13 +5124,9 @@ const Detect = {
                         if (['textfield', 'textarea'].includes(o.ctype)) o.txtObj = o._objects[1];
                         if (['checkbox', 'radio'].includes(o.ctype)) o.markObj = o._objects[1];
                     }
-                    // Anciens documents : les champs y étaient parfois bloqués en
-                    // taille. On les rend de nouveau redimensionnables.
-                    if (o.ctype && !o.isBackground) {
-                        o.set({ lockScalingX: false, lockScalingY: false });
-                        if (['checkbox', 'radio'].includes(o.ctype)) o.setControlsVisibility({ mtr: false, mt: false, mb: false, ml: false, mr: false });
-                        else if (['textfield', 'textarea', 'dropdown'].includes(o.ctype)) o.setControlsVisibility({ mtr: false, tl: true, tr: true, bl: true, br: true, mt: true, mb: true, ml: true, mr: true });
-                    }
+                    // Les blocages de taille enregistrés dans d'anciens documents
+                    // ne font pas foi : c'est le verrou du header qui décide.
+                    if (o.ctype && !o.isBackground) App.verrouiller1(o);
                 });
             },
             setSideTab: (tab) => {
@@ -5336,6 +5433,8 @@ const Detect = {
                 poser('g-stroke', 'value', d.stroke);
                 poser('hdr-stroke', 'value', d.stroke);
                 poser('g-width', 'value', d.width);
+                poser('g-def-height', 'value', d.defHeight);
+                poser('g-def-box', 'value', d.boxSize);
 
                 const pf = document.getElementById('preview-fill');
                 if (pf) pf.style.backgroundColor = d.fill;
@@ -5403,6 +5502,69 @@ const Detect = {
                 const c = document.getElementById('g-snap');
                 if (c) c.checked = State.snap;
                 if (!State.snap) { State.snapLines = []; if (State.canvas) State.canvas.requestRenderAll(); }
+            },
+
+            /* Le verrou de taille : quand il est fermé, cases, boutons et champs
+               de saisie gardent leur taille. On masque leurs poignées plutôt que
+               de les laisser refuser le geste, pour éviter le curseur « interdit ». */
+            CHAMPS_TAILLE: ['checkbox', 'radio', 'textfield', 'textarea', 'dropdown'],
+
+            verrouiller1: (o) => {
+                if (!o || !o.ctype || !App.CHAMPS_TAILLE.includes(o.ctype)) return;
+                const v = !!State.sizeLock;
+                o.set({ lockScalingX: v, lockScalingY: v });
+                if (v) {
+                    o.setControlsVisibility({ mtr: false, tl: false, tr: false, bl: false, br: false, mt: false, mb: false, ml: false, mr: false });
+                } else if (['checkbox', 'radio'].includes(o.ctype)) {
+                    // Coins seuls : la case reste carrée, le bouton reste rond
+                    o.setControlsVisibility({ mtr: false, tl: true, tr: true, bl: true, br: true, mt: false, mb: false, ml: false, mr: false });
+                } else {
+                    o.setControlsVisibility({ mtr: false, tl: true, tr: true, bl: true, br: true, mt: true, mb: true, ml: true, mr: true });
+                }
+            },
+
+            appliquerVerrouTaille: () => {
+                if (!State.canvas) return;
+                State.canvas.getObjects().forEach(App.verrouiller1);
+                State.canvas.requestRenderAll();
+            },
+
+            basculerVerrouTaille: () => App.setVerrouTaille(!State.sizeLock),
+
+            setVerrouTaille: (on) => {
+                State.sizeLock = !!on;
+                const b = document.getElementById('btn-hdr-verrou');
+                if (b) {
+                    b.setAttribute('aria-pressed', State.sizeLock ? 'true' : 'false');
+                    b.title = State.sizeLock
+                        ? 'Taille des champs : verrouillée. Cliquez pour la libérer.'
+                        : 'Taille des champs : libre. Cliquez pour la verrouiller.';
+                }
+                App.appliquerVerrouTaille();
+                Panel.update(State.canvas ? State.canvas.getActiveObject() : null);
+            },
+
+            /* « Utiliser cette taille pour les prochains » : le champ sélectionné
+               devient la référence des futurs champs du même genre. */
+            tailleUtile: (o) => {
+                if (!o) return 0;
+                if (['checkbox', 'radio'].includes(o.ctype)) {
+                    const f = o._objects && o._objects[0];
+                    if (!f) return Math.round(o.getScaledWidth());
+                    const base = f.width || (f.radius ? f.radius * 2 : 0);
+                    return Math.round(base * (f.scaleX || 1) * (o.scaleX || 1));
+                }
+                return Math.round(o.getScaledHeight());
+            },
+
+            definirTailleParDefaut: (o) => {
+                if (!o || !o.ctype) return;
+                const n = App.tailleUtile(o);
+                if (!n || n < 2) return;
+                if (['checkbox', 'radio'].includes(o.ctype)) State.defaults.boxSize = n;
+                else if (['textfield', 'dropdown'].includes(o.ctype)) State.defaults.defHeight = n;
+                else return;
+                App.majStyleUI();
             },
 
             setStyle: (key, val) => {
@@ -5785,6 +5947,10 @@ const Detect = {
                     checkRotation(); // <--- C'est lui qui va mettre à jour le panel maintenant
                 });
 
+                // Tout champ qui arrive sur la page adopte l'état du verrou :
+                // création à la main, détection automatique, collage, modèle...
+                C.on('object:added', e => { if (e.target) App.verrouiller1(e.target); });
+
                 C.on('object:moving', e => {
                     const target = e.target;
                     const snapD = App.snapMove(target);
@@ -5797,7 +5963,14 @@ const Detect = {
                 });
 
                 C.on('object:scaling', e => { if (e.transform && e.transform.corner) App.snapScale(e.target, e.transform.corner); });
-                C.on('object:modified', () => App.clearGuides());
+                C.on('object:modified', (e) => {
+                    App.clearGuides();
+                    // Champ coché « taille de référence » : le réglage global suit
+                    // le redimensionnement, sans qu'on ait à le ressaisir.
+                    const o = e && e.target;
+                    if (o && o.refTaille && Panel.REF_TAILLE[o.ctype]) App.definirTailleParDefaut(o);
+                    if (o) Panel.majAideDefaut(o.type === 'activeSelection' ? null : o);
+                });
 
                 C.on('mouse:dblclick', o => {
                     if (!o.target) return;
@@ -6062,8 +6235,8 @@ const Detect = {
         };
         document.getElementById('project-input').addEventListener('change', Project.load);
 
-        document.getElementById('img-input').addEventListener('change', (e) => {
-            const file = e.target.files[0];
+        // Ajout d'une image, depuis le bouton ou par dépôt sur la page
+        App.ajouterImage = (file) => {
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (f) => {
@@ -6084,7 +6257,12 @@ const Detect = {
                 });
             };
             reader.readAsDataURL(file);
+        };
+
+        document.getElementById('img-input').addEventListener('change', (e) => {
+            const f = e.target.files[0];
             e.target.value = '';
+            App.ajouterImage(f);
         });
 
 
@@ -6122,7 +6300,46 @@ const Detect = {
                 dimH: document.getElementById('p-dim-h'),
                 posX: document.getElementById('p-pos-x'),
                 posY: document.getElementById('p-pos-y'),
-                secDims: document.getElementById('sec-dims')
+                secDims: document.getElementById('sec-dims'),
+                rowAsDefault: document.getElementById('row-as-default'),
+                asDefault: document.getElementById('p-as-default'),
+                asDefaultAide: document.getElementById('p-as-default-aide')
+            },
+
+            // Types pour lesquels « taille de référence » a un sens, et le
+            // réglage global que chacun alimente.
+            REF_TAILLE: { checkbox: 'boxSize', radio: 'boxSize', textfield: 'defHeight', dropdown: 'defHeight' },
+
+            utiliserCommeDefaut: (coche) => {
+                const o = State.canvas.getActiveObject();
+                if (!o) return;
+                const cle = Panel.REF_TAILLE[o.ctype];
+                if (!cle) return;
+
+                if (coche) {
+                    // Un seul champ de référence par réglage : on retire le rôle
+                    // aux autres, sinon deux champs se disputeraient la valeur.
+                    State.canvas.getObjects().forEach(x => {
+                        if (x !== o && x.refTaille && Panel.REF_TAILLE[x.ctype] === cle) x.refTaille = false;
+                    });
+                    o.refTaille = true;
+                    App.definirTailleParDefaut(o);
+                } else {
+                    o.refTaille = false;
+                }
+                Panel.majAideDefaut(o);
+            },
+
+            majAideDefaut: (o) => {
+                const d = Panel.dom;
+                const cle = o ? Panel.REF_TAILLE[o.ctype] : null;
+                if (!o || !cle) { d.rowAsDefault.classList.add('hidden'); return; }
+                d.rowAsDefault.classList.remove('hidden');
+                d.asDefault.checked = !!o.refTaille;
+                const actuel = State.defaults[cle];
+                d.asDefaultAide.textContent = cle === 'boxSize'
+                    ? `Taille des cases : ${actuel} px`
+                    : `Hauteur de ligne : ${actuel} px`;
             },
             toggleRatio: () => {
                 Panel.ratioLocked = !Panel.ratioLocked;
@@ -6146,6 +6363,7 @@ const Detect = {
                     Panel.dom.content.style.display = 'flex';
                     Panel.dom.secConfig.style.display = 'none';
                     Panel.dom.secDims.classList.add('hidden');
+                    Panel.dom.rowAsDefault.classList.add('hidden');
                     Panel.dom.secAlign.style.display = 'flex';
 
                     // DETECT MULTI RADIOS
@@ -6211,6 +6429,17 @@ const Detect = {
                 Panel.dom.secDims.classList.remove('hidden');
                 Panel.dom.dimW.value = Math.round(obj.getScaledWidth());
                 Panel.dom.dimH.value = Math.round(obj.getScaledHeight());
+
+                // Cadenas fermé : les cases Largeur/Hauteur suivent, sinon on
+                // pourrait contourner le verrou en tapant un nombre.
+                const fige = !!obj.lockScalingX && !!obj.lockScalingY;
+                [Panel.dom.dimW, Panel.dom.dimH].forEach(e => {
+                    e.disabled = fige;
+                    e.classList.toggle('opacity-50', fige);
+                    e.title = fige ? 'Taille verrouillée — ouvrez le cadenas dans la barre du haut' : '';
+                });
+
+                Panel.majAideDefaut(obj);
 
                 // UPDATE POS X/Y
                 Panel.dom.posX.value = Math.round(obj.left);
@@ -6532,13 +6761,21 @@ const Detect = {
         // refuse de démarrer sur un écart de version. Ce CDN doit rester joignable.
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-        document.getElementById('file-input').addEventListener('change', async e => {
-            const f = e.target.files[0];
+        // Import d'un PDF, quelle qu'en soit la provenance : bouton « Importer »,
+        // écran d'accueil, ou fichier déposé sur la page.
+        App.importerPDF = async (f) => {
             if (!f) return;
+            if (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name || '')) {
+                App.showConfirm("Ce n'est pas un PDF",
+                    `« ${f.name || 'Ce fichier'} » n'est pas un fichier PDF. Déposez un document au format PDF.`,
+                    [{ label: 'Compris', primary: true }]);
+                return;
+            }
 
             // UI : Petit loading (optionnel mais sympa)
             App.showModal("Chargement", "Importation du PDF en cours...");
 
+            try {
             const ab = await f.arrayBuffer();
             State.pdfBytes = new Uint8Array(ab); // On garde le binaire pour l'export
             const pdf = await pdfjsLib.getDocument(URL.createObjectURL(new Blob([ab]))).promise;
@@ -6601,9 +6838,6 @@ const Detect = {
             App.fermerAccueil();
             App.loadPage(0);
 
-            // Reset de l'input pour pouvoir réimporter le même fichier si besoin
-            e.target.value = '';
-
             // Guidage : l'étape suivante la plus utile est la détection,
             // on la propose au lieu d'attendre que l'utilisateur la trouve.
             setTimeout(() => {
@@ -6614,7 +6848,63 @@ const Detect = {
                     { label: 'Je place moi-même' }
                 ]);
             }, 600);
+            } catch (err) {
+                console.warn(err);
+                App.closeModal();
+                App.showConfirm("Impossible d'ouvrir ce PDF",
+                    "Le fichier est peut-être abîmé ou protégé par un mot de passe.",
+                    [{ label: 'Compris', primary: true }]);
+            }
+        };
+
+        document.getElementById('file-input').addEventListener('change', async e => {
+            const f = e.target.files[0];
+            // On vide l'input tout de suite : sinon réimporter le même fichier
+            // ne déclencherait aucun évènement.
+            e.target.value = '';
+            await App.importerPDF(f);
         });
+
+        // --- DÉPÔT D'UN FICHIER SUR LA PAGE ---
+        (() => {
+            const zone = document.getElementById('workspace');
+            const voile = document.getElementById('drop-overlay');
+            let profondeur = 0;   // dragenter/dragleave se déclenchent aussi sur les enfants
+
+            const estFichier = (e) => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
+
+            document.addEventListener('dragenter', (e) => {
+                if (!estFichier(e)) return;
+                e.preventDefault();
+                profondeur++;
+                document.body.classList.add('drop-on');
+            });
+            document.addEventListener('dragover', (e) => {
+                if (!estFichier(e)) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            });
+            document.addEventListener('dragleave', (e) => {
+                if (!estFichier(e)) return;
+                profondeur = Math.max(0, profondeur - 1);
+                if (profondeur === 0) document.body.classList.remove('drop-on');
+            });
+            document.addEventListener('drop', async (e) => {
+                if (!estFichier(e)) return;
+                e.preventDefault();
+                profondeur = 0;
+                document.body.classList.remove('drop-on');
+
+                const f = e.dataTransfer.files[0];
+                if (!f) return;
+
+                // Une image déposée devient un élément posé sur la page ;
+                // un PDF devient le document de fond.
+                if (/^image\//.test(f.type)) { App.ajouterImage(f); return; }
+                await App.importerPDF(f);
+            });
+            if (zone && voile) voile.addEventListener('drop', e => e.preventDefault());
+        })();
     </script>
 </body>
 
