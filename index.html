@@ -678,6 +678,176 @@
             color: #48484a;
         }
 
+        /* --- Couleurs et épaisseur, à portée de clic dans le header --- */
+        #hdr-style-quick {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 0 0 auto;
+            padding: 3px;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .hsq-pastille {
+            position: relative;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .hsq-pastille:hover {
+            background: #ececf0;
+        }
+
+        /* L'input natif couvre la pastille : un clic dessus ouvre le nuancier */
+        .hsq-pastille input[type=color] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            padding: 0;
+            border: 0;
+        }
+
+        .hsq-rond {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #c7c7cc;
+            box-shadow: inset 0 0 0 1px #fff;
+            pointer-events: none;
+        }
+
+        /* La bordure est montrée comme un anneau, le fond comme un disque plein */
+        #hsq-stroke {
+            box-shadow: inset 0 0 0 3px #fff;
+        }
+
+        #hdr-width {
+            width: 30px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            transition: background .15s;
+        }
+
+        #hdr-width:hover,
+        #hdr-width[aria-expanded="true"] {
+            background: #ececf0;
+        }
+
+        #hsq-trait {
+            width: 18px;
+            background: #1c1c1e;
+            border-radius: 1px;
+            pointer-events: none;
+        }
+
+        #epaisseur-menu {
+            display: none;
+            position: fixed;
+            top: calc(var(--hdr-h) + 6px);
+            z-index: 75;
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+            padding: 8px;
+            width: 176px;
+        }
+
+        body.width-open #epaisseur-menu {
+            display: block;
+        }
+
+        .ep-titre {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #8e8e93;
+            padding: 2px 6px 6px;
+        }
+
+        .ep-item {
+            width: 100%;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #1c1c1e;
+            transition: background .12s;
+        }
+
+        .ep-item:hover {
+            background: #f2f2f7;
+        }
+
+        .ep-item.actif {
+            background: #eef2ff;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .ep-trait {
+            flex: 1 1 auto;
+            background: currentColor;
+            border-radius: 1px;
+            min-height: 1px;
+        }
+
+        .ep-vide {
+            flex: 1 1 auto;
+            border-top: 1px dashed #c7c7cc;
+        }
+
+        /* --- Aimant : interrupteur permanent du header --- */
+        #btn-hdr-snap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            flex: 0 0 auto;
+            border-radius: 9px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: #8e8e93;
+            font-size: 13px;
+            transition: background .15s, color .15s, border-color .15s;
+        }
+
+        #btn-hdr-snap:hover {
+            background: #f2f2f7;
+            color: #1c1c1e;
+        }
+
+        /* Actif = les champs s'alignent sur leurs voisins */
+        #btn-hdr-snap[aria-pressed="true"] {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+            color: #2563eb;
+        }
+
+        #btn-hdr-snap[aria-pressed="true"]:hover {
+            background: #e0e7ff;
+        }
+
         /* --- Menu "..." du header --- */
         #hdr-more-group {
             display: none;
@@ -1038,6 +1208,14 @@
             }
         }
 
+        /* Téléphone : plus de place pour les pastilles de couleur dans le header.
+           Elles restent accessibles par le panneau Style (barre du bas). */
+        @media (max-width: 559px) {
+            #hdr-style-quick {
+                display: none;
+            }
+        }
+
         /* Écrans très étroits : on récupère de la place dans le header */
         @media (max-width: 380px) {
             #hdr-history {
@@ -1274,7 +1452,8 @@
             <label class="tb-case">
                 <input type="checkbox" id="g-lock" class="accent-black w-4 h-4 rounded" checked
                     onchange="App.setStyle('lock', this.checked)">
-                <span>Imposer ces tailles aux nouveaux champs</span>
+                <span>Créer les nouveaux champs à ces tailles<br>
+                    <span class="text-[10px] text-gray-400">Un champ posé reste toujours redimensionnable.</span></span>
             </label>
 
             <button id="btn-size-painter" onclick="App.setTool('size-painter')"
@@ -1286,7 +1465,7 @@
 
             <label class="tb-case">
                 <input type="checkbox" id="g-snap" class="accent-black w-4 h-4 rounded" checked
-                    onchange="State.snap=this.checked">
+                    onchange="App.setAimant(this.checked)">
                 <span>Aligner automatiquement sur les champs voisins</span>
             </label>
         </div>
@@ -1335,6 +1514,26 @@
                 </button>
             </div>
 
+            <div id="hdr-style-quick">
+                <label id="hsq-fill-wrap" class="hsq-pastille" title="Couleur de fond des nouveaux champs">
+                    <input type="color" id="hdr-fill" value="#ffffff" oninput="App.setStyle('fill', this.value)">
+                    <span class="hsq-rond" id="hsq-fill"></span>
+                </label>
+                <label id="hsq-stroke-wrap" class="hsq-pastille" title="Couleur de la bordure des nouveaux champs">
+                    <input type="color" id="hdr-stroke" value="#000000" oninput="App.setStyle('stroke', this.value)">
+                    <span class="hsq-rond" id="hsq-stroke"></span>
+                </label>
+                <button id="hdr-width" onclick="App.basculerEpaisseur()" aria-expanded="false"
+                    title="Épaisseur du trait des nouveaux champs">
+                    <span id="hsq-trait"></span>
+                </button>
+            </div>
+
+            <button id="btn-hdr-snap" onclick="App.basculerAimant()" aria-pressed="true"
+                title="Aimant : aligner automatiquement sur les champs voisins">
+                <i class="fa-solid fa-magnet"></i>
+            </button>
+
             <button id="btn-hdr-style" onclick="MobileUI.toggleStyle()"
                 class="items-center gap-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-bg px-3 py-2 rounded transition shrink-0"
                 title="Police, couleurs et tailles par défaut">
@@ -1350,6 +1549,11 @@
                 title="Plus d'options" aria-label="Plus d'options">
                 <i class="fa-solid fa-ellipsis-vertical"></i>
             </button>
+        </div>
+
+        <div id="epaisseur-menu">
+            <div class="ep-titre">Épaisseur du trait</div>
+            <div id="ep-choix"></div>
         </div>
     </header>
 
@@ -2093,6 +2297,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             MobileUI.init();
             App.init();
+            App.majStyleUI();
+            App.setAimant(State.snap);
             Bank.init(); // <--- AJOUTER ICI
         });
         if (window.fabric) {
@@ -2148,7 +2354,9 @@
             closeAll: () => {
                 document.getElementById('sidebar-tools').classList.remove('is-open');
                 document.getElementById('panel-right').classList.remove('is-open');
-                document.body.classList.remove('drawer-open', 'style-open', 'more-open');
+                document.body.classList.remove('drawer-open', 'style-open', 'more-open', 'width-open');
+                const w = document.getElementById('hdr-width');
+                if (w) w.setAttribute('aria-expanded', 'false');
                 MobileUI.sync();
             },
 
@@ -2194,9 +2402,15 @@
 
                 // Un clic hors des menus déroulants les referme
                 document.addEventListener('pointerdown', (e) => {
-                    if (!document.body.classList.contains('style-open') && !document.body.classList.contains('more-open')) return;
+                    const b = document.body;
+                    if (b.classList.contains('width-open') && !e.target.closest('#epaisseur-menu, #hdr-width')) {
+                        b.classList.remove('width-open');
+                        const w = document.getElementById('hdr-width');
+                        if (w) w.setAttribute('aria-expanded', 'false');
+                    }
+                    if (!b.classList.contains('style-open') && !b.classList.contains('more-open')) return;
                     if (e.target.closest('#toolbar-main, #hdr-more-group, #bar-style, #btn-mobile-more, #btn-hdr-style')) return;
-                    document.body.classList.remove('style-open', 'more-open');
+                    b.classList.remove('style-open', 'more-open');
                     MobileUI.sync();
                 }, true);
 
@@ -3630,18 +3844,15 @@ const Detect = {
                 text.lockScalingX = text.lockScalingY = true;
                 text.lockRotation = true;
 
-                const lockY = (type === 'textfield' && State.defaults.lock);
-
                 const grp = new fabric.Group([rect, text], {
                     left: l, top: t,
                     subTargetCheck: true,   // Gardé à true pour que le dblclick détecte le texte et déclenche l'édition
-                    lockScalingY: lockY,
                     lockRotation: true
                 });
 
-                const controls = { mtr: false };
-                if (lockY) Object.assign(controls, { mt: false, mb: false, ml: true, mr: true });
-                grp.setControlsVisibility(controls);
+                // Un champ posé reste toujours redimensionnable : les tailles par
+                // défaut ne servent qu'au moment de la création.
+                grp.setControlsVisibility({ mtr: false });
 
                 grp.set({ ctype: type, pid: Factory.getName(type), bStyle: 'solid', fmt: 'text', tAlign: 'left' });
                 grp.bgObj = rect; grp.txtObj = text;
@@ -3649,8 +3860,8 @@ const Detect = {
             },
 
             // --- CHECKBOX ---
-            createCheckbox: (l, t) => {
-                const s = State.defaults.boxSize;
+            createCheckbox: (l, t, taille) => {
+                const s = Math.max(4, Math.round(taille || State.defaults.boxSize));
                 const rect = new fabric.Rect({
                     width: s, height: s,
                     fill: State.defaults.fill,
@@ -3670,8 +3881,6 @@ const Detect = {
                 rect.lockRotation = true;
                 rect.selectable = false; // Par sécurité
 
-                const locked = State.defaults.lock;
-
                 const grp = new fabric.Group([rect, mark], {
                     left: l, top: t,
                     subTargetCheck: false,
@@ -3679,24 +3888,17 @@ const Detect = {
                     lockRotation: true
                 });
 
-                const controls = { mtr: false };
-
-                if (locked) {
-                    grp.set({ lockScalingX: true, lockScalingY: true });
-                    Object.assign(controls, { tl: false, tr: false, bl: false, br: false, mt: false, mb: false, ml: false, mr: false });
-                } else {
-                    Object.assign(controls, { mt: false, mb: false, ml: false, mr: false });
-                }
-
-                grp.setControlsVisibility(controls);
+                // Toujours redimensionnable, mais seulement par les coins pour
+                // que la case reste carrée.
+                grp.setControlsVisibility({ mtr: false, mt: false, mb: false, ml: false, mr: false });
                 grp.set({ ctype: 'checkbox', pid: Factory.getName('checkbox'), isChecked: false });
                 grp.bgObj = rect; grp.markObj = mark;
                 return grp;
             },
 
             // --- RADIO ---
-            createRadio: (l, t) => {
-                const s = State.defaults.boxSize;
+            createRadio: (l, t, taille) => {
+                const s = Math.max(4, Math.round(taille || State.defaults.boxSize));
                 const outer = new fabric.Circle({
                     radius: s / 2,
                     fill: State.defaults.fill,
@@ -3715,8 +3917,6 @@ const Detect = {
                 outer.lockRotation = true;
                 outer.selectable = false; // Par sécurité
 
-                const locked = State.defaults.lock;
-
                 const grp = new fabric.Group([outer, inner], {
                     left: l, top: t,
                     subTargetCheck: false,
@@ -3724,16 +3924,9 @@ const Detect = {
                     lockRotation: true
                 });
 
-                const controls = { mtr: false };
-
-                if (locked) {
-                    grp.set({ lockScalingX: true, lockScalingY: true });
-                    Object.assign(controls, { tl: false, tr: false, bl: false, br: false, mt: false, mb: false, ml: false, mr: false });
-                } else {
-                    Object.assign(controls, { mt: false, mb: false, ml: false, mr: false });
-                }
-
-                grp.setControlsVisibility(controls);
+                // Toujours redimensionnable, mais seulement par les coins pour
+                // que le bouton reste rond.
+                grp.setControlsVisibility({ mtr: false, mt: false, mb: false, ml: false, mr: false });
                 grp.set({
                     ctype: 'radio',
                     pid: Factory.getName('radio'),
@@ -4830,6 +5023,13 @@ const Detect = {
                         if (['textfield', 'textarea'].includes(o.ctype)) o.txtObj = o._objects[1];
                         if (['checkbox', 'radio'].includes(o.ctype)) o.markObj = o._objects[1];
                     }
+                    // Anciens documents : les champs y étaient parfois bloqués en
+                    // taille. On les rend de nouveau redimensionnables.
+                    if (o.ctype && !o.isBackground) {
+                        o.set({ lockScalingX: false, lockScalingY: false });
+                        if (['checkbox', 'radio'].includes(o.ctype)) o.setControlsVisibility({ mtr: false, mt: false, mb: false, ml: false, mr: false });
+                        else if (['textfield', 'textarea', 'dropdown'].includes(o.ctype)) o.setControlsVisibility({ mtr: false, tl: true, tr: true, bl: true, br: true, mt: true, mb: true, ml: true, mr: true });
+                    }
                 });
             },
             setSideTab: (tab) => {
@@ -5123,10 +5323,91 @@ const Detect = {
 
                 // Sur mobile, on referme le tiroir pour laisser la place au dessin
                 MobileUI.closeIfCompact();
-            }, setStyle: (key, val) => {
+            },
+
+            /* Les couleurs et l'épaisseur existent à deux endroits : les pastilles
+               du header et le panneau Style. On les réaligne toutes sur
+               State.defaults, d'où que vienne le changement. */
+            majStyleUI: () => {
+                const d = State.defaults;
+                const poser = (id, prop, val) => { const e = document.getElementById(id); if (e) e[prop] = val; };
+                poser('g-fill', 'value', d.fill);
+                poser('hdr-fill', 'value', d.fill);
+                poser('g-stroke', 'value', d.stroke);
+                poser('hdr-stroke', 'value', d.stroke);
+                poser('g-width', 'value', d.width);
+
+                const pf = document.getElementById('preview-fill');
+                if (pf) pf.style.backgroundColor = d.fill;
+                const ps = document.getElementById('preview-stroke');
+                if (ps) ps.style.backgroundColor = d.stroke;
+                const hf = document.getElementById('hsq-fill');
+                if (hf) hf.style.backgroundColor = d.fill;
+                const hs = document.getElementById('hsq-stroke');
+                if (hs) hs.style.backgroundColor = d.stroke;
+
+                // Le trait du header montre l'épaisseur réelle (0 = sans bordure)
+                const tr = document.getElementById('hsq-trait');
+                if (tr) {
+                    tr.style.height = Math.max(1, d.width) + 'px';
+                    tr.style.opacity = d.width > 0 ? '1' : '.25';
+                    tr.style.background = d.width > 0 ? '#1c1c1e' : 'transparent';
+                    tr.style.borderTop = d.width > 0 ? 'none' : '1px dashed #8e8e93';
+                }
+
+                const choix = document.getElementById('ep-choix');
+                if (choix) {
+                    choix.innerHTML = [0, 1, 2, 3, 4, 5].map(n => `
+                        <button class="ep-item${n === d.width ? ' actif' : ''}" onclick="App.choisirEpaisseur(${n})">
+                            <span class="${n === 0 ? 'ep-vide' : 'ep-trait'}" style="height:${n}px"></span>
+                            <span style="width:44px;text-align:right">${n === 0 ? 'Aucune' : n + ' px'}</span>
+                        </button>`).join('');
+                }
+            },
+
+            choisirEpaisseur: (n) => {
+                App.setStyle('width', n);
+                document.body.classList.remove('width-open');
+                const b = document.getElementById('hdr-width');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            },
+
+            basculerEpaisseur: () => {
+                const b = document.getElementById('hdr-width');
+                const ouvert = !document.body.classList.contains('width-open');
+                document.body.classList.toggle('width-open', ouvert);
+                if (b) {
+                    b.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+                    // Le menu s'aligne sous le bouton, sans sortir de l'écran
+                    const menu = document.getElementById('epaisseur-menu');
+                    if (menu && ouvert) {
+                        const r = b.getBoundingClientRect();
+                        const l = Math.min(Math.max(8, r.left + r.width / 2 - 88), window.innerWidth - 184);
+                        menu.style.left = l + 'px';
+                    }
+                }
+            },
+
+            /* L'aimant : aligner ou non les champs sur leurs voisins. */
+            basculerAimant: () => App.setAimant(!State.snap),
+
+            setAimant: (on) => {
+                State.snap = !!on;
+                const b = document.getElementById('btn-hdr-snap');
+                if (b) {
+                    b.setAttribute('aria-pressed', State.snap ? 'true' : 'false');
+                    b.title = State.snap
+                        ? 'Aimant activé : les champs s\'alignent sur leurs voisins'
+                        : 'Aimant désactivé : les champs se posent librement';
+                }
+                const c = document.getElementById('g-snap');
+                if (c) c.checked = State.snap;
+                if (!State.snap) { State.snapLines = []; if (State.canvas) State.canvas.requestRenderAll(); }
+            },
+
+            setStyle: (key, val) => {
                 if (key === 'size' || key === 'width') val = parseInt(val); if (key === 'lock') State.defaults.lock = val; else State.defaults[key] = val;
-                if (key === 'fill') document.getElementById('preview-fill').style.backgroundColor = val;
-                if (key === 'stroke') document.getElementById('preview-stroke').style.backgroundColor = val;
+                App.majStyleUI();
 
                 const objs = State.canvas.getActiveObjects();
                 objs.forEach(obj => {
@@ -5136,17 +5417,8 @@ const Detect = {
                     if (key === 'width') target.set('strokeWidth', val);
                     if (key === 'font' && txt) txt.set('fontFamily', val);
                     if (key === 'size' && txt) txt.set('fontSize', val);
-                    if (key === 'lock') {
-                        if (obj.ctype === 'textfield') { obj.set('lockScalingY', val); if (val) obj.setControlsVisibility({ mt: false, mb: false }); else obj.setControlsVisibility({ mt: true, mb: true }); }
-                        if (['checkbox', 'radio'].includes(obj.ctype)) {
-                            obj.set({ lockScalingX: val, lockScalingY: val });
-                            if (val) {
-                                obj.setControlsVisibility({ tl: false, tr: false, bl: false, br: false, mtr: false, mt: false, mb: false, ml: false, mr: false });
-                            } else {
-                                obj.setControlsVisibility({ tl: true, tr: true, bl: true, br: true, mtr: false, mt: false, mb: false, ml: false, mr: false });
-                            }
-                        }
-                    }
+                    // 'lock' ne concerne que la taille donnée à la création : un
+                    // champ déjà posé reste redimensionnable dans tous les cas.
                 });
                 if (objs.length) { State.canvas.requestRenderAll(); History.save(); Panel.update(objs[0]); }
             },
@@ -5369,14 +5641,26 @@ const Detect = {
                         const startSnap = App.snapMove(fakeStart);
                         sx = ptr.x + startSnap.x; sy = ptr.y + startSnap.y;
 
+                        const trait = { fill: 'rgba(37,99,235,0.1)', stroke: '#2563eb', strokeWidth: 1, strokeDashArray: [4, 4], opacity: 1 };
+
                         if (['textfield', 'textarea', 'dropdown', 'rect'].includes(State.mode)) {
-                            ghost = new fabric.Rect({ left: sx, top: sy, width: 0, height: 0, fill: 'rgba(37,99,235,0.1)', stroke: '#2563eb', strokeWidth: 1, strokeDashArray: [4, 4], opacity: 1 });
+                            ghost = new fabric.Rect({ left: sx, top: sy, width: 0, height: 0, ...trait });
                         }
                         else if (State.mode === 'circle') {
-                            ghost = new fabric.Ellipse({ left: sx, top: sy, rx: 0, ry: 0, fill: 'rgba(37,99,235,0.1)', stroke: '#2563eb', strokeWidth: 1, strokeDashArray: [4, 4], opacity: 1 });
+                            ghost = new fabric.Ellipse({ left: sx, top: sy, rx: 0, ry: 0, ...trait });
                         }
                         else if (State.mode === 'line') {
                             ghost = new fabric.Line([sx, sy, sx, sy], { stroke: '#2563eb', strokeWidth: 1, strokeDashArray: [4, 4] });
+                        }
+                        // Cases et boutons : le fantôme part à la taille par défaut,
+                        // pour qu'un simple clic montre déjà ce qui sera posé.
+                        else if (State.mode === 'checkbox') {
+                            const s = State.defaults.boxSize;
+                            ghost = new fabric.Rect({ left: sx, top: sy, width: s, height: s, ...trait });
+                        }
+                        else if (State.mode === 'radio') {
+                            const s = State.defaults.boxSize;
+                            ghost = new fabric.Ellipse({ left: sx, top: sy, rx: s / 2, ry: s / 2, ...trait });
                         }
 
                         if (ghost) C.add(ghost);
@@ -5412,13 +5696,21 @@ const Detect = {
                         let w = Math.abs(sx - destX); let h = Math.abs(sy - destY);
                         let l = Math.min(sx, destX); let t = Math.min(sy, destY);
 
-                        if (State.defaults.lock) {
-                            if (State.mode === 'textfield') { h = State.defaults.defHeight; t = (destY < sy) ? sy - h : sy; }
-                            if (['checkbox', 'radio'].includes(State.mode)) { w = State.defaults.boxSize; h = State.defaults.boxSize; t = (destY < sy) ? sy - h : sy; l = (destX < sx) ? sx - w : sx; }
+                        if (State.defaults.lock && State.mode === 'textfield') { h = State.defaults.defHeight; t = (destY < sy) ? sy - h : sy; }
+
+                        // Case / bouton : toujours carré. Tant que la souris n'a pas
+                        // vraiment bougé, on garde la taille par défaut ; dès qu'on
+                        // tire, c'est le geste qui décide.
+                        if (['checkbox', 'radio'].includes(State.mode)) {
+                            const cote = Math.max(w, h) < 5 ? State.defaults.boxSize : Math.max(w, h);
+                            w = h = cote;
+                            t = (destY < sy) ? sy - h : sy;
+                            l = (destX < sx) ? sx - w : sx;
                         }
 
                         if (State.mode === 'line') { ghost.set({ x2: destX, y2: destY }); }
                         else if (State.mode === 'circle') { ghost.set({ rx: w / 2, ry: h / 2, left: l, top: t }); }
+                        else if (State.mode === 'radio') { ghost.set({ rx: w / 2, ry: h / 2, left: l, top: t }); }
                         else { ghost.set({ width: w, height: h, left: l, top: t }); }
                         C.requestRenderAll();
 
@@ -5461,7 +5753,10 @@ const Detect = {
                         if (ghost) { l = ghost.left; t = ghost.top; w = ghost.width * ghost.scaleX; h = ghost.height * ghost.scaleY; C.remove(ghost); ghost = null; }
                         else { l = sx; t = sy; w = 0; h = 0; }
 
-                        const isClick = w < 5 && h < 5;
+                        // Un simple clic (pas de glissement) : le fantôme des cases
+                        // vaut déjà la taille par défaut, donc on mesure le geste.
+                        const glisse = Math.max(Math.abs(ptr.x - sx), Math.abs(ptr.y - sy)) >= 5;
+                        const isClick = ['checkbox', 'radio'].includes(State.mode) ? !glisse : (w < 5 && h < 5);
                         if (isClick) {
                             if (['textfield', 'dropdown'].includes(State.mode)) { w = 150; h = State.defaults.defHeight; }
                             else if (State.mode === 'textarea') { w = 250; h = State.defaults.defHeight * 3; }
@@ -5470,15 +5765,12 @@ const Detect = {
                             else if (['checkbox', 'radio'].includes(State.mode)) { w = State.defaults.boxSize; h = State.defaults.boxSize; }
                         } else if (State.mode === 'textarea') h = Math.max(h, 50);
 
-                        if (State.defaults.lock) {
-                            if (State.mode === 'textfield') h = State.defaults.defHeight;
-                            if (['checkbox', 'radio'].includes(State.mode)) { w = State.defaults.boxSize; h = State.defaults.boxSize; }
-                        }
+                        if (State.defaults.lock && State.mode === 'textfield') h = State.defaults.defHeight;
 
                         let obj = null;
                         if (['textfield', 'textarea', 'dropdown'].includes(State.mode)) obj = Factory.createInputGroup(l, t, w, h, State.mode);
-                        else if (State.mode === 'checkbox') obj = Factory.createCheckbox(l, t);
-                        else if (State.mode === 'radio') obj = Factory.createRadio(l, t);
+                        else if (State.mode === 'checkbox') obj = Factory.createCheckbox(l, t, Math.max(w, h));
+                        else if (State.mode === 'radio') obj = Factory.createRadio(l, t, Math.max(w, h));
                         else if (State.mode === 'label') obj = Factory.createLabel(l, t);
                         else if (['rect', 'circle', 'line'].includes(State.mode)) {
                             if (State.mode === 'line') obj = Factory.createShape(State.mode, sx, sy, ptr.x - sx, ptr.y - sy);
@@ -5524,10 +5816,8 @@ const Detect = {
                     } else if (t.txtObj) {
                         const items = t.getObjects(); t._restoreObjectsState(); C.remove(t); items.forEach(i => C.add(i)); C.setActiveObject(items[1]); items[1].enterEditing(); items[1].selectAll();
                         items[1].on('editing:exited', () => {
-                            const grp = new fabric.Group(items, { left: t.left, top: t.top, subTargetCheck: true, lockScalingY: t.lockScalingY, lockRotation: true });
-                            const controls = { mtr: false };
-                            if (t.lockScalingY) Object.assign(controls, { mt: false, mb: false, ml: true, mr: true });
-                            grp.setControlsVisibility(controls);
+                            const grp = new fabric.Group(items, { left: t.left, top: t.top, subTargetCheck: true, lockRotation: true });
+                            grp.setControlsVisibility({ mtr: false });
                             grp.set({ ctype: t.ctype, pid: t.pid, bStyle: t.bStyle, fmt: t.fmt, tAlign: t.tAlign, isRequired: t.isRequired, isReadOnly: t.isReadOnly });
                             grp.bgObj = items[0]; grp.txtObj = items[1];
                             if (t.ctype === 'radio') { grp.grp = t.grp; grp.val = t.val; }
