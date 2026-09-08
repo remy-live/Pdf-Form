@@ -574,6 +574,165 @@
            actions secondaires dans le menu "...". Les panneaux latéraux, eux,
            ne deviennent des tiroirs qu'en dessous de 1024px (bloc suivant).
            ========================================================== */
+        /* ==========================================================
+           HEADER SOBRE, À TOUTES LES LARGEURS
+           La barre de réglages inline était un mur de dix contrôles collés,
+           sans indication de ce à quoi ils s'appliquent. Elle devient un
+           panneau "Style" déroulant, et les actions secondaires le menu "⋮".
+           Le header ne garde que l'essentiel : titre, Annuler/Rétablir,
+           Style, Export.
+           ========================================================== */
+        #hdr-pencil {
+            display: none;
+        }
+
+        #hdr-title-wrap {
+            flex: 0 1 auto;
+            min-width: 0;
+            margin-left: 0;
+        }
+
+        #doc-title {
+            width: 100%;
+            max-width: 220px;
+            min-width: 0;
+            text-align: left;
+        }
+
+        #doc-title:focus {
+            width: 100%;
+        }
+
+        #btn-hdr-style,
+        #btn-mobile-more {
+            display: flex;
+        }
+
+        /* --- Panneau "Style" déroulant --- */
+        #toolbar-main {
+            display: none;
+            position: fixed;
+            top: calc(var(--hdr-h) + 6px);
+            right: 8px;
+            width: min(340px, calc(100vw - 16px));
+            z-index: 70;
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+            padding: 14px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+            max-height: 72vh;
+            overflow-y: auto;
+        }
+
+        body.style-open #toolbar-main {
+            display: flex;
+        }
+
+        .tb-titre {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+
+        .tb-aide {
+            font-size: 10px;
+            line-height: 1.45;
+            color: #8e8e93;
+            margin: 4px 0 12px;
+        }
+
+        .tb-section {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #aeaeb2;
+            margin: 12px 0 6px;
+        }
+
+        .tb-ligne {
+            display: grid;
+            grid-template-columns: 108px 1fr;
+            align-items: center;
+            gap: 8px;
+            min-height: 30px;
+        }
+
+        .tb-lbl {
+            font-size: 11px;
+            color: #48484a;
+        }
+
+        .tb-case {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            min-height: 30px;
+            font-size: 11px;
+            color: #48484a;
+        }
+
+        /* --- Menu "..." du header --- */
+        #hdr-more-group {
+            display: none;
+            position: fixed;
+            top: calc(var(--hdr-h) + 6px);
+            right: 8px;
+            z-index: 70;
+            flex-direction: column;
+            align-items: stretch;
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+            padding: 6px;
+            gap: 2px;
+            min-width: 215px;
+        }
+
+        body.more-open #hdr-more-group {
+            display: flex;
+        }
+
+        #hdr-more-group>button {
+            width: 100%;
+            height: 42px;
+            border-radius: 8px;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 0 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1c1c1e;
+            margin: 0;
+        }
+
+        #hdr-more-group>button i {
+            width: 18px;
+            text-align: center;
+        }
+
+        #hdr-more-group .hdr-label {
+            display: inline;
+        }
+
+        #hdr-more-group .hdr-icon {
+            display: inline-block;
+        }
+
+        #hdr-more-group .hdr-compact {
+            display: none;
+        }
+
+        /* Sous 1600px : Annuler/Rétablir en flottant (le header se resserre),
+           ce qui oblige à empiler les barres du bas pour éviter les
+           recouvrements. */
         @media (max-width: 1599px) {
 
             #hdr-left {
@@ -582,130 +741,16 @@
                 gap: 10px;
             }
 
-            #hdr-pencil {
-                display: none;
-            }
-
-            #hdr-title-wrap {
-                flex: 0 1 auto;
-                min-width: 0;
-                margin-left: 0;
-            }
-
-            #doc-title {
-                width: 100%;
-                max-width: 190px;
-                min-width: 0;
-                text-align: left;
-            }
-
-            #doc-title:focus {
-                width: 100%;
-            }
-
-            #btn-hdr-style,
-            #btn-mobile-more,
             #float-history {
                 display: flex;
             }
 
-            /* --- Empilement des barres flottantes du bas ---
-               Dès que Annuler/Rétablir apparaît, le bloc de gauche s'élargit et
-               rattrape la navigation de pages restée centrée ; plus bas encore,
-               la barre de validation de la détection venait s'ajouter par-dessus.
-               On les empile de bas en haut : commandes, pages, détection. */
             #page-nav {
                 bottom: 64px;
             }
 
             #detect-bar {
                 bottom: 124px;
-            }
-
-            /* --- Barre "Style" en menu déroulant --- */
-            #toolbar-main {
-                display: none;
-                position: fixed;
-                top: calc(var(--hdr-h) + 6px);
-                left: auto;
-                right: 8px;
-                width: min(560px, calc(100vw - 16px));
-                z-index: 70;
-                background: #fff;
-                border: 1px solid #e5e5e5;
-                border-radius: 12px;
-                box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
-                padding: 10px;
-                flex-wrap: wrap;
-                gap: 8px;
-                max-height: 62vh;
-                overflow-y: auto;
-            }
-
-            body.style-open #toolbar-main {
-                display: flex;
-            }
-
-            #toolbar-main>div {
-                flex-wrap: wrap;
-            }
-
-            #toolbar-main>div:last-child {
-                border-left: none;
-                padding-left: 0;
-                margin-left: 0;
-            }
-
-            /* --- Menu "..." du header --- */
-            #hdr-more-group {
-                display: none;
-                position: fixed;
-                top: calc(var(--hdr-h) + 6px);
-                right: 8px;
-                z-index: 70;
-                flex-direction: column;
-                align-items: stretch;
-                background: #fff;
-                border: 1px solid #e5e5e5;
-                border-radius: 12px;
-                box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
-                padding: 6px;
-                gap: 2px;
-                min-width: 215px;
-            }
-
-            body.more-open #hdr-more-group {
-                display: flex;
-            }
-
-            #hdr-more-group>button {
-                width: 100%;
-                height: 42px;
-                border-radius: 8px;
-                justify-content: flex-start;
-                gap: 12px;
-                padding: 0 12px;
-                font-size: 13px;
-                font-weight: 500;
-                color: #1c1c1e;
-                margin: 0;
-            }
-
-            #hdr-more-group>button i {
-                width: 18px;
-                text-align: center;
-            }
-
-            #hdr-more-group .hdr-label {
-                display: inline;
-            }
-
-            #hdr-more-group .hdr-icon {
-                display: inline-block;
-            }
-
-            #hdr-more-group .hdr-compact {
-                display: none;
             }
         }
 
@@ -1158,76 +1203,92 @@
             </div>
         </div>
 
-        <div id="toolbar-main" class="flex items-center gap-4 transition-opacity duration-200">
+        <div id="toolbar-main" class="transition-opacity duration-200">
 
-            <div id="toolbar-font" class="flex items-center gap-2 bg-bg px-2 py-1 rounded-lg border border-border">
-                <i class="fa-solid fa-font text-[10px] text-gray-400"></i>
-                <select id="g-font"
-                    class="bg-transparent text-xs font-medium border-none outline-none w-20 cursor-pointer"
-                    onchange="App.setStyle('font', this.value)">
-                    <option value="Arial">Arial</option>
-                    <option value="Helvetica">Helvetica</option>
-                    <option value="Times New Roman">Times</option>
-                    <option value="Courier New">Courier</option>
-                </select>
-                <input type="number" id="g-size" value="11"
-                    class="bg-transparent text-xs font-medium w-10 text-center outline-none border-none"
-                    oninput="App.setStyle('size', this.value)" title="Taille Police">
+            <div class="tb-titre">Réglages des nouveaux champs</div>
+            <p class="tb-aide">S'applique aux champs que vous créerez ensuite. Pour modifier un champ
+                déjà posé, sélectionnez-le : ses réglages apparaissent dans le panneau Propriétés.</p>
+
+            <div class="tb-section">Texte</div>
+
+            <div id="toolbar-font" class="tb-ligne">
+                <span class="tb-lbl">Police</span>
+                <div class="flex items-center gap-2">
+                    <select id="g-font"
+                        class="os-input flex-1 text-xs cursor-pointer"
+                        onchange="App.setStyle('font', this.value)">
+                        <option value="Arial">Arial</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Times New Roman">Times</option>
+                        <option value="Courier New">Courier</option>
+                    </select>
+                    <input type="number" id="g-size" value="11" class="os-input w-12 text-center"
+                        oninput="App.setStyle('size', this.value)" title="Taille du texte, en points">
+                </div>
             </div>
 
-            <div class="flex items-center gap-2 bg-bg px-2 py-1 rounded-lg border border-border">
-                <div class="flex flex-col items-center group cursor-pointer relative" title="Couleur Fond">
-                    <input type="color" id="g-fill" value="#ffffff" class="w-5 h-5 cursor-pointer absolute opacity-0"
+            <div class="tb-section">Couleurs</div>
+
+            <div class="tb-ligne">
+                <span class="tb-lbl">Fond</span>
+                <div class="flex items-center gap-2 relative">
+                    <input type="color" id="g-fill" value="#ffffff" class="w-7 h-7 cursor-pointer absolute opacity-0"
                         oninput="App.setStyle('fill', this.value)">
-                    <div class="w-4 h-4 rounded bg-white border border-gray-300 shadow-sm" id="preview-fill"></div>
+                    <div class="w-7 h-7 rounded border border-gray-300 shadow-sm bg-white" id="preview-fill"></div>
+                    <span class="text-[10px] text-gray-400">Intérieur du champ</span>
                 </div>
-                <div class="flex flex-col items-center group cursor-pointer relative" title="Couleur Bordure">
-                    <input type="color" id="g-stroke" value="#000000" class="w-5 h-5 cursor-pointer absolute opacity-0"
+            </div>
+
+            <div class="tb-ligne">
+                <span class="tb-lbl">Bordure</span>
+                <div class="flex items-center gap-2 relative">
+                    <input type="color" id="g-stroke" value="#000000" class="w-7 h-7 cursor-pointer absolute opacity-0"
                         oninput="App.setStyle('stroke', this.value)">
-                    <div class="w-4 h-4 rounded bg-black border border-gray-300 shadow-sm" id="preview-stroke"></div>
+                    <div class="w-7 h-7 rounded border border-gray-300 shadow-sm bg-black" id="preview-stroke"></div>
+                    <input type="number" id="g-width" value="1" min="0" max="10" class="os-input w-12 text-center"
+                        oninput="App.setStyle('width', this.value)" title="Épaisseur du trait">
+                    <span class="text-[10px] text-gray-400">px</span>
                 </div>
-                <div class="w-px h-4 bg-gray-300"></div>
-                <input type="number" id="g-width" value="1" min="0" max="10"
-                    class="bg-transparent text-xs font-medium w-8 text-center outline-none border-none"
-                    oninput="App.setStyle('width', this.value)" title="Épaisseur Trait">
             </div>
 
-            <div class="flex items-center gap-2 px-2 border-l border-border pl-4">
-                <label class="flex items-center gap-2 cursor-pointer select-none border-r border-border pr-3 mr-1">
-                    <input type="checkbox" id="g-snap" class="accent-black w-4 h-4 rounded" checked
-                        onchange="State.snap=this.checked">
-                    <span class="text-[10px] font-bold text-gray-500"
-                        title="Aligne automatiquement les champs entre eux">Aligner</span>
-                </label>
-                <div class="flex items-center gap-3">
+            <div class="tb-section">Tailles</div>
 
-                    <span class="text-[10px] font-medium text-gray-500"
-                        title="Hauteur des lignes de texte que vous créez">
-                        Hauteur ligne</span>
-                    <input type="number" id="g-def-height" value="24"
-                        class="os-input w-12 text-center h-5 p-0 text-[10px]"
+            <div class="tb-ligne">
+                <span class="tb-lbl">Hauteur de ligne</span>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="g-def-height" value="24" class="os-input w-14 text-center"
                         onchange="State.defaults.defHeight = parseInt(this.value)">
-
-                    <button id="btn-size-painter" onclick="App.setTool('size-painter')"
-                        class="mx-2 w-7 h-7 bg-gray-100 hover:bg-black hover:text-white text-gray-500 rounded flex items-center justify-center transition shadow-sm"
-                        title="Appliquer ces tailles à un champ existant en cliquant dessus">
-                        <i class="fa-solid fa-paintbrush text-xs"></i>
-                    </button>
-
-
-                    <span class="text-[10px] font-medium text-gray-500" title="Taille des cases à cocher et des ronds">
-                        Taille case</span>
-                    <input type="number" id="g-def-box" value="14" class="os-input w-12 text-center h-5 p-0 text-[10px]"
-                        onchange="State.defaults.boxSize = parseInt(this.value)">
-
-                    <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
-                        <input type="checkbox" id="g-lock" class="accent-black w-4 h-4 rounded" checked
-                            onchange="App.setStyle('lock', this.checked)">
-                        <span class="text-[10px] font-bold text-gray-500"
-                            title="Les nouveaux champs gardent la taille indiquée ci-dessus">Taille imposée</span>
-                    </label>
+                    <span class="text-[10px] text-gray-400">px</span>
                 </div>
             </div>
+
+            <div class="tb-ligne">
+                <span class="tb-lbl">Taille des cases</span>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="g-def-box" value="14" class="os-input w-14 text-center"
+                        onchange="State.defaults.boxSize = parseInt(this.value)">
+                    <span class="text-[10px] text-gray-400">px</span>
+                </div>
+            </div>
+
+            <label class="tb-case">
+                <input type="checkbox" id="g-lock" class="accent-black w-4 h-4 rounded" checked
+                    onchange="App.setStyle('lock', this.checked)">
+                <span>Imposer ces tailles aux nouveaux champs</span>
+            </label>
+
+            <button id="btn-size-painter" onclick="App.setTool('size-painter')"
+                class="mt-2 w-full h-9 bg-gray-100 hover:bg-black hover:text-white text-gray-600 rounded-lg flex items-center justify-center gap-2 text-[11px] font-semibold transition">
+                <i class="fa-solid fa-paintbrush text-xs"></i> Appliquer ces tailles à un champ existant
+            </button>
+
+            <div class="tb-section">Aide au placement</div>
+
+            <label class="tb-case">
+                <input type="checkbox" id="g-snap" class="accent-black w-4 h-4 rounded" checked
+                    onchange="State.snap=this.checked">
+                <span>Aligner automatiquement sur les champs voisins</span>
+            </label>
         </div>
 
         <div id="hdr-actions" class="flex items-center gap-3 shrink-0">
