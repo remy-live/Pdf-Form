@@ -3173,6 +3173,48 @@ const Detect = {
                     });
             },
 
+            // Découpe un trait en zones réellement offertes à la saisie.
+            // On regarde l'encre AU-DESSUS de la ligne de base : là où il y en a,
+            // c'est un libellé ; là où il n'y en a pas, on peut écrire. Les points
+            // de conduite, eux, restent collés à la ligne de base et laissent la
+            // bande du dessus vide — ils sont donc reconnus comme zone libre.
+            // C'est ce qui permet de poser trois champs sur une rangée
+            // « Nom : ..... Prénom : ..... Classe : ..... ».
+            zonesLibres: (dark, W, H, a1, a2, b, fh, minLen) => {
+                const y1 = Math.max(0, Math.round(b - 0.80 * fh));
+                const y2 = Math.min(H - 1, Math.round(b - 0.20 * fh));
+                const xa = Math.max(0, Math.round(a1)), xb = Math.min(W - 1, Math.round(a2));
+                if (y2 <= y1 || xb <= xa) return [];
+                const zones = [];
+                let debut = -1;
+                for (let x = xa; x <= xb; x++) {
+                    let encre = false;
+                    for (let y = y1; y <= y2; y++) if (dark[y * W + x]) { encre = true; break; }
+                    if (!encre) { if (debut === -1) debut = x; }
+                    else {
+                        if (debut !== -1 && x - debut >= minLen) zones.push({ x1: debut, x2: x - 1 });
+                        debut = -1;
+                    }
+                }
+                if (debut !== -1 && xb - debut + 1 >= minLen) zones.push({ x1: debut, x2: xb });
+                return zones;
+            },
+
+            // Un morceau de texte fait surtout de points de conduite
+            // (« : ..................... ») : c'est une zone à remplir, pas un libellé.
+            estPointille: (s) => {
+                const t = String(s || '').replace(/\s+/g, '');
+                if (t.length < 4) return false;
+                const pts = (t.match(/[.·…_]/g) || []).length;
+                return pts >= 4 && pts / t.length >= 0.6;
+            },
+
+            // Caractères utilisés comme case à cocher dans un PDF
+            estGlypheCase: (s) => {
+                const t = String(s || '').trim();
+                return t.length > 0 && t.length <= 2 && /^[■-▣▪▫◻-◾☐☑☒❏-❒⬚¨]+$/.test(t);
+            },
+
             // Nettoie un libellé pour en faire un nom de champ PDF valide
             cleanName: (s) => {
                 if (!s) return null;
@@ -3201,6 +3243,13 @@ const Detect = {
                         if (x - (it.x + it.w) > (maxDist || 80 * unit)) return null;
                     } else if (bordGauche - (it.x + it.w) > 7 * unit) {
                         break;   // un vrai blanc : on change de bloc de texte
+                    }
+                    // Le morceau contient des points de conduite : tout ce qui est
+                    // à leur gauche appartient au champ précédent, pas à celui-ci.
+                    const apresPoints = String(it.str).match(/[.·…]{3,}\s*([^.·…]*)$/);
+                    if (apresPoints) {
+                        if (apresPoints[1].trim()) morceaux.unshift(apresPoints[1]);
+                        break;
                     }
                     morceaux.unshift(it.str);
                     bordGauche = it.x;
@@ -3323,6 +3372,14 @@ const Detect = {
                     return false;
                 };
 
+                // Le rectangle recouvre-t-il un caractère « case à cocher » ?
+                const glyphesCase = textItems.filter(it => Detect.estGlypheCase(it.str));
+                const surGlypheCase = (x, y, w, h) => glyphesCase.some(it => {
+                    const ix = Math.min(x + w, it.x + it.w) - Math.max(x, it.x);
+                    const iy = Math.min(y + h, it.y + it.fh * 0.23) - Math.max(y, it.y - it.fh * 0.82);
+                    return ix > 0 && iy > 0 && (ix * iy) / (w * h) > 0.3;
+                });
+
                 // --- 1. CASES À COCHER (petits carrés fermés) ---
                 const boxes = [];
                 const shortV = vAll.filter(s => s.len >= P.boxMin && s.len <= P.boxMax).sort((a, b) => a.b - b.b);
@@ -3366,7 +3423,11 @@ const Detect = {
                             Detect.density(dark, W, H, a.b, a.a2 + m1, w, m2 - m1)           // bas
                         ];
                         if (strips.filter(d => d > 0.25).length >= 2) continue;
-                        if (onText(a.b, a.a1, w, h, 0.45)) continue; // lettre, pas une case
+                        // Une case superposée à du texte est presque toujours une
+                        // lettre (O, D…) — sauf quand le « texte » est justement
+                        // un caractère case à cocher : certains formulaires
+                        // écrivent « □ » au lieu de dessiner un carré.
+                        if (onText(a.b, a.a1, w, h, 0.45) && !surGlypheCase(a.b, a.a1, w, h)) continue;
                         boxes.push({ x: a.b, y: a.a1, w, h, checked: inner > 0.05 });
                     }
                 }
@@ -3596,27 +3657,26 @@ const Detect = {
                 const hFieldLines = hLong.filter(s => !hDot.some(d => sameLine(s, d) && d.len > s.len))
                     .concat(hDot.filter(d => !hLong.some(s => sameLine(s, d) && s.len >= d.len)));
 
-                // Un trait de saisie passe souvent sous son propre libellé
-                // (« Nom et Prénom : ________ ») : le champ ne doit commencer
-                // qu'après le texte, sinon il recouvre l'intitulé.
-                // On avance depuis la gauche tant que le texte se suit : c'est le
-                // libellé. Dès qu'un blanc apparaît, la zone de saisie commence.
-                // (On ne peut pas prendre « le texte le plus à droite » : ces
-                // traits se terminent souvent par un point décoratif collé à la
-                // marge, qui renverrait le départ en bout de ligne.)
-                const debutLibre = (s) => {
-                    const marge = Math.round(6 * unit);
-                    const surLaRangee = textItems
-                        .filter(it => it.y >= s.b - 1.15 * it.fh && it.y <= s.b + 0.35 * it.fh
-                            && it.x + it.w > s.a1 && it.x < s.a2)
-                        .sort((a, b) => a.x - b.x);
-                    let x = s.a1;
-                    for (const it of surLaRangee) {
-                        if (it.x > x + marge) break;
-                        x = Math.max(x, it.x + it.w + Math.round(3 * unit));
-                    }
-                    return x;
+                // Hauteur du texte de la rangée que longe le trait. On prend la
+                // médiane et non le maximum : un caractère deux fois plus haut
+                // (le « □ » d'une case à cocher voisine) élargissait la bande
+                // d'analyse jusqu'à la rangée du dessus, et le trait passait
+                // alors pour un souligné de titre.
+                const corpsRangee = (s) => {
+                    const proches = textItems.filter(it => Math.abs(it.y - s.b) <= Math.max(8 * unit, 0.5 * P.fieldH));
+                    if (!proches.length) return P.fieldH;
+                    const fhs = proches.map(it => it.fh).sort((a, b) => a - b);
+                    return Math.min(fhs[Math.floor(fhs.length / 2)], P.fieldH * 1.6);
                 };
+
+                // Bord d'un cadre : un trait dont les deux bouts tombent sur un
+                // COIN, c'est-à-dire l'extrémité d'un montant vertical. Un trait
+                // de saisie n'a jamais ça — et une ligne pointillée tracée à
+                // l'intérieur d'un encadré croise les montants en leur milieu,
+                // elle n'est donc pas confondue avec le cadre.
+                const coinEn = (x, y) => vLong.some(v => Math.abs(v.b - x) <= P.tol * 2
+                    && (Math.abs(v.a1 - y) <= P.tol * 2 || Math.abs(v.a2 - y) <= P.tol * 2));
+                const bordDeCadre = (s) => coinEn(s.a1, s.b) && coinEn(s.a2, s.b);
 
                 // Intitulé posé sur la rangée juste au-dessus du trait
                 const libelleAuDessus = (s) => {
@@ -3633,29 +3693,31 @@ const Detect = {
                 const lineFields = [];
                 hFieldLines.forEach(s => {
                     if (usedH.has(s)) return;
+                    if (bordDeCadre(s)) return;
                     const fh = P.fieldH;
 
-                    // On rogne d'abord la part occupée par le libellé : les tests de
-                    // place libre qui suivent ne doivent porter que sur la zone
-                    // réellement offerte à la saisie.
-                    const x0 = textItems.length ? debutLibre(s) : s.a1;
-                    const w = s.a2 - x0 + 1;
-                    if (w < P.minH) return;   // il ne reste plus de place utile
+                    // Le trait peut longer plusieurs libellés sur la même rangée
+                    // (« Nom : .... Prénom : .... Classe : .... ») : on le découpe
+                    // en autant de zones réellement libres, et chacune devient un
+                    // champ. Les libellés ne sont donc jamais recouverts.
+                    const zones = Detect.zonesLibres(dark, W, H, s.a1, s.a2, s.b, corpsRangee(s), P.minH);
+                    if (!zones.length) return;   // tout est occupé : souligné de titre
 
-                    // La zone au-dessus doit être libre (sinon : souligné de titre)
-                    if (Detect.density(dark, W, H, x0 + 2, s.b - fh - 2, w - 4, fh - 2) > 0.03) return;
-                    // Et juste en dessous aussi : un trait "dans" du texte (barre de
-                    // lettres en gras) a de l'encre immédiatement sous lui
-                    if (Detect.density(dark, W, H, x0 + 2, s.b + 3, w - 4, Math.max(4, Math.round(4 * unit))) > 0.10) return;
+                    zones.forEach(z => {
+                        const w = z.x2 - z.x1 + 1;
+                        // Un trait « dans » du texte (barre de lettres en gras) a de
+                        // l'encre immédiatement sous lui
+                        if (Detect.density(dark, W, H, z.x1 + 2, s.b + 3, w - 4, Math.max(4, Math.round(4 * unit))) > 0.10) return;
 
-                    // Nom auto : libellé à gauche de la ligne (ex: "Nom :")
-                    let lineName = textItems.length
-                        ? Detect.cleanName(Detect.labelLeftOf(textItems, x0, s.b, unit, 90 * unit))
-                        : null;
-                    // Trait pleine largeur : son intitulé est sur la rangée du dessus
-                    // (« Organise une formation … : » puis le trait en dessous).
-                    if (!lineName && textItems.length) lineName = Detect.cleanName(libelleAuDessus(s));
-                    lineFields.push({ type: 'textfield', x: x0, y: s.b - fh, w, h: fh, name: lineName });
+                        // Nom auto : libellé à gauche de la zone (ex: "Nom :")
+                        let lineName = textItems.length
+                            ? Detect.cleanName(Detect.labelLeftOf(textItems, z.x1, s.b, unit, 90 * unit))
+                            : null;
+                        // Trait pleine largeur : son intitulé est sur la rangée du dessus
+                        // (« Organise une formation … : » puis le trait en dessous).
+                        if (!lineName && textItems.length) lineName = Detect.cleanName(libelleAuDessus(s));
+                        lineFields.push({ type: 'textfield', x: z.x1, y: s.b - fh, w, h: fh, name: lineName });
+                    });
                 });
 
                 // --- 5. LIBELLÉS "Nom :" sans ligne → champ après les deux-points ---
@@ -3677,6 +3739,9 @@ const Detect = {
                     if (ix <= 0 || iy <= 0) return false;
                     return (ix * iy) / Math.min(a.w * a.h, b.w * b.h) > 0.3;
                 };
+
+                // Point d'observation pour les tests de détection (inactif sinon)
+                if (window.__detectDebug) window._dbg = { hLong, hDot, hFieldLines, lineFields, hintFields, boxes, tableCells, textItems, unit, W, H, P };
 
                 const counts = { table: 0, radio: 0, box: 0, line: 0, hint: 0 };
                 const accepted = [];
@@ -3791,20 +3856,77 @@ const Detect = {
                     // Sans ce garde-fou, les intitulés de section (« Référent du
                     // syndicat : », « Formatrices.teurs : ») recevaient un champ
                     // inutile, en double avec celui de la ligne.
-                    if (isColon && traits.some(s => s.b > it.y - 1.2 * it.fh && s.b < it.y + 1.6 * it.fh
-                        && s.a2 > it.x && s.a1 < W - 20 * unit)) return;
+                    // Le trait doit dépasser nettement à droite du libellé pour
+                    // porter la réponse : un trait qui s'arrête avec le texte est
+                    // un simple soulignement de titre, et l'intitulé attend
+                    // toujours son champ.
+                    if ((isColon || isDots) && traits.some(s => s.b > it.y - 1.2 * it.fh && s.b < it.y + 1.6 * it.fh
+                        && s.a2 > it.x + it.w + 15 * unit && s.a1 < W - 20 * unit)) return;
+
+                    // Le morceau se termine par des points de conduite : la zone à
+                    // remplir, ce sont les points eux-mêmes, pas le reste de marge
+                    // après eux. Si le détecteur de traits ne les a pas vus, on
+                    // pose le champ dessus plutôt qu'au bout de la ligne.
+                    if (isDots) {
+                        const m = raw.match(/([.·…]{3,})\s*$/);
+                        const debutPts = it.x + it.w * (raw.length - m[1].length) / raw.length;
+                        const largeur = it.x + it.w - debutPts;
+                        if (largeur >= 20 * unit) {
+                            out.push({
+                                type: 'textfield', x: debutPts, y: it.y - Math.max(it.fh * 1.4, P.fieldH) * 0.78,
+                                w: largeur, h: Math.max(it.fh * 1.4, P.fieldH),
+                                name: Detect.cleanName(Detect.labelLeftOf(items, debutPts, it.y, unit, 90 * unit))
+                            });
+                        }
+                        return;
+                    }
 
                     // « Programme de la formation : » suivi d'une grande zone vide :
                     // ce qu'il faut là, c'est un paragraphe sous le titre, pas une
                     // ligne à côté de lui.
                     if (isColon) {
-                        const hautZone = it.y + 0.6 * it.fh;
-                        let basZone = H - Math.round(25 * unit);
-                        items.forEach(o2 => { if (o2 !== it && o2.y > it.y + 0.5 * it.fh && o2.y - o2.fh < basZone) basZone = o2.y - o2.fh; });
-                        traits.forEach(s => { if (s.b > hautZone && s.b < basZone) basZone = s.b; });
+                        // Largeur de la zone : bornée par les montants d'un encadré
+                        // s'il y en a un. Sans ça, sur un formulaire à cases
+                        // (« Motif », « Devoir à faire »), le paragraphe débordait
+                        // sur l'encadré voisin et se faisait rejeter.
+                        let gx = Math.min(it.x, Math.round(60 * unit));
+                        let gx2 = W - Math.round(25 * unit);
+                        verticals.forEach(v => {
+                            if (v.y1 > it.y || v.y2 < it.y) return;
+                            if (v.x <= it.x) gx = Math.max(gx, v.x + Math.round(4 * unit));
+                            else if (v.x < gx2) gx2 = v.x - Math.round(4 * unit);
+                        });
 
-                        const gx = Math.min(it.x, Math.round(60 * unit));
-                        const gw = W - Math.round(25 * unit) - gx;
+                        // L'intitulé peut tenir sur deux lignes (« Devoir à faire : »
+                        // puis « (à fournir avec la demande) ») : on descend tant
+                        // que les lignes se suivent.
+                        let bas = it.y, encore = true;
+                        while (encore) {
+                            encore = false;
+                            items.forEach(o2 => {
+                                if (o2.y <= bas + 0.2 * o2.fh || o2.y >= bas + 1.8 * o2.fh) return;
+                                if (o2.x + o2.w <= gx || o2.x >= gx2) return;
+                                // Une rangée qui porte son propre deux-points attend
+                                // son propre champ : elle n'appartient pas à
+                                // l'intitulé du paragraphe.
+                                if (items.some(o3 => Math.abs(o3.y - o2.y) < 0.5 * o2.fh && /[:=]$/.test(o3.str.trim()))) return;
+                                bas = o2.y; encore = true;
+                            });
+                        }
+
+                        const hautZone = bas + 0.6 * it.fh;
+                        let basZone = H - Math.round(25 * unit);
+                        items.forEach(o2 => {
+                            if (o2.y <= hautZone || o2.x + o2.w <= gx || o2.x >= gx2) return;
+                            if (o2.y - o2.fh < basZone) basZone = o2.y - o2.fh;
+                        });
+                        traits.forEach(s => {
+                            if (s.b <= hautZone || s.b >= basZone) return;
+                            if (s.a2 <= gx || s.a1 >= gx2) return;
+                            basZone = s.b;
+                        });
+
+                        const gw = gx2 - gx;
                         const gh = basZone - hautZone;
                         if (gh >= 3.2 * it.fh && gw > 200 * unit
                             && Detect.density(dark, W, H, gx + 4, hautZone + 4, gw - 8, gh - 8) < 0.004) {
@@ -3846,8 +3968,11 @@ const Detect = {
                     const ins = Math.round(2 * unit);
                     if (Detect.density(dark, W, H, startX + ins, y + ins, w - 2 * ins, h - 2 * ins) > 0.015) return;
 
-                    let name = Detect.cleanName(raw.replace(/[=:.…·\s]+$/, ''));
-                    if (!name) name = Detect.cleanName(Detect.labelLeftOf(items, it.x, it.y, unit, 90 * unit));
+                    // Le libellé est souvent coupé en plusieurs morceaux
+                    // (« Nombre d'heures » + « demandées : ») : on recolle la
+                    // rangée avant de retomber sur le morceau seul.
+                    let name = Detect.cleanName(Detect.labelLeftOf(items, it.x + it.w, it.y, unit, 120 * unit));
+                    if (!name) name = Detect.cleanName(raw.replace(/[=:.…·\s]+$/, ''));
                     out.push({ type: 'textfield', x: startX, y, w, h, name });
                 });
                 return out;
