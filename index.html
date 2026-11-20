@@ -1749,11 +1749,19 @@
                     </button>
                 </div>
 
-                <button onclick="App.allongerChamps()"
-                    class="w-full h-9 mt-1 rounded-md bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
-                    title="Étendre chaque ligne de texte jusqu'à la place libre à sa droite, pour que le texte saisi ne soit plus coupé">
-                    <i class="fa-solid fa-arrows-left-right"></i> Allonger les lignes de texte
-                </button>
+                <div class="flex gap-1 mt-1">
+                    <button onclick="App.allongerChamps()"
+                        class="flex-1 h-9 rounded-md bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
+                        title="Étendre les lignes de texte jusqu'à la place libre à leur droite. Si des champs sont sélectionnés, seuls ceux-là sont traités.">
+                        <i class="fa-solid fa-arrows-left-right"></i> Allonger les lignes
+                    </button>
+                    <button onclick="App.etirerSelection(-10)"
+                        class="w-9 h-9 rounded-md bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-bold flex items-center justify-center transition"
+                        title="Raccourcir de 10 px les lignes sélectionnées (Ctrl + flèche gauche)">−</button>
+                    <button onclick="App.etirerSelection(10)"
+                        class="w-9 h-9 rounded-md bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-bold flex items-center justify-center transition"
+                        title="Allonger de 10 px les lignes sélectionnées (Ctrl + flèche droite)">+</button>
+                </div>
             </div>
 
             <div class="px-3 py-2 bg-gray-50 border-b border-border flex justify-between items-center shrink-0">
@@ -2909,7 +2917,7 @@
             currentPage: 0,  // Index de la page active (commence à 0)
             totalPages: 1,    // Nombre total de pages
             sequenceList: [], // Pour stocker l'ordre temporaire
-            isSequencing: false, canvas: null, mode: 'select', snap: true, sizeLock: false, isPreview: false, pdfBytes: null, clipboard: null, counts: { draw : 1, textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14, autoFit: false }
+            isSequencing: false, canvas: null, mode: 'select', snap: true, sizeLock: false, isPreview: false, pdfBytes: null, clipboard: null, counts: { draw : 1, textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14, autoFit: false }, formulaireRepris: false
         };
 
         // ============================================================
@@ -6285,6 +6293,13 @@ const Detect = {
                     // 2. DÉPLACEMENT AU CLAVIER (FLÈCHES)
                     // ------------------------------------------------------------
                     if (activeObj && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                        // Ctrl + gauche/droite : allonger ou raccourcir les lignes
+                        // de texte sélectionnées, au lieu de les déplacer.
+                        if ((e.ctrlKey || e.metaKey) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                            e.preventDefault();
+                            App.etirerSelection(e.key === 'ArrowRight' ? (e.shiftKey ? 40 : 10) : (e.shiftKey ? -40 : -10));
+                            return;
+                        }
                         e.preventDefault(); // Empêche le scroll de la page web
 
                         const step = e.shiftKey ? 10 : 1; // Shift = Grand pas (10px)
@@ -6801,25 +6816,36 @@ const Detect = {
                 // ont été repris à l'import comme objets modifiables : on retire
                 // les anciens, sinon ils réapparaîtraient en double et leurs noms
                 // empêcheraient de recréer les nôtres.
+                // MAIS on ne retire rien si la reprise n'a pas eu lieu (document
+                // ouvert avant cette version, annotations illisibles…) : on
+                // effacerait alors un formulaire que personne ne recrée.
+                const ancienFormulaire = [];
                 try {
-                    // D'abord les widgets posés sur les pages : une fois le champ
-                    // retiré du formulaire, ses objets n'existent plus et on ne
-                    // peut plus savoir ce que la page référence.
-                    doc.getPages().forEach(pg => {
-                        const annots = pg.node.Annots && pg.node.Annots();
-                        if (!annots) return;
-                        for (let i = annots.size() - 1; i >= 0; i--) {
-                            let sous = '';
-                            try {
-                                const dict = doc.context.lookup(annots.get(i));
-                                sous = dict && dict.get ? String(dict.get(PDFLib.PDFName.of('Subtype'))) : '';
-                            } catch (e) { }
-                            if (sous === '/Widget') annots.remove(i);
-                        }
-                    });
                     const ancien = doc.getForm();
-                    ancien.getFields().forEach(f => { try { ancien.removeField(f); } catch (e) { console.warn('champ non retiré', e); } });
-                } catch (e) { console.warn('Ancien formulaire non retiré :', e); }
+                    ancien.getFields().forEach(f => ancienFormulaire.push(f.getName()));
+                } catch (e) { }
+
+                if (State.formulaireRepris && ancienFormulaire.length) {
+                    try {
+                        // D'abord les widgets posés sur les pages : une fois le champ
+                        // retiré du formulaire, ses objets n'existent plus et on ne
+                        // peut plus savoir ce que la page référence.
+                        doc.getPages().forEach(pg => {
+                            const annots = pg.node.Annots && pg.node.Annots();
+                            if (!annots) return;
+                            for (let i = annots.size() - 1; i >= 0; i--) {
+                                let sous = '';
+                                try {
+                                    const dict = doc.context.lookup(annots.get(i));
+                                    sous = dict && dict.get ? String(dict.get(PDFLib.PDFName.of('Subtype'))) : '';
+                                } catch (e) { }
+                                if (sous === '/Widget') annots.remove(i);
+                            }
+                        });
+                        const ancien = doc.getForm();
+                        ancien.getFields().forEach(f => { try { ancien.removeField(f); } catch (e) { console.warn('champ non retiré', e); } });
+                    } catch (e) { console.warn('Ancien formulaire non retiré :', e); }
+                }
 
                 // --- A. CHARGEMENT DES POLICES STANDARD ---
                 const helveticaFont = await doc.embedFont(StandardFonts.Helvetica);
@@ -6834,6 +6860,9 @@ const Detect = {
                 };
                 const getSafeId = (id, set) => { let n = id; let i = 1; while (set.has(n)) n = id + "_" + i++; set.add(n); return n; };
                 const usedIds = new Set();
+                // Formulaire d'origine conservé : ses noms sont déjà pris, nos
+                // champs ne doivent pas tomber dessus.
+                if (!State.formulaireRepris) ancienFormulaire.forEach(n => usedIds.add(n));
 
                 // --- BOUCLE PAGES ---
                 for (let i = 0; i < State.pages.length; i++) {
@@ -7125,7 +7154,13 @@ const Detect = {
             const idx = C.getObjects().indexOf(obj);
             if (idx < 0) return false;
             const p = obj.getPointByOrigin ? obj.getPointByOrigin('left', 'top') : { x: obj.left, y: obj.top };
-            const neuf = Factory.createInputGroup(p.x, p.y, largeur, obj.getScaledHeight(), obj.ctype);
+            // La largeur demandée est celle du champ bordure comprise, alors que
+            // Factory fabrique un cadre intérieur puis ajoute le trait : sans
+            // cette soustraction, chaque cran ferait grandir le champ d'un pixel
+            // de plus que demandé.
+            const bord = State.defaults.width || 0;
+            const neuf = Factory.createInputGroup(p.x, p.y,
+                Math.max(4, largeur - bord), Math.max(4, obj.getScaledHeight() - bord), obj.ctype);
             if (!neuf) return false;
 
             ['pid', 'bStyle', 'fmt', 'tAlign', 'isRequired', 'isReadOnly', 'opts', 'detectKind', 'refTaille']
@@ -7147,7 +7182,38 @@ const Detect = {
             C.insertAt(neuf, idx);
             App.verrouiller1(neuf);
             neuf.setCoords();
-            return true;
+            return neuf;
+        };
+
+        // Allonge (ou raccourcit) d'un cran les lignes de texte sélectionnées.
+        // On défait d'abord la sélection : dans un groupe de sélection, Fabric
+        // exprime les positions par rapport au groupe, pas à la page.
+        App.etirerSelection = (delta) => {
+            const C = State.canvas;
+            const choisis = C.getActiveObjects().filter(o => o.ctype === 'textfield');
+            if (!choisis.length) {
+                App.toast("Sélectionnez d'abord une ou plusieurs lignes de texte", 'info', 3000);
+                return 0;
+            }
+            if (State.sizeLock) {
+                App.toast("Le cadenas de la barre du haut bloque la taille des champs", 'info', 3500);
+                return 0;
+            }
+            C.discardActiveObject();
+            const neufs = [];
+            choisis.forEach(o => {
+                const large = Math.max(20, o.getScaledWidth() + delta);
+                const n = App.redimensionnerLigne(o, large);
+                if (n) neufs.push(n);
+            });
+            if (neufs.length === 1) C.setActiveObject(neufs[0]);
+            else if (neufs.length > 1) {
+                C.setActiveObject(new fabric.ActiveSelection(neufs, { canvas: C }));
+            }
+            C.requestRenderAll();
+            History.save();
+            Panel.update(C.getActiveObject());
+            return neufs.length;
         };
 
         // Étend chaque ligne de texte jusqu'à la place libre à sa droite, pour
@@ -7181,6 +7247,13 @@ const Detect = {
                 return (0.299 * px[j] + 0.587 * px[j + 1] + 0.114 * px[j + 2]) < 170;
             };
 
+            // Une sélection restreint l'action à ces champs-là ; sinon toute
+            // la page. On défait la sélection pour travailler en coordonnées
+            // de page, pas en coordonnées de groupe.
+            const choisis = C.getActiveObjects().filter(o => o.ctype === 'textfield');
+            if (choisis.length) C.discardActiveObject();
+            const seulement = choisis.length ? new Set(choisis) : null;
+
             const sx = bg.scaleX || 1, sy = bg.scaleY || 1;
             const bgPos = bg.getPointByOrigin ? bg.getPointByOrigin('left', 'top') : { x: bg.left, y: bg.top };
             const unit = W / 595;
@@ -7194,8 +7267,10 @@ const Detect = {
             });
 
             let allonges = 0, gainTotal = 0;
+            const neufs = [];
             boites.forEach(b => {
                 if (b.o.ctype !== 'textfield') return;
+                if (seulement && !seulement.has(b.o)) return;
 
                 const haut = Math.max(0, Math.round(b.y + b.h * 0.18));
                 const bas = Math.min(H - 1, Math.round(b.y + b.h * 0.82));
@@ -7219,19 +7294,28 @@ const Detect = {
 
                 const neuve = butoir - ecart - b.x;
                 if (neuve - b.w < 6) return;          // rien d'utile à gagner
-                if (App.redimensionnerLigne(b.o, neuve * sx)) {
+                const n = App.redimensionnerLigne(b.o, neuve * sx);
+                if (n) {
+                    neufs.push(n);
                     allonges++;
                     gainTotal += Math.round(neuve - b.w);
                 }
             });
 
             if (allonges) {
+                // On ne rend la sélection que si l'utilisateur en avait une :
+                // après un passage sur toute la page, tout sélectionner
+                // surprendrait plus qu'autre chose.
+                if (seulement && neufs.length === 1) C.setActiveObject(neufs[0]);
+                else if (seulement && neufs.length > 1) C.setActiveObject(new fabric.ActiveSelection(neufs, { canvas: C }));
                 C.requestRenderAll();
                 History.save();
                 Panel.update(C.getActiveObject());
                 App.toast(`${allonges} ligne${allonges > 1 ? 's' : ''} de texte allongée${allonges > 1 ? 's' : ''}`, 'success', 3000);
             } else {
-                App.toast("Aucune ligne de texte à allonger : la place à droite est déjà prise", 'info', 3500);
+                App.toast(seulement
+                    ? "Les lignes choisies touchent déjà ce qu'il y a à leur droite"
+                    : "Aucune ligne de texte à allonger : la place à droite est déjà prise", 'info', 3500);
             }
             return allonges;
         };
@@ -7357,6 +7441,7 @@ const Detect = {
             State.currentPage = 0;
             const nomsPris = new Set();
             let nbRecuperes = 0;
+            State.formulaireRepris = false;
 
             // BOUCLE SUR CHAQUE PAGE
             for (let i = 1; i <= pdf.numPages; i++) {
@@ -7407,6 +7492,7 @@ const Detect = {
                     objects: [img.toObject(customProps)].concat(dejaLa.map(o => o.toObject(customProps)))
                 };
                 nbRecuperes += dejaLa.length;
+                if (dejaLa.length) State.formulaireRepris = true;
 
                 State.pages.push(pageJSON);
             }
