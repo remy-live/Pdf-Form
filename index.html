@@ -1481,6 +1481,15 @@
                 </div>
             </div>
 
+            <label class="tb-case">
+                <input type="checkbox" id="g-autofit" class="accent-black w-4 h-4 rounded"
+                    onchange="App.setStyle('autoFit', this.checked)">
+                <span>Laisser le lecteur PDF réduire le texte trop long<br>
+                    <span class="text-[10px] text-gray-400">Acrobat et Chrome rapetissent alors le texte au lieu de le
+                        couper ; le lecteur de Firefox, lui, en montre moins. Pour régler le problème partout,
+                        préférez « Allonger les lignes de texte ».</span></span>
+            </label>
+
             <div class="tb-section">Couleurs</div>
 
             <div class="tb-ligne">
@@ -1739,6 +1748,12 @@
                         <i class="fa-solid fa-shapes"></i> Modèles
                     </button>
                 </div>
+
+                <button onclick="App.allongerChamps()"
+                    class="w-full h-9 mt-1 rounded-md bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
+                    title="Étendre chaque ligne de texte jusqu'à la place libre à sa droite, pour que le texte saisi ne soit plus coupé">
+                    <i class="fa-solid fa-arrows-left-right"></i> Allonger les lignes de texte
+                </button>
             </div>
 
             <div class="px-3 py-2 bg-gray-50 border-b border-border flex justify-between items-center shrink-0">
@@ -2894,7 +2909,7 @@
             currentPage: 0,  // Index de la page active (commence à 0)
             totalPages: 1,    // Nombre total de pages
             sequenceList: [], // Pour stocker l'ordre temporaire
-            isSequencing: false, canvas: null, mode: 'select', snap: true, sizeLock: false, isPreview: false, pdfBytes: null, clipboard: null, counts: { draw : 1, textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14 }
+            isSequencing: false, canvas: null, mode: 'select', snap: true, sizeLock: false, isPreview: false, pdfBytes: null, clipboard: null, counts: { draw : 1, textfield: 1, textarea: 1, checkbox: 1, radio: 1, dropdown: 1, label: 1, rect: 1, circle: 1, radiogroup: 1, image: 1 }, defaults: { fill: '#ffffff', stroke: '#000000', width: 1, font: 'Arial', size: 12, lock: true, defHeight: 24, boxSize: 14, autoFit: false }
         };
 
         // ============================================================
@@ -5673,6 +5688,8 @@ const Detect = {
                 poser('g-width', 'value', d.width);
                 poser('g-def-height', 'value', d.defHeight);
                 poser('g-def-box', 'value', d.boxSize);
+                const af = document.getElementById('g-autofit');
+                if (af) af.checked = !!d.autoFit;
 
                 const pf = document.getElementById('preview-fill');
                 if (pf) pf.style.backgroundColor = d.fill;
@@ -6780,6 +6797,30 @@ const Detect = {
                 if (State.pdfBytes) doc = await PDFDocument.load(State.pdfBytes);
                 else doc = await PDFDocument.create();
 
+                // Le PDF de départ était peut-être déjà un formulaire. Ses champs
+                // ont été repris à l'import comme objets modifiables : on retire
+                // les anciens, sinon ils réapparaîtraient en double et leurs noms
+                // empêcheraient de recréer les nôtres.
+                try {
+                    // D'abord les widgets posés sur les pages : une fois le champ
+                    // retiré du formulaire, ses objets n'existent plus et on ne
+                    // peut plus savoir ce que la page référence.
+                    doc.getPages().forEach(pg => {
+                        const annots = pg.node.Annots && pg.node.Annots();
+                        if (!annots) return;
+                        for (let i = annots.size() - 1; i >= 0; i--) {
+                            let sous = '';
+                            try {
+                                const dict = doc.context.lookup(annots.get(i));
+                                sous = dict && dict.get ? String(dict.get(PDFLib.PDFName.of('Subtype'))) : '';
+                            } catch (e) { }
+                            if (sous === '/Widget') annots.remove(i);
+                        }
+                    });
+                    const ancien = doc.getForm();
+                    ancien.getFields().forEach(f => { try { ancien.removeField(f); } catch (e) { console.warn('champ non retiré', e); } });
+                } catch (e) { console.warn('Ancien formulaire non retiré :', e); }
+
                 // --- A. CHARGEMENT DES POLICES STANDARD ---
                 const helveticaFont = await doc.embedFont(StandardFonts.Helvetica);
                 const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -7018,6 +7059,36 @@ const Detect = {
                     });
                 }
 
+                // --- AJUSTEMENT AUTOMATIQUE DU TEXTE ---
+                // Un champ court coupe le texte saisi dès qu'il dépasse la
+                // largeur. En inscrivant « 0 Tf » dans l'apparence par défaut,
+                // on demande au lecteur PDF de réduire le texte pour qu'il
+                // tienne — c'est le mécanisme standard de taille automatique.
+                // L'apparence déjà fabriquée reste en place, à une taille
+                // raisonnable, pour les lecteurs qui ne recalculent pas.
+                let autoPosee = 0;
+                if (State.defaults.autoFit) {
+                    try {
+                        const form = doc.getForm();
+                        form.getFields().forEach(f => {
+                            if (!f.acroField || typeof f.acroField.getDefaultAppearance !== 'function') return;
+                            // Seuls les champs de saisie et les listes affichent du
+                            // texte ; cases et boutons radio n'en ont pas.
+                            let ft = '';
+                            try { ft = String(f.acroField.dict.lookup(PDFLib.PDFName.of('FT')) || ''); } catch (e) { }
+                            if (ft !== '/Tx' && ft !== '/Ch') return;
+                            const da = String(f.acroField.getDefaultAppearance() || '');
+                            if (!/\sTf/.test(da)) return;
+                            f.acroField.setDefaultAppearance(da.replace(/([\d.]+)\s+Tf/, '0 Tf'));
+                            autoPosee++;
+                        });
+                        if (autoPosee) {
+                            // Demande au lecteur de recalculer les apparences
+                            form.acroForm.dict.set(PDFLib.PDFName.of('NeedAppearances'), PDFLib.PDFBool.True);
+                        }
+                    } catch (e) { console.warn('Ajustement automatique non appliqué :', e); }
+                }
+
                 // --- AJOUT DES MÉTADONNÉES PRO ---
                 const title = document.getElementById('doc-title').value || "Formulaire";
                 doc.setTitle(title);
@@ -7026,7 +7097,10 @@ const Detect = {
                 doc.setProducer("Pdf Studio V1.0");
                 // ----------------------------------
 
-                const bytes = await doc.save();
+                // On n'autorise pas pdf-lib à refabriquer les apparences ici :
+                // elles sont déjà faites, et il les referait à la taille « auto »
+                // qu'on vient d'inscrire, donc immenses.
+                const bytes = await doc.save({ updateFieldAppearances: false });
                 const blob = new Blob([bytes], { type: 'application/pdf' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
@@ -7041,6 +7115,221 @@ const Detect = {
 
         // Import d'un PDF, quelle qu'en soit la provenance : bouton « Importer »,
         // écran d'accueil, ou fichier déposé sur la page.
+        // Récupère les champs d'un PDF qui est DÉJÀ un formulaire, pour qu'ils
+        // redeviennent modifiables au lieu d'être aplatis dans l'image de fond.
+        // Refabrique une ligne de saisie à une nouvelle largeur, en gardant tout
+        // ce qui la caractérise. On ne l'étire pas : étirer un groupe Fabric
+        // déforme la police et la zone de texte repousse les bords du cadre.
+        App.redimensionnerLigne = (obj, largeur) => {
+            const C = State.canvas;
+            const idx = C.getObjects().indexOf(obj);
+            if (idx < 0) return false;
+            const p = obj.getPointByOrigin ? obj.getPointByOrigin('left', 'top') : { x: obj.left, y: obj.top };
+            const neuf = Factory.createInputGroup(p.x, p.y, largeur, obj.getScaledHeight(), obj.ctype);
+            if (!neuf) return false;
+
+            ['pid', 'bStyle', 'fmt', 'tAlign', 'isRequired', 'isReadOnly', 'opts', 'detectKind', 'refTaille']
+                .forEach(k => { if (obj[k] !== undefined) neuf[k] = obj[k]; });
+            if (obj.txtObj && neuf.txtObj) {
+                neuf.txtObj.set({
+                    text: obj.txtObj.text || '', fontSize: obj.txtObj.fontSize,
+                    fontFamily: obj.txtObj.fontFamily, fill: obj.txtObj.fill,
+                    textAlign: obj.txtObj.textAlign
+                });
+            }
+            if (obj.bgObj && neuf.bgObj) {
+                neuf.bgObj.set({
+                    fill: obj.bgObj.fill, stroke: obj.bgObj.stroke,
+                    strokeWidth: obj.bgObj.strokeWidth, strokeDashArray: obj.bgObj.strokeDashArray
+                });
+            }
+            C.remove(obj);
+            C.insertAt(neuf, idx);
+            App.verrouiller1(neuf);
+            neuf.setCoords();
+            return true;
+        };
+
+        // Étend chaque ligne de texte jusqu'à la place libre à sa droite, pour
+        // qu'un champ court ne coupe plus ce qu'on y écrit. On s'arrête sur
+        // l'encre du document (un autre libellé, un bord de cadre) comme sur le
+        // champ voisin. Les paragraphes, listes, cases et boutons ne bougent pas :
+        // seules les lignes de saisie sont concernées.
+        App.allongerChamps = () => {
+            const C = State.canvas;
+            const bg = C.getObjects().find(o => o.isBackground);
+            if (!bg || bg.type !== 'image') {
+                App.toast("Importez d'abord un PDF : l'allongement s'arrête sur le contenu de la page", 'info', 3500);
+                return 0;
+            }
+            if (State.sizeLock) {
+                App.toast("Le cadenas de la barre du haut bloque la taille des champs", 'info', 3500);
+                return 0;
+            }
+
+            const el = bg._originalElement || bg._element;
+            const W = el.naturalWidth || el.width, H = el.naturalHeight || el.height;
+            if (!W || !H) return 0;
+            const off = document.createElement('canvas');
+            off.width = W; off.height = H;
+            const ctx = off.getContext('2d', { willReadFrequently: true });
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+            ctx.drawImage(el, 0, 0, W, H);
+            const px = ctx.getImageData(0, 0, W, H).data;
+            const sombre = (x, y) => {
+                const j = ((y * W) + x) * 4;
+                return (0.299 * px[j] + 0.587 * px[j + 1] + 0.114 * px[j + 2]) < 170;
+            };
+
+            const sx = bg.scaleX || 1, sy = bg.scaleY || 1;
+            const bgPos = bg.getPointByOrigin ? bg.getPointByOrigin('left', 'top') : { x: bg.left, y: bg.top };
+            const unit = W / 595;
+            const marge = Math.round(12 * unit);     // on laisse une marge à droite
+            const ecart = Math.round(3 * unit);      // petit blanc avant l'obstacle
+
+            // Tous les champs, pour ne pas chevaucher le voisin
+            const boites = C.getObjects().filter(o => o.ctype && !o.isBackground).map(o => {
+                const r = o.getBoundingRect(true, true);
+                return { o, x: (r.left - bgPos.x) / sx, y: (r.top - bgPos.y) / sy, w: r.width / sx, h: r.height / sy };
+            });
+
+            let allonges = 0, gainTotal = 0;
+            boites.forEach(b => {
+                if (b.o.ctype !== 'textfield') return;
+
+                const haut = Math.max(0, Math.round(b.y + b.h * 0.18));
+                const bas = Math.min(H - 1, Math.round(b.y + b.h * 0.82));
+                if (bas <= haut) return;
+
+                let butoir = W - marge;
+                // Un autre champ sur la même rangée borne l'allongement
+                boites.forEach(a => {
+                    if (a === b || a.x <= b.x) return;
+                    if (a.y + a.h < b.y + 2 || a.y > b.y + b.h - 2) return;   // pas la même rangée
+                    if (a.x < butoir) butoir = a.x;
+                });
+
+                // ...et l'encre du document aussi
+                const depart = Math.round(b.x + b.w) + 2;
+                for (let x = depart; x < butoir; x++) {
+                    let encre = false;
+                    for (let y = haut; y <= bas; y++) if (sombre(x, y)) { encre = true; break; }
+                    if (encre) { butoir = x; break; }
+                }
+
+                const neuve = butoir - ecart - b.x;
+                if (neuve - b.w < 6) return;          // rien d'utile à gagner
+                if (App.redimensionnerLigne(b.o, neuve * sx)) {
+                    allonges++;
+                    gainTotal += Math.round(neuve - b.w);
+                }
+            });
+
+            if (allonges) {
+                C.requestRenderAll();
+                History.save();
+                Panel.update(C.getActiveObject());
+                App.toast(`${allonges} ligne${allonges > 1 ? 's' : ''} de texte allongée${allonges > 1 ? 's' : ''}`, 'success', 3000);
+            } else {
+                App.toast("Aucune ligne de texte à allonger : la place à droite est déjà prise", 'info', 3500);
+            }
+            return allonges;
+        };
+
+        App.champsExistants = async (page, vp, scale, nomsPris) => {
+            let annots = [];
+            try { annots = await page.getAnnotations({ intent: 'display' }); }
+            catch (e) { console.warn('Annotations illisibles :', e); return []; }
+
+            const off = State.canvas.pageOffset || { x: 0, y: 0 };
+            const objs = [];
+            const groupesRadio = new Map();
+
+            // Un nom de champ ne peut servir qu'une fois (sauf pour les boutons
+            // radio d'un même groupe, qui le partagent par construction)
+            const nomLibre = (base) => {
+                let n = Detect.cleanName(base) || 'champ';
+                if (!nomsPris.has(n)) { nomsPris.add(n); return n; }
+                let i = 2;
+                while (nomsPris.has(n + '_' + i)) i++;
+                nomsPris.add(n + '_' + i);
+                return n + '_' + i;
+            };
+
+            for (const a of annots) {
+                if (a.subtype !== 'Widget' || a.hidden || a.pushButton) continue;
+                if (!a.rect || a.rect.length < 4) continue;
+
+                const r = vp.convertToViewportRectangle(a.rect);
+                const l = off.x + Math.min(r[0], r[2]);
+                const t = off.y + Math.min(r[1], r[3]);
+                const w = Math.abs(r[2] - r[0]);
+                const h = Math.abs(r[3] - r[1]);
+                if (w < 2 || h < 2) continue;
+
+                let obj = null;
+                if (a.fieldType === 'Btn' && a.checkBox) {
+                    obj = Factory.createCheckbox(l, t, Math.min(w, h));
+                    if (a.fieldValue && a.fieldValue !== 'Off') { obj.isChecked = true; obj.markObj.set('opacity', 1); }
+                }
+                else if (a.fieldType === 'Btn' && a.radioButton) {
+                    obj = Factory.createRadio(l, t, Math.min(w, h));
+                    // Tous les boutons d'un même nom appartiennent au même groupe
+                    if (!groupesRadio.has(a.fieldName)) groupesRadio.set(a.fieldName, { nom: nomLibre(a.fieldName), n: 0 });
+                    const g = groupesRadio.get(a.fieldName);
+                    obj.grp = g.nom;
+                    obj.val = String(a.buttonValue != null ? a.buttonValue : g.n);
+                    obj.pid = g.nom + '_' + (++g.n);
+                    if (a.fieldValue != null && String(a.fieldValue) === obj.val) { obj.isChecked = true; obj.markObj.set('opacity', 1); }
+                }
+                else if (a.fieldType === 'Ch') {
+                    obj = Factory.createInputGroup(l, t, w, h, 'dropdown');
+                    obj.opts = (a.options || []).map(o => o.displayValue || o.exportValue || '').join('\n');
+                }
+                else if (a.fieldType === 'Tx') {
+                    obj = Factory.createInputGroup(l, t, w, h, a.multiLine ? 'textarea' : 'textfield');
+                    const val = Array.isArray(a.fieldValue) ? a.fieldValue.join(' ') : (a.fieldValue || '');
+                    if (val && obj.txtObj) obj.txtObj.set('text', String(val));
+                }
+                if (!obj) continue;
+
+                // Nom, bordure et fond repris du document
+                if (a.fieldType !== 'Btn' || !a.radioButton) obj.pid = nomLibre(a.fieldName || obj.ctype);
+                if (a.readOnly) obj.isReadOnly = true;
+                if (a.required) obj.isRequired = true;
+
+                const cible = obj.bgObj || obj._objects[0];
+                if (cible) {
+                    const bw = (a.borderStyle && a.borderStyle.width != null) ? a.borderStyle.width : 1;
+                    cible.set({
+                        stroke: App.couleurPDF(a.borderColor) || '#000000',
+                        strokeWidth: Math.max(0, bw) * scale,
+                        fill: App.couleurPDF(a.backgroundColor) || 'transparent'
+                    });
+                    if (!bw) obj.bStyle = 'none';
+                }
+                // Taille du texte : celle du document si elle est plausible,
+                // sinon une taille qui tient dans le cadre. Un PDF produit par
+                // un outil qui laisse la police « automatique » annonce parfois
+                // 78 pt pour un cadre de 90 pt.
+                if (obj.txtObj) {
+                    const daPt = (a.defaultAppearanceData && a.defaultAppearanceData.fontSize) || 0;
+                    const voulue = daPt > 3 && daPt < 24 ? daPt * scale : 11 * scale;
+                    obj.txtObj.set('fontSize', Math.max(8, Math.round(Math.min(voulue, h * 0.62))));
+                }
+                objs.push(obj);
+            }
+            return objs;
+        };
+
+        // [r, v, b] de pdf.js (0-255) → couleur CSS
+        App.couleurPDF = (c) => {
+            if (!c) return null;
+            const t = Array.isArray(c) ? c : [c[0], c[1], c[2]];
+            if (t[0] == null) return null;
+            return 'rgb(' + Math.round(t[0]) + ',' + Math.round(t[1]) + ',' + Math.round(t[2]) + ')';
+        };
+
         App.importerPDF = async (f) => {
             if (!f) return;
             if (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name || '')) {
@@ -7066,6 +7355,8 @@ const Detect = {
             State.pages = [];
             State.totalPages = pdf.numPages;
             State.currentPage = 0;
+            const nomsPris = new Set();
+            let nbRecuperes = 0;
 
             // BOUCLE SUR CHAQUE PAGE
             for (let i = 1; i <= pdf.numPages; i++) {
@@ -7087,7 +7378,14 @@ const Detect = {
                 const c = document.createElement('canvas');
                 c.width = vp.width;
                 c.height = vp.height;
-                await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+                // Les champs d'un formulaire déjà présent ne doivent PAS être
+                // dessinés dans l'image de fond : on les récupère juste après
+                // comme de vrais champs modifiables. Le mode ENABLE_FORMS rend
+                // les annotations ordinaires mais laisse les champs de côté.
+                await page.render({
+                    canvasContext: c.getContext('2d'), viewport: vp,
+                    annotationMode: (pdfjsLib.AnnotationMode && pdfjsLib.AnnotationMode.ENABLE_FORMS) || 2
+                }).promise;
 
                 // Création de l'objet Image Fabric
                 const img = new fabric.Image(c);
@@ -7103,10 +7401,12 @@ const Detect = {
                 // CRÉATION DU JSON DE LA PAGE
                 // On crée une "fausse" page qui contient juste cette image de fond pour l'instant
                 // Note: On doit simuler la structure JSON de Fabric
+                const dejaLa = await App.champsExistants(page, vp, scale, nomsPris);
                 const pageJSON = {
                     version: "5.3.0",
-                    objects: [img.toObject(customProps)]
+                    objects: [img.toObject(customProps)].concat(dejaLa.map(o => o.toObject(customProps)))
                 };
+                nbRecuperes += dejaLa.length;
 
                 State.pages.push(pageJSON);
             }
@@ -7120,6 +7420,16 @@ const Detect = {
             // on la propose au lieu d'attendre que l'utilisateur la trouve.
             setTimeout(() => {
                 const n = State.totalPages;
+                // Le PDF contenait déjà un formulaire : ses champs sont repris
+                // tels quels, inutile de proposer une détection par-dessus.
+                if (nbRecuperes) {
+                    App.showConfirm("Formulaire récupéré",
+                        `${n} page${n > 1 ? 's' : ''} chargée${n > 1 ? 's' : ''}, et ${nbRecuperes} champ${nbRecuperes > 1 ? 's' : ''} déjà présent${nbRecuperes > 1 ? 's' : ''} dans le PDF ${nbRecuperes > 1 ? 'ont' : 'a'} été repris. Vous pouvez les déplacer, les renommer ou les supprimer.\n\nVoulez-vous en chercher d'autres ?`, [
+                        { label: 'Chercher d\'autres champs', onClick: () => App.detectFields() },
+                        { label: 'C\'est bon comme ça', primary: true }
+                    ]);
+                    return;
+                }
                 App.showConfirm("PDF importé",
                     `${n} page${n > 1 ? 's' : ''} chargée${n > 1 ? 's' : ''}.\n\nVoulez-vous repérer automatiquement les zones à remplir (lignes, cases à cocher, tableaux) ?`, [
                     { label: 'Repérer les champs', primary: true, onClick: () => App.detectFields() },
