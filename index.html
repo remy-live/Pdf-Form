@@ -6825,11 +6825,10 @@ const Detect = {
                     ancien.getFields().forEach(f => ancienFormulaire.push(f.getName()));
                 } catch (e) { }
 
+                let ancienRetire = false;
                 if (State.formulaireRepris && ancienFormulaire.length) {
                     try {
-                        // D'abord les widgets posés sur les pages : une fois le champ
-                        // retiré du formulaire, ses objets n'existent plus et on ne
-                        // peut plus savoir ce que la page référence.
+                        // 1. Les widgets quittent les pages.
                         doc.getPages().forEach(pg => {
                             const annots = pg.node.Annots && pg.node.Annots();
                             if (!annots) return;
@@ -6842,9 +6841,25 @@ const Detect = {
                                 if (sous === '/Widget') annots.remove(i);
                             }
                         });
-                        const ancien = doc.getForm();
-                        ancien.getFields().forEach(f => { try { ancien.removeField(f); } catch (e) { console.warn('champ non retiré', e); } });
+
+                        // 2. La liste des champs du formulaire est vidée à la main.
+                        //    On n'utilise pas removeField : il exige de retrouver la
+                        //    page de chaque widget, ce qu'il ne sait pas faire quand
+                        //    le champ et son widget sont deux objets distincts sans
+                        //    renvoi vers la page. Il échouait alors sur tous les
+                        //    champs et laissait un formulaire sans widgets — présent
+                        //    dans le fichier, invisible à l'écran.
+                        const acro = doc.catalog.lookup(PDFLib.PDFName.of('AcroForm'), PDFLib.PDFDict);
+                        const liste = acro && acro.lookup(PDFLib.PDFName.of('Fields'), PDFLib.PDFArray);
+                        if (liste) while (liste.size()) liste.remove(0);
+
+                        ancienRetire = doc.getForm().getFields().length === 0;
                     } catch (e) { console.warn('Ancien formulaire non retiré :', e); }
+
+                    // Si le nettoyage a échoué, mieux vaut garder l'ancien
+                    // formulaire que livrer un fichier à moitié démonté : on
+                    // réserve alors ses noms pour que les nôtres soient uniques.
+                    if (!ancienRetire) console.warn("Ancien formulaire conservé : le retrait n'a pas abouti");
                 }
 
                 // --- A. CHARGEMENT DES POLICES STANDARD ---
@@ -6862,7 +6877,7 @@ const Detect = {
                 const usedIds = new Set();
                 // Formulaire d'origine conservé : ses noms sont déjà pris, nos
                 // champs ne doivent pas tomber dessus.
-                if (!State.formulaireRepris) ancienFormulaire.forEach(n => usedIds.add(n));
+                if (!ancienRetire) ancienFormulaire.forEach(n => usedIds.add(n));
 
                 // --- BOUCLE PAGES ---
                 for (let i = 0; i < State.pages.length; i++) {
@@ -7406,12 +7421,15 @@ const Detect = {
             return objs;
         };
 
-        // [r, v, b] de pdf.js (0-255) → couleur CSS
+        // [r, v, b] de pdf.js (0-255) → couleur hexadécimale.
+        // En hexadécimal et pas en rgb(...) : c'est la seule notation que
+        // comprend l'export, qui laissait sinon tomber bordure et fond.
         App.couleurPDF = (c) => {
             if (!c) return null;
             const t = Array.isArray(c) ? c : [c[0], c[1], c[2]];
             if (t[0] == null) return null;
-            return 'rgb(' + Math.round(t[0]) + ',' + Math.round(t[1]) + ',' + Math.round(t[2]) + ')';
+            const d = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+            return '#' + d(t[0]) + d(t[1]) + d(t[2]);
         };
 
         App.importerPDF = async (f) => {
